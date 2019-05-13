@@ -14,7 +14,7 @@
 %   batchReproject             - batchReproject reprojects a batch of typeOfData files to extentName
 %   browseLandsat              - browseLandsat makes browse image of Landsat RGB, snow & masks
 %   browseLandsatMODIS         - browseLandsatMODIS makes browse image of Landsat & MODIS files
-%   canopyAdjLandsat           - canopyAdjLandsat returns canopy-adjusted fsca from mat file
+%   landsatFsca                - landsatFsca returns fsca from mat file
 %   contFSCALandsat            - contFSCALandsat returns continuous FSCA from mat file
 %   getSaturationFromQcal      - getSaturationFromQcal finds pixels with bands 123 all saturated
 %   landsatRGB                 - landsatRGB returns scaled bands 642 RGB from mat file
