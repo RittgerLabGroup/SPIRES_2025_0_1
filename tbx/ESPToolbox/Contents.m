@@ -1,5 +1,5 @@
 % ESPToolbox
-% Version 1.6 (R2017b) 14-Aug-2018
+% Version 1.7 (R2018b) 24-Jul-2019
 %
 % Functions
 %
@@ -7,7 +7,7 @@
 %   writeRectangleToCsv        - writeRectangleToCsv writes Rectangle shape coords to .csv file
 %   saveStudyExtentGeolocation - saveStudyExtentGeolocation saves geotiffs of lat/lon and x,y
 %   studyExtent                - studyExtent - information about a named study extent
-%   ESPEnv                     - 
+%   ESPEnv                     - ESPEnv - environment for ESP data directories
 %   batchBrowse                - batchBrowse do batch of LandSat/MODIS browse images
 %   batchBrowseLandsat         - batchBrowseLandsat do batch of LandSat (RGB/Snow/Masks) browse images
 %   batchGetJPLmodis           - batchGetJPLmodis - fetches a batch of JPL MODIS scag/drfs/mod09 files
@@ -22,3 +22,4 @@
 %   reprojectToStudyExtent     - reprojectToStudyExtent returns sensor data reprojected to StudyExtent
 %   scale2uint8                - scale2uint8 scales data to uint8 with NaNs set to 255
 %   utmMstructFromTmInfo       - utmMstruct creates mstruct from the tmInfo struct
+%   cube                       - cube class contains data and metadata for reading a MODIS scag STC cube
