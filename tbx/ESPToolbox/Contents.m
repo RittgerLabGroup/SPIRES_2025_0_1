@@ -1,5 +1,5 @@
 % ESPToolbox
-% Version 1.7 (R2018b) 24-Jul-2019
+% Version 1.8 (R2018b) 15-Oct-2019
 %
 % Functions
 %
@@ -23,3 +23,8 @@
 %   scale2uint8                - scale2uint8 scales data to uint8 with NaNs set to 255
 %   utmMstructFromTmInfo       - utmMstruct creates mstruct from the tmInfo struct
 %   cube                       - cube class contains data and metadata for reading a MODIS scag STC cube
+%   MODISData                  - MODISData - manages our inventory of MODIS tile data
+%   batchCleanDuplicates       - batchCleanDuplicates - finds and cleans all mod09GA-related duplicates
+%   reprojectForestHeight      - batchReproject reprojects a forest height image to extentName
+%   reprojectSrtm              - batchReproject reprojects an SRTM DEM file to extentName
+%   getFilenameForType         - getFilenameForType finds the filename of the requested filetype
