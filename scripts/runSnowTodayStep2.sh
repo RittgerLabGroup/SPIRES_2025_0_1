@@ -8,7 +8,7 @@
 #SBATCH --qos normal
 #SBATCH --job-name runSnowTodayStep2
 #SBATCH --account=ucb135_summit1
-#SBATCH --time=00:02:00
+#SBATCH --time=00:30:00
 #SBATCH --ntasks-per-node=1
 #SBATCH --nodes=1
 #SBATCH -o /pl/active/rittger_esp/modis/archive_status/slurm_output/runSnowTodayStep2-%j.out
@@ -25,19 +25,14 @@ mindays=$2
 
 thisHost=$(hostname)
 thisDate=$(date)
-echo "$0: Begin on hostname=$thisHost on $thisDate for mindays=$mindays"
+echo "$0: Begin on hostname=$thisHost on $thisDate for yr=$yr and mindays=$mindays"
 echo "SLURM_SCRATCH=$SLURM_SCRATCH"
 echo "SLURM_JOB_ID=$SLURM_JOB_ID"
 
 #Go here so that correct pathdef.m file is used
-# cd /projects/brodzik/Documents/MATLAB/esp_SnowToday_ops
-cd /projects/brodzik/Documents/MATLAB/esp
-
-matlab -nodesktop -nodisplay -r "clear; updateMosaicForStub('westernUS', ${yr}, 'STc', ${mindays}); exit(0);"
-
-#schedule next job in SnowToday pipeline for today
-#next step will update plots
-#sbatch --dependency=afterok:$SLURM_JOB_ID scripts/runSnowTodayStep3.sh $yr $mindays
+cd /projects/brodzik/Documents/MATLAB/esp_SnowToday_ops
+#cd /projects/brodzik/Documents/MATLAB/esp
+matlab -nodesktop -nodisplay -r "clear; updateMosaicFor('westernUS', ${yr}, 'STc', ${mindays}); exit(0);"
 
 thisDate=$(date)
 echo "$0: Done on hostname=$thisHost on $thisDate"
