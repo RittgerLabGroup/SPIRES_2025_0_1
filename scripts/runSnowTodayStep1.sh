@@ -16,9 +16,9 @@
 #SBATCH --qos normal
 #SBATCH --job-name runSnowTodayStep1
 #SBATCH --account=ucb135_summit1
-#SBATCH --time=00:05:00
-# FOR REAL PROCESSING ntasks-per-node SHOULD BE 20
-#SBATCH --ntasks-per-node=1
+#SBATCH --time=03:00:00
+#SBATCH --ntasks-per-node=20
+#SBATCH --mem=90G
 #SBATCH --nodes=1
 #SBATCH -o /pl/active/rittger_esp/modis/archive_status/slurm_output/runSnowTodayStep1-%A_%a.out
 # Set the system up to notify upon completion
@@ -43,15 +43,17 @@ echo "SLURM_ARRAY_JOB_ID=$SLURM_ARRAY_JOB_ID"
 mkdir -p $SLURM_SCRATCH/$SLURM_ARRAY_JOB_ID
 
 #Go here so that correct pathdef.m file is used
-# cd /projects/brodzik/Documents/MATLAB/esp_SnowToday_ops
-cd /projects/brodzik/Documents/MATLAB/esp
-matlab -nodesktop -nodisplay -r "clear; updateWesternUSMonthCubesStub("$SLURM_ARRAY_TASK_ID", ${yr}, ${mindays}); exit(0);"
+cd /projects/brodzik/Documents/MATLAB/esp_SnowToday_ops
+#cd /projects/brodzik/Documents/MATLAB/esp
+matlab -nodesktop -nodisplay -r "clear; updateWesternUSMonthCubes("$SLURM_ARRAY_TASK_ID", ${yr}, ${mindays}); exit(0);"
+
+#schedule next job in SnowToday pipeline to run after entire job array completes
+if [ "$SLURM_ARRAY_TASK_ID" -eq "1" ]; then
+    sbatch --dependency=afterok:$SLURM_ARRAY_JOB_ID scripts/runSnowTodayStep2.sh $yr $mindays
+fi
 
 #Clean up temporary directory for matlab job storage
 rm -rf $SLURM_SCRATCH/$SLURM_ARRAY_JOB_ID
-
-#schedule next job in SnowToday pipeline
-#sbatch --dependency=afterok:$SLURM_JOB_ID scripts/runSnowTodayStep1.sh
 
 thisDate=$(date)
 echo "$0: Done on hostname=$thisHost on $thisDate"

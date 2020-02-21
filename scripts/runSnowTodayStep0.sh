@@ -10,9 +10,8 @@
 #SBATCH --qos normal
 #SBATCH --job-name runSnowTodayStep0
 #SBATCH --account=ucb135_summit1
-#SBATCH --time=00:05:00
-# REAL ntasks-per-node should be 6
-#SBATCH --ntasks-per-node=2
+#SBATCH --time=00:15:00
+#SBATCH --ntasks-per-node=6
 #SBATCH --nodes=1
 #SBATCH -o /pl/active/rittger_esp/modis/archive_status/slurm_output/runSnowTodayStep0-%j.out
 # Set the system up to notify upon completion
@@ -32,18 +31,18 @@ echo "SLURM_SCRATCH=$SLURM_SCRATCH"
 echo "SLURM_JOB_ID=$SLURM_JOB_ID"
 
 #Go here so that correct pathdef.m file is used
-# cd /projects/brodzik/Documents/MATLAB/esp_SnowToday_ops
-cd /projects/brodzik/Documents/MATLAB/esp
+cd /projects/brodzik/Documents/MATLAB/esp_SnowToday_ops
+#cd /projects/brodzik/Documents/MATLAB/esp
 
 #matlab -nodesktop -nodisplay -r "clear; tiles=MODISData.tilesFor('westernUS'); batchUpdateModisArchiveStub('nrt', tiles, 'startyyyymmdd', '20191220'); exit(0);"
-matlab -nodesktop -nodisplay -r "clear; tiles=MODISData.tilesFor('westernUS'); batchUpdateModisArchiveStub('nrt', tiles); exit(0);"
+matlab -nodesktop -nodisplay -r "clear; tiles=MODISData.tilesFor('westernUS'); batchUpdateModisArchive('nrt', tiles); exit(0);"
 
 #schedule next job in SnowToday pipeline for today
 thisYear=$(date +'%Y')
 sbatch --dependency=afterok:$SLURM_JOB_ID scripts/runSnowTodayStep1.sh $thisYear $mindays
 
 #schedule Step0 for the next time clock strikes noon
-#sbatch --begin=12:00:00 scripts/runSnowTodayStep0.sh
+sbatch --begin=12:00:00 scripts/runSnowTodayStep0.sh $mindays
 
 thisDate=$(date)
 echo "$0: Done on hostname=$thisHost on $thisDate"
