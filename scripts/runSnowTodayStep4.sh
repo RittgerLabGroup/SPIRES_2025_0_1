@@ -6,11 +6,12 @@
 #
 
 #SBATCH --qos normal
-#SBATCH --job-name runSnowTodayStep2
+#SBATCH --job-name runSnowTodayStep4
 #SBATCH --account=ucb135_summit1
-#SBATCH --time=00:30:00
-#SBATCH --ntasks-per-node=1
+#SBATCH --time=02:00:00
+#SBATCH --ntasks-per-node=20
 #SBATCH --nodes=1
+#SBATCH --mem=90G
 #SBATCH -o /pl/active/rittger_esp/modis/archive_status/slurm_output/runSnowTodayStep4-%j.out
 # Set the system up to notify upon completion
 #SBATCH --mail-type=END,FAIL,REQUEUE,STAGE_OUT
@@ -35,10 +36,11 @@ threshZ=1200
 #Go here so that correct pathdef.m file is used
 cd /projects/brodzik/Documents/MATLAB/esp_SnowToday_ops
 #cd /projects/brodzik/Documents/MATLAB/esp
-matlab -nodesktop -nodisplay -r "clear; todayDt = datetime; plotAnnualSCA_SCDInContext('westernUS', todayDt, ${threshSCF}, ${threshZ}, ${mindays}); exit(0);"
+matlab -nodesktop -nodisplay -r "clear; todayDt = datetime; plotAnnualSCA_SCDInContext('westernUS', todayDt, ${threshSCF}, ${threshZ}, ${mindays}); showSCF_SCD('westernUS', todayDt, ${threshSCF}, ${threshZ}, ${mindays}); exit(0);"
 
-#schedule Step 5 to push plots to NSIDC
-#sbatch --dependency=afterok:$SLURM_JOB_ID scripts/runSnowTodayStep5.sh $creationDate $mindays
+#use Step 5 to push plots to NSIDC (no need for slurm)
+creationDate=$(date +'%Y%m%d')
+. ./scripts/runSnowTodayStep5.sh $creationDate $mindays
 
 thisDate=$(date)
 echo "$0: Done on hostname=$thisHost on $thisDate"
