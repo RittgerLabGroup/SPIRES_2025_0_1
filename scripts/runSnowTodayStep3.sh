@@ -40,7 +40,7 @@ cd /projects/brodzik/Documents/MATLAB/esp_SnowToday_ops
 matlab -nodesktop -nodisplay -r "clear; runSummarizeSCA_SCDForLinePlots('westernUS', ${yr}, ${yr}, ${threshSCF}, ${threshZ}, ${mindays}); exit(0);"
 
 #schedule Step 4 to make today's plots
-sbatch --dependency=afterok:$SLURM_JOB_ID scripts/runSnowTodayStep4.sh $thisYear $mindays
+sbatch --dependency=afterok:$SLURM_JOB_ID scripts/runSnowTodayStep4.sh $yr $mindays
 
 thisDate=$(date)
 echo "$0: Done on hostname=$thisHost on $thisDate"

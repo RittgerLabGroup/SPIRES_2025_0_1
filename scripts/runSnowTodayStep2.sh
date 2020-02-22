@@ -35,7 +35,7 @@ cd /projects/brodzik/Documents/MATLAB/esp_SnowToday_ops
 matlab -nodesktop -nodisplay -r "clear; updateMosaicFor('westernUS', ${yr}, 'STc', ${mindays}); exit(0);"
 
 #schedule Step 3 to update stats 
-sbatch --dependency=afterok:$SLURM_JOB_ID scripts/runSnowTodayStep3.sh $thisYear $mindays
+sbatch --dependency=afterok:$SLURM_JOB_ID scripts/runSnowTodayStep3.sh $yr $mindays
 
 thisDate=$(date)
 echo "$0: Done on hostname=$thisHost on $thisDate"
