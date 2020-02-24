@@ -31,6 +31,9 @@ echo "$0: Begin on hostname=$thisHost on $thisDate for yr=$yr and mindays=$minda
 echo "SLURM_SCRATCH=$SLURM_SCRATCH"
 echo "SLURM_JOB_ID=$SLURM_JOB_ID"
 
+#Make a unique temporary directory for matlab job storage
+mkdir -p $SLURM_SCRATCH/$SLURM_JOB_ID
+
 threshSCF=10
 threshZ=1200
 
@@ -41,6 +44,9 @@ matlab -nodesktop -nodisplay -r "clear; runSummarizeSCA_SCDForLinePlots('western
 
 #schedule Step 4 to make today's plots
 sbatch --dependency=afterok:$SLURM_JOB_ID scripts/runSnowTodayStep4.sh $yr $mindays
+
+#Clean up temporary directory for matlab job storage
+rm -rf $SLURM_SCRATCH/$SLURM_JOB_ID
 
 thisDate=$(date)
 echo "$0: Done on hostname=$thisHost on $thisDate"

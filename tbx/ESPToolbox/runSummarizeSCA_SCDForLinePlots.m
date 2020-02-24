@@ -79,12 +79,10 @@ function runSummarizeSCA_SCDForLinePlots(regionName, startYr, stopYr, ...
          myCluster = parcluster('local');
          myCluster.JobStorageLocation = fullfile( ...
              getenv('SLURM_SCRATCH'), ...
-             getenv('SLURM_ARRAY_JOB_ID'));
+             getenv('SLURM_JOB_ID'));
          myPool = parpool(myCluster, myCluster.NumWorkers);
-         addAttachedFiles(myPool, {elevationFile});
      end
 
-     % KR: App memory appeared to be 43GB on 4 cores
      parfor y=1:length(yrs)
          
          elevationData = load(elevationFile, 'Z');
