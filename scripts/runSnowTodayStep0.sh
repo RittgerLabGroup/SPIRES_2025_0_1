@@ -10,7 +10,7 @@
 #SBATCH --qos normal
 #SBATCH --job-name runSnowTodayStep0
 #SBATCH --account=ucb135_summit1
-#SBATCH --time=00:15:00
+#SBATCH --time=01:00:00
 #SBATCH --ntasks-per-node=6
 #SBATCH --nodes=1
 #SBATCH -o /pl/active/rittger_esp/modis/archive_status/slurm_output/runSnowTodayStep0-%j.out
