@@ -43,8 +43,8 @@ echo "SLURM_ARRAY_JOB_ID=$SLURM_ARRAY_JOB_ID"
 mkdir -p $SLURM_SCRATCH/$SLURM_ARRAY_JOB_ID
 
 #Go here so that correct pathdef.m file is used
-cd /projects/brodzik/Documents/MATLAB/esp_SnowToday_ops
-#cd /projects/brodzik/Documents/MATLAB/esp
+#cd /projects/brodzik/Documents/MATLAB/esp_SnowToday_ops
+cd /projects/brodzik/Documents/MATLAB/esp
 matlab -nodesktop -nodisplay -r "clear; updateWesternUSMonthCubes("$SLURM_ARRAY_TASK_ID", ${yr}, ${mindays}); exit(0);"
 
 #schedule next job in SnowToday pipeline to run after entire job array completes
