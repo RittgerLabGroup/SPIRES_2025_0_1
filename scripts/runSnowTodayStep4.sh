@@ -32,6 +32,12 @@ echo "SLURM_JOB_ID=$SLURM_JOB_ID"
 
 #Make a unique temporary directory for matlab job storage
 mkdir -p $SLURM_SCRATCH/$SLURM_JOB_ID
+mkdir -p $SLURM_SCRATCH/$SLURM_JOB_ID/tmp
+export TMP=$SLURM_SCRATCH/$SLURM_JOB_ID/tmp
+export TMPDIR=$SLURM_SCRATCH/$SLURM_JOB_ID/tmp
+
+echo "TMP=$TMP"
+echo "TMPDIR=$TMPDIR"
 
 threshSCF=10
 threshZ=1200
