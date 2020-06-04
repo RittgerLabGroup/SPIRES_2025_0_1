@@ -42,7 +42,7 @@ thisYear=$(date +'%Y')
 sbatch --dependency=afterok:$SLURM_JOB_ID scripts/runSnowTodayStep1.sh $thisYear $mindays
 
 #schedule Step0 for the next time clock strikes noon
-sbatch --begin=12:00:00 scripts/runSnowTodayStep0.sh $mindays
+sbatch --begin=10:30:00 scripts/runSnowTodayStep0.sh $mindays
 
 thisDate=$(date)
 echo "$0: Done on hostname=$thisHost on $thisDate"
