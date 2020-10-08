@@ -8,7 +8,7 @@
 
 #SBATCH --qos normal
 #SBATCH --job-name runSnowTodayStep3
-#SBATCH --account=ucb135_summit1
+#SBATCH --account=ucb135_summit2
 #SBATCH --time=00:30:00
 #SBATCH --ntasks-per-node=20
 #SBATCH --mem=90G
@@ -19,7 +19,7 @@
 #SBATCH --mail-user=brodzik@nsidc.org
 
 module purge
-ml matlab
+ml matlab/R2019b
 date
 
 yr=$1
