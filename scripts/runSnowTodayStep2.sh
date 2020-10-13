@@ -1,13 +1,13 @@
 #!/bin/bash
 #
 # script to run SnowToday Step2:
-#   update westernUS daily mosaic files for this year for 3 variables
+#   update westernUS daily mosaic files for this year for all variables
 #   kick off Step3 for today
 #
 
 #SBATCH --qos normal
 #SBATCH --job-name runSnowTodayStep2
-#SBATCH --account=ucb135_summit1
+#SBATCH --account=ucb135_summit2
 #SBATCH --time=01:30:00
 #SBATCH --ntasks-per-node=1
 #SBATCH --nodes=1
@@ -17,11 +17,15 @@
 #SBATCH --mail-user=brodzik@nsidc.org
 
 module purge
-ml matlab
+ml matlab/R2019b
 date
 
 yr=$1
 mindays=$2
+northZthresh=$3
+southZthresh=$4
+monthStart=$5
+monthStop=$6
 
 thisHost=$(hostname)
 thisDate=$(date)
@@ -32,10 +36,23 @@ echo "SLURM_JOB_ID=$SLURM_JOB_ID"
 #Go here so that correct pathdef.m file is used
 #cd /projects/brodzik/Documents/MATLAB/esp_SnowToday_ops
 cd /projects/brodzik/Documents/MATLAB/esp
-matlab -nodesktop -nodisplay -r "clear; varNames={'STc', 'LogGmT', 'DVT'}; for i=1:3; updateMosaicFor('westernUS', ${yr}, varNames{i}, ${mindays}); end; exit(0);"
+matlab -nodesktop -nodisplay -r "clear; "\
+"varNames={'snow_fraction', 'viewable_snow_fraction', 'grain_size', "\
+"'drfs_grnsz', 'deltavis', 'radiative_forcing', "\
+"'albedo_clean_mu0', 'albedo_observed_mu0', "\
+"'albedo_clean_muZ', 'albedo_observed_muZ'}; "\
+"updateMosaicFor('westernUS', ${yr}, varNames, ${mindays}, "\
+"'monthStart', ${monthStart}, 'monthStop', ${monthStop}, "\
+"'zthresh', ["${northZthresh}" "${southZthresh}"]); "\
+"exit(0);"
 
-#schedule Step 3 to update stats 
-#sbatch --dependency=afterok:$SLURM_JOB_ID scripts/runSnowTodayStep3.sh $yr $mindays
+#schedule Step 3 to update stats
+thisMonth=$(date +'%m')
+waterYr=$yr
+if (( "$thisMonth" > "9" )); then
+    waterYr=$(( $waterYr + 1 ))
+fi
+sbatch --dependency=afterok:$SLURM_JOB_ID scripts/runSnowTodayStep3.sh $waterYr $mindays $northZthresh $southZthresh
 
 thisDate=$(date)
 echo "$0: Done on hostname=$thisHost on $thisDate"

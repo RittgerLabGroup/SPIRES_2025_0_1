@@ -7,7 +7,7 @@
 
 #SBATCH --qos normal
 #SBATCH --job-name runSnowTodayStep4
-#SBATCH --account=ucb135_summit1
+#SBATCH --account=ucb135_summit2
 #SBATCH --time=02:00:00
 #SBATCH --ntasks-per-node=20
 #SBATCH --nodes=1
@@ -18,11 +18,14 @@
 #SBATCH --mail-user=brodzik@nsidc.org
 
 module purge
-ml matlab
+ml matlab/R2019b
 date
 
-yr=$1
-mindays=$2
+mindays=$1
+northZthresh=$2
+southZthresh=$3
+minSCF=$4
+minZ=$5
 
 thisHost=$(hostname)
 thisDate=$(date)
@@ -36,20 +39,22 @@ mkdir -p $SLURM_SCRATCH/$SLURM_JOB_ID/tmp
 export TMP=$SLURM_SCRATCH/$SLURM_JOB_ID/tmp
 export TMPDIR=$SLURM_SCRATCH/$SLURM_JOB_ID/tmp
 
-echo "TMP=$TMP"
-echo "TMPDIR=$TMPDIR"
-
-threshSCF=10
-threshZ=1200
-
 #Go here so that correct pathdef.m file is used
-cd /projects/brodzik/Documents/MATLAB/esp_SnowToday_ops
-#cd /projects/brodzik/Documents/MATLAB/esp
-matlab -nodesktop -nodisplay -r "clear; todayDt = datetime; plotAnnualSCA_SCDInContext('westernUS', todayDt, ${threshSCF}, ${threshZ}, ${mindays}); showSCF_SCD('westernUS', todayDt, ${threshSCF}, ${threshZ}, ${mindays}); exit(0);"
+#cd /projects/brodzik/Documents/MATLAB/esp_SnowToday_ops
+cd /projects/brodzik/Documents/MATLAB/esp
+matlab -nodesktop -nodisplay -r "clear; "\
+"todayDt = datetime; "\
+"plotAnnualSCA_SCDInContext('westernUS', todayDt, "\
+"${minSCF}, ${minZ}, ${mindays}, "\
+"["${northZthresh}" "${southZthresh}"]); "\
+"showSCF_SCD('westernUS', todayDt, "\
+"${minSCF}, ${minZ}, ${mindays}, "\
+"["${northZthresh}" "${southZthresh}"]); "\
+"exit(0);"
 
 #use Step 5 to push plots to NSIDC (no need for slurm)
 creationDate=$(date +'%Y%m%d')
- . ./scripts/runSnowTodayStep5.sh $creationDate $mindays
+ . ./scripts/runSnowTodayStep5.sh $creationDate $mindays $northZthresh $southZthresh
 
 #Clean up temporary directory for matlab job storage
 rm -rf $SLURM_SCRATCH/$SLURM_JOB_ID
