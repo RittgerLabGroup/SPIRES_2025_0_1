@@ -22,28 +22,34 @@ module purge
 ml matlab/R2019b
 date
 
-yr=$1
+waterYr=$1
 mindays=$2
+northZthresh=$3
+southZthresh=$4
 
 thisHost=$(hostname)
 thisDate=$(date)
-echo "$0: Begin on hostname=$thisHost on $thisDate for yr=$yr and mindays=$mindays"
+echo "$0: Begin on hostname=$thisHost on $thisDate for waterYr=$waterYr and mindays=$mindays, zthresh=[$northZthresh $southZthresh]"
 echo "SLURM_SCRATCH=$SLURM_SCRATCH"
 echo "SLURM_JOB_ID=$SLURM_JOB_ID"
 
 #Make a unique temporary directory for matlab job storage
 mkdir -p $SLURM_SCRATCH/$SLURM_JOB_ID
 
-threshSCF=10
-threshZ=1200
+minSCF=10
+minZ=800
 
 #Go here so that correct pathdef.m file is used
-cd /projects/brodzik/Documents/MATLAB/esp_SnowToday_ops
-#cd /projects/brodzik/Documents/MATLAB/esp
-matlab -nodesktop -nodisplay -r "clear; runSummarizeSCA_SCDForLinePlots('westernUS', ${yr}, ${yr}, ${threshSCF}, ${threshZ}, ${mindays}); exit(0);"
+#cd /projects/brodzik/Documents/MATLAB/esp_SnowToday_ops
+cd /projects/brodzik/Documents/MATLAB/esp
+matlab -nodesktop -nodisplay -r "clear; "\
+"runSummarizeSCA_SCDForLinePlots('westernUS', ${waterYr}, ${waterYr}, "\
+"${minSCF}, ${minZ}, ${mindays}, "\
+"["${northZthresh}" "${southZthresh}"]); "\
+"exit(0);"
 
 #schedule Step 4 to make today's plots
-sbatch --dependency=afterok:$SLURM_JOB_ID scripts/runSnowTodayStep4.sh $yr $mindays
+sbatch --dependency=afterok:$SLURM_JOB_ID scripts/runSnowTodayStep4.sh $mindays $northZthresh $southZthresh $minSCF $minZ
 
 #Clean up temporary directory for matlab job storage
 rm -rf $SLURM_SCRATCH/$SLURM_JOB_ID

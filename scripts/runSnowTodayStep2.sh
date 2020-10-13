@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # script to run SnowToday Step2:
-#   update westernUS daily mosaic files for this year for 3 variables
+#   update westernUS daily mosaic files for this year for all variables
 #   kick off Step3 for today
 #
 
@@ -22,8 +22,10 @@ date
 
 yr=$1
 mindays=$2
-northZthresh=$2
-southZthresh=$3
+northZthresh=$3
+southZthresh=$4
+monthStart=$5
+monthStop=$6
 
 thisHost=$(hostname)
 thisDate=$(date)
@@ -40,11 +42,17 @@ matlab -nodesktop -nodisplay -r "clear; "\
 "'albedo_clean_mu0', 'albedo_observed_mu0', "\
 "'albedo_clean_muZ', 'albedo_observed_muZ'}; "\
 "updateMosaicFor('westernUS', ${yr}, varNames, ${mindays}, "\
+"'monthStart', ${monthStart}, 'monthStop', ${monthStop}, "\
 "'zthresh', ["${northZthresh}" "${southZthresh}"]); "\
 "exit(0);"
 
-#schedule Step 3 to update stats 
-#sbatch --dependency=afterok:$SLURM_JOB_ID scripts/runSnowTodayStep3.sh $yr $mindays
+#schedule Step 3 to update stats
+thisMonth=$(date +'%m')
+waterYr=$yr
+if (( "$thisMonth" > "9" )); then
+    waterYr=$(( $waterYr + 1 ))
+fi
+sbatch --dependency=afterok:$SLURM_JOB_ID scripts/runSnowTodayStep3.sh $waterYr $mindays $northZthresh $southZthresh
 
 thisDate=$(date)
 echo "$0: Done on hostname=$thisHost on $thisDate"

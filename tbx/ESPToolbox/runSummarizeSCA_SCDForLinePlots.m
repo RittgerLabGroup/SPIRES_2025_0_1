@@ -1,34 +1,46 @@
-function runSummarizeSCA_SCDForLinePlots(regionName, startYr, stopYr, ...
-    threshSCF, threshZ, mindays)
+function runSummarizeSCA_SCDForLinePlots(regionName, ...
+    startWaterYr, stopWaterYr, ...
+    minSCF, minZ, mindays, zthresh)
 % This script summarizes total snow cover fraction and median snow covered
 % days for each day of each year for line graphs for multiple years
 % It then calculates the interquartile range and median values
 %
 % Inputs
-%   regionName
-%   startYr
-%   stopYr
-%          the follwing inputs control when to count fSCA as a SCD
-%   threshSCF: 0-100, fSCA threshold below which to ignore (percent)
+%   regionName: regionName to summarize, currently only 'westernUS'
+%   startWaterYr: integer, 4-digit, begin water year
+%   stopWaterYr: integer, 4-digit, end water year
+%   minSCF: 0-100, fSCA threshold below which to ignore (percent)
 %              should default to 10
-%   threshZ: elevation threshold (meters) below which to ignore
-%              should default to 1200
+%   minZ: elevation threshold (meters) below which to ignore for
+%         SCD only
+%         should default to 800
+%   mindays: mindays for label on mosaic files to read
+%   zthresh: North/South elevation threshold on mosaic files to read
+%
+% Outputs
+%   Output will be saved to summary statistic file
+%   quartile statistics will also be saved if startWaterYr != stopWaterYr
+
+% Copyright 2020 The Regents of the University of Colorado
 
      % Calculation will be for water years, beginning Oct 1.
      % In early October we should run this for 2001 (beginning of
      % first full water year of MODIS record) to this year.
-     % e.g. in early October 2019, do 2001, 2019.
-     % For daily updates in current year, startYr == stopYr
-     if startYr < stopYr
-         yrs = startYr:stopYr;
-     elseif startYr == stopYr
-         yrs = startYr;
+     % e.g. in early October 2019, do:
+     %  startWaterYr=2001 and stopWaterYr=2019 
+     % to generate historical data.
+     % For daily updates in current water year, do
+     % startWaterYr == stopWaterYr
+     if startWaterYr < stopWaterYr
+         yrs = startWaterYr:stopWaterYr;
+     elseif startWaterYr == stopWaterYr
+         yrs = startWaterYr;
      else
          errorStruct.identifier = ...
              'runSummarizeSCA_SCDForLinePlots:YearError';
          errorStruct.message = sprintf(...
-             '%s: startYr=%d should be <= stopYr=%d', ...
-             mfilename(), startYr, stopYr);
+             '%s: startWaterYr=%d should be <= stopWaterYr=%d', ...
+             mfilename(), startWaterYr, stopWaterYr);
          error(errorStruct);
      end
      
@@ -37,23 +49,20 @@ function runSummarizeSCA_SCDForLinePlots(regionName, startYr, stopYr, ...
      % Set the environment to point to location with mosaic files
      myEnv = ESPEnv('Summit');
      
-     baseDir = MData.archiveDir;
-     zthresh = [1000 1000];
-     
      version = 6;
-     batchName = 'SnowTodayV00';
-     labelName = sprintf( ...
-         'mindays%02d_minthresh5_ndsimin0_zthresh10001000', ...
-         mindays);
+     minthresh = 5;
+     ndsimin = 0.0;
+     labelName = sprintf(...
+        'mindays%02d_minthresh%02d_ndsimin%4.2f_zthresh%04d%04d', ...
+        mindays, minthresh, ndsimin, zthresh(1), zthresh(2));
      
      % Daily regional summary files are stored in this hierarchy
-     myEnv.SCAGDRFSDir = fullfile(baseDir, ...
-         sprintf('scagdrfs_v01.zthresh%04d%04d_mindays%02dadj', ...
+     myEnv.SCAGDRFSDir = fullfile(MData.archiveDir, ...
+         sprintf('scagdrfs_v02.zthresh%04d%04d_mindays%02dadj', ...
          zthresh(1), zthresh(2), mindays));
      
      % Elevation dataset and elevation threshold to use
      elevationFile = myEnv.modisElevationFile(regionName);
-     
 
      % Preallocate vector of snow cover area and days for each
      % year
@@ -81,6 +90,9 @@ function runSummarizeSCA_SCDForLinePlots(regionName, startYr, stopYr, ...
              getenv('SLURM_SCRATCH'), ...
              getenv('SLURM_JOB_ID'));
          myPool = parpool(myCluster, myCluster.NumWorkers);
+
+         myCluster
+         myPool
      end
 
      parfor y=1:length(yrs)
@@ -90,23 +102,23 @@ function runSummarizeSCA_SCDForLinePlots(regionName, startYr, stopYr, ...
          yr = yrs(y);
          [~, sca_area_km2_yr(y, :), scd_sum_yr(y, :)] = ...
              summarizeSCA_SCDForLinePlots(...
-             myEnv, version, batchName, regionName, labelName, ...
-             yr, threshSCF, elevationData.Z, threshZ, ...
+             myEnv, version, regionName, labelName, ...
+             yr, minSCF, elevationData.Z, minZ, ...
              MODISData.pixSize_500m, maxDaysPerYear);
      end
      
      % Save all (overwrites previous file)
      % line_plot_annual_SCA_SCD_in_context_line.m
-     summaryFile = myEnv.SummarySnowFile(version, batchName, ...
-         regionName, yrs(1), yrs(end), threshSCF, threshZ);
+     summaryFile = myEnv.SummarySnowFile(version, ...
+         regionName, yrs(1), yrs(end), minSCF, minZ);
      [folder, ~, ~] = fileparts(summaryFile);
      if ~exist(folder, 'dir')
          mkdir(folder);
      end
      save(summaryFile, 'sca_area_km2_yr', 'scd_sum_yr', ...
-         'yrs', 'elevationFile', 'threshSCF', 'threshZ', ...
+         'yrs', 'elevationFile', 'minSCF', 'minZ', ...
          'version', 'regionName', 'labelName', ...
-         'mindays', 'myEnv');
+         'zthresh', 'mindays', 'myEnv');
      fprintf('%s: Saved summary to %s\n', mfilename(), summaryFile);
      
      % If it was the historical run, find the median, prctiles, min/max

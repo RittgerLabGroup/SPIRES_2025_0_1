@@ -25,12 +25,14 @@
 # Set the system up to notify upon completion
 #SBATCH --mail-type=END,FAIL,REQUEUE,STAGE_OUT
 #SBATCH --mail-user=brodzik@nsidc.org
-#SBATCH --array=3
+#SBATCH --array=1-5
 
 yr=$1
 mindays=$2
 northZthresh=$3
 southZthresh=$4
+monthStart=$5
+monthStop=$6
 
 module purge
 ml matlab/R2019b
@@ -49,13 +51,14 @@ mkdir -p $SLURM_SCRATCH/$SLURM_ARRAY_JOB_ID
 #cd /projects/brodzik/Documents/MATLAB/esp_SnowToday_ops
 cd /projects/brodzik/Documents/MATLAB/esp
 matlab -nodesktop -nodisplay -r "clear; "\
-"updateWesternUSMonthCubes("$SLURM_ARRAY_TASK_ID", ${yr}, "\
-"${mindays}, 'zthresh', ["${northZthresh}" "${southZthresh}"]); "\
+"updateWesternUSMonthCubes("$SLURM_ARRAY_TASK_ID", ${yr}, ${mindays}, "\
+"'monthStart', ${monthStart}, 'monthStop', ${monthStop}, "\
+"'zthresh', ["${northZthresh}" "${southZthresh}"]); "\
 "exit(0);"
 
 #schedule next job in SnowToday pipeline to run after entire job array completes
 if [ "$SLURM_ARRAY_TASK_ID" -eq "1" ]; then
-    sbatch --dependency=afterok:$SLURM_ARRAY_JOB_ID scripts/runSnowTodayStep2.sh $yr $mindays $northZthresh $southZthresh
+    sbatch --dependency=afterok:$SLURM_ARRAY_JOB_ID scripts/runSnowTodayStep2.sh $yr $mindays $northZthresh $southZthresh $monthStart $monthStop
 fi
 
 #Clean up temporary directory for matlab job storage
