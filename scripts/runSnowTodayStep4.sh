@@ -27,6 +27,9 @@ southZthresh=$3
 minSCF=$4
 minZ=$5
 
+#SCD minimum days to include in the plots
+minSCD=14
+
 thisHost=$(hostname)
 thisDate=$(date)
 echo "$0: Begin on hostname=$thisHost on $thisDate for yr=$yr and mindays=$mindays"
@@ -41,14 +44,13 @@ export TMPDIR=$SLURM_SCRATCH/$SLURM_JOB_ID/tmp
 
 #Go here so that correct pathdef.m file is used
 cd /projects/brodzik/Documents/MATLAB/esp_SnowToday_ops
-#cd /projects/brodzik/Documents/MATLAB/esp
 matlab -nodesktop -nodisplay -r "clear; "\
 "todayDt = datetime; "\
 "plotAnnualSCA_SCDInContext('westernUS', todayDt, "\
 "${minSCF}, ${minZ}, ${mindays}, "\
 "["${northZthresh}" "${southZthresh}"]); "\
 "showSCF_SCD('westernUS', todayDt, "\
-"${minSCF}, ${minZ}, ${mindays}, "\
+"${minSCF}, ${minSCD},${minZ}, ${mindays}, "\
 "["${northZthresh}" "${southZthresh}"]); "\
 "exit(0);"
 
