@@ -33,8 +33,8 @@ echo "SLURM_SCRATCH=$SLURM_SCRATCH"
 echo "SLURM_JOB_ID=$SLURM_JOB_ID"
 
 #Go here so that correct pathdef.m file is used
-#cd /projects/brodzik/Documents/MATLAB/esp_SnowToday_ops
-cd /projects/brodzik/Documents/MATLAB/esp
+cd /projects/brodzik/Documents/MATLAB/esp_SnowToday_ops
+#cd /projects/brodzik/Documents/MATLAB/esp
 
 #matlab -nodesktop -nodisplay -r "clear; tiles=MODISData.tilesFor('westernUS'); batchUpdateModisArchive('nrt', tiles, 'startyyyymmdd', '20191220'); exit(0);"
 matlab -nodesktop -nodisplay -r "clear; tiles=MODISData.tilesFor('westernUS'); batchUpdateModisArchive('nrt', tiles); exit(0);"

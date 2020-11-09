@@ -18,7 +18,7 @@
 #SBATCH --qos normal
 #SBATCH --job-name runSnowTodayStep1
 #SBATCH --account=ucb135_summit2
-#SBATCH --time=04:00:00
+#SBATCH --time=06:00:00
 #SBATCH --ntasks-per-node=24
 #SBATCH --nodes=1
 #SBATCH -o /pl/active/rittger_esp/modis/archive_status/slurm_output/runSnowTodayStep1-%A_%a.out
@@ -48,8 +48,8 @@ echo "SLURM_ARRAY_JOB_ID=$SLURM_ARRAY_JOB_ID"
 mkdir -p $SLURM_SCRATCH/$SLURM_ARRAY_JOB_ID
 
 #Go here so that correct pathdef.m file is used
-#cd /projects/brodzik/Documents/MATLAB/esp_SnowToday_ops
-cd /projects/brodzik/Documents/MATLAB/esp
+cd /projects/brodzik/Documents/MATLAB/esp_SnowToday_ops
+#cd /projects/brodzik/Documents/MATLAB/esp
 matlab -nodesktop -nodisplay -r "clear; "\
 "updateWesternUSMonthCubes("$SLURM_ARRAY_TASK_ID", ${yr}, ${mindays}, "\
 "'monthStart', ${monthStart}, 'monthStop', ${monthStop}, "\

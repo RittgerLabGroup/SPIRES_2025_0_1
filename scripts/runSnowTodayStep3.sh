@@ -40,8 +40,8 @@ minSCF=10
 minZ=800
 
 #Go here so that correct pathdef.m file is used
-#cd /projects/brodzik/Documents/MATLAB/esp_SnowToday_ops
-cd /projects/brodzik/Documents/MATLAB/esp
+cd /projects/brodzik/Documents/MATLAB/esp_SnowToday_ops
+#cd /projects/brodzik/Documents/MATLAB/esp
 matlab -nodesktop -nodisplay -r "clear; "\
 "runSummarizeSCA_SCDForLinePlots('westernUS', ${waterYr}, ${waterYr}, "\
 "${minSCF}, ${minZ}, ${mindays}, "\

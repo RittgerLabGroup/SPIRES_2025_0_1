@@ -40,8 +40,8 @@ export TMP=$SLURM_SCRATCH/$SLURM_JOB_ID/tmp
 export TMPDIR=$SLURM_SCRATCH/$SLURM_JOB_ID/tmp
 
 #Go here so that correct pathdef.m file is used
-#cd /projects/brodzik/Documents/MATLAB/esp_SnowToday_ops
-cd /projects/brodzik/Documents/MATLAB/esp
+cd /projects/brodzik/Documents/MATLAB/esp_SnowToday_ops
+#cd /projects/brodzik/Documents/MATLAB/esp
 matlab -nodesktop -nodisplay -r "clear; "\
 "todayDt = datetime; "\
 "plotAnnualSCA_SCDInContext('westernUS', todayDt, "\
