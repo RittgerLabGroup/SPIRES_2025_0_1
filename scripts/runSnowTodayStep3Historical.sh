@@ -8,8 +8,8 @@
 
 #SBATCH --qos normal
 #SBATCH --job-name runSnowTodayStep3Historical
-#SBATCH --account=ucb135_summit2
-#SBATCH --time=01:30:00
+#SBATCH --account=ucb188_summit1
+#SBATCH --time=02:30:00
 #SBATCH --ntasks-per-node=20
 #SBATCH --mem=90G
 #SBATCH --nodes=1
