@@ -4,12 +4,13 @@
 #   update all westernUS SCF_SCD statistics files
 #   for region paritions (full region, States, HUC2, etc)
 #   for prior history to the current year
+#   for westernUS, longest job is 19 states, takes 1h40min
 #
 
 #SBATCH --qos normal
 #SBATCH --job-name runSnowTodayStep3Historical
 #SBATCH --account=ucb188_summit1
-#SBATCH --time=02:30:00
+#SBATCH --time=02:00:00
 #SBATCH --ntasks-per-node=20
 #SBATCH --mem=90G
 #SBATCH --nodes=1
