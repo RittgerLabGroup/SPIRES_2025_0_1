@@ -33,7 +33,7 @@ minSCD=14
 
 thisHost=$(hostname)
 thisDate=$(date)
-echo "$0: Begin on hostname=$thisHost on $thisDate for partitionNum=$SLURM_ARRAY_TASK_ID, yr=$yr and mindays=$mindays"
+echo "$0: Begin on hostname=$thisHost on $thisDate for partitionNum=$SLURM_ARRAY_TASK_ID and mindays=$mindays"
 echo "SLURM_SCRATCH=$SLURM_SCRATCH"
 echo "SLURM_JOB_ID=$SLURM_JOB_ID"
 echo "SLURM_ARRAY_JOB_ID=$SLURM_ARRAY_JOB_ID"
@@ -59,10 +59,10 @@ matlab -nodesktop -nodisplay -r "clear; "\
 "exit(0);"
 
 #use Step 5 to push all plots to NSIDC
-#if [ "$SLURM_ARRAY_TASK_ID" -eq "10" ]; then
-#    creationDate=$(date +'%Y%m%d')
-#    sbatch --dependency=afterok:$SLURM_ARRAY_JOB_ID scripts/runSnowTodayStep5.sh $creationDate $mindays $northZthresh $southZthresh
-#fi
+if [ "$SLURM_ARRAY_TASK_ID" -eq "10" ]; then
+    creationDate=$(date +'%Y%m%d')
+    sbatch --dependency=afterok:$SLURM_ARRAY_JOB_ID scripts/runSnowTodayStep5.sh $creationDate $mindays $northZthresh $southZthresh
+fi
 
 #Clean up temporary directory for matlab job storage
 rm -rf $SLURM_SCRATCH/$SLURM_ARRAY_JOB_ID

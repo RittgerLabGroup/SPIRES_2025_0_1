@@ -9,7 +9,7 @@
 
 #SBATCH --qos normal
 #SBATCH --job-name runSnowTodayStep3
-#SBATCH --account=ucb135_summit2
+#SBATCH --account=ucb188_summit1
 #SBATCH --time=01:30:00
 #SBATCH --ntasks-per-node=20
 #SBATCH --mem=90G
@@ -43,8 +43,7 @@ minSCF=10
 minZ=800
 
 #Go here so that correct pathdef.m file is used
-#cd /projects/brodzik/Documents/MATLAB/esp_SnowToday_ops
-cd /projects/brodzik/Documents/MATLAB/esp_dev
+cd /projects/brodzik/Documents/MATLAB/esp_staging
 matlab -nodesktop -nodisplay -r "clear; "\
 "runSummarizeSCA_SCDForLinePlots('westernUS', "$SLURM_ARRAY_TASK_ID", "\
 "${waterYr}, ${waterYr}, "\
@@ -52,10 +51,10 @@ matlab -nodesktop -nodisplay -r "clear; "\
 "["${northZthresh}" "${southZthresh}"]); "\
 "exit(0);"
 
-#schedule Step 4 to make today's plots
-#if [ "$SLURM_ARRAY_TASK_ID" -eq "1" ]; then
-#    sbatch --dependency=afterok:$SLURM_ARRAY_JOB_ID scripts/runSnowTodayStep4.sh $mindays $nort#hZthresh $southZthresh $minSCF $minZ
-#fi    
+#schedule Step 4 to make today's plots after all these array jobs complete
+if [ "$SLURM_ARRAY_TASK_ID" -eq "10" ]; then
+    sbatch --dependency=afterok:$SLURM_ARRAY_JOB_ID scripts/runSnowTodayStep4.sh $mindays $northZthresh $southZthresh $minSCF $minZ
+fi    
 
 #Clean up temporary directory for matlab job storage
 rm -rf $SLURM_SCRATCH/$SLURM_ARRAY_JOB_ID
