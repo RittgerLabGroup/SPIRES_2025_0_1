@@ -44,7 +44,6 @@ mkdir -p $SLURM_SCRATCH/$SLURM_ARRAY_JOB_ID
 minSCF=10
 minZ=800
 
-
 #Go here so that correct pathdef.m file is used
 cd /projects/brodzik/Documents/MATLAB/esp_staging
 matlab -nodesktop -nodisplay -r "clear; "\
