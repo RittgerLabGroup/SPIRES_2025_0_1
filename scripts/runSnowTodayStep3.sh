@@ -51,10 +51,17 @@ matlab -nodesktop -nodisplay -r "clear; "\
 "["${northZthresh}" "${southZthresh}"]); "\
 "exit(0);"
 
-#schedule Step 4 to make today's plots after all these array jobs complete
 if [ "$SLURM_ARRAY_TASK_ID" -eq "10" ]; then
+    
+    #schedule Step 4 to make today's plots after all these array jobs complete
     sbatch --dependency=afterok:$SLURM_ARRAY_JOB_ID scripts/runSnowTodayStep4.sh $mindays $northZthresh $southZthresh $minSCF $minZ
-fi    
+
+    #schedule Step 3 to run this set of stats/plots the next time clock strikes 4pm
+    sbatch --begin=16:00:00 scripts/runSnowTodayStep3.sh $waterYr $mindays $northZthresh $southZthresh
+    
+fi
+
+
 
 #Clean up temporary directory for matlab job storage
 rm -rf $SLURM_SCRATCH/$SLURM_ARRAY_JOB_ID
