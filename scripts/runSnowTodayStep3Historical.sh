@@ -28,9 +28,12 @@ mindays=$2
 northZthresh=$3
 southZthresh=$4
 
+startWaterYr=2001
+stopWaterYr=$(( $waterYr - 1 ))
+
 thisHost=$(hostname)
 thisDate=$(date)
-echo "$0: Begin on hostname=$thisHost on $thisDate for waterYr=$waterYr and mindays=$mindays, zthresh=[$northZthresh $southZthresh]"
+echo "$0: Begin on hostname=$thisHost on $thisDate for array job=$SLURM_ARRAY_JOB_ID and WY=$startWaterYr to $stopWaterYr and mindays=$mindays, zthresh=[$northZthresh $southZthresh]"
 echo "SLURM_SCRATCH=$SLURM_SCRATCH"
 echo "SLURM_JOB_ID=$SLURM_JOB_ID"
 echo "SLURM_ARRAY_JOB_ID=$SLURM_ARRAY_JOB_ID"
@@ -41,8 +44,6 @@ mkdir -p $SLURM_SCRATCH/$SLURM_ARRAY_JOB_ID
 minSCF=10
 minZ=800
 
-startWaterYr=2001
-stopWaterYr=$(( $waterYr - 1 ))
 
 #Go here so that correct pathdef.m file is used
 cd /projects/brodzik/Documents/MATLAB/esp_staging
