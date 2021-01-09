@@ -51,7 +51,9 @@ mkdir -p $SLURM_SCRATCH/$SLURM_ARRAY_JOB_ID
 cd /projects/brodzik/Documents/MATLAB/esp_SnowToday_ops
 #cd /projects/brodzik/Documents/MATLAB/esp
 matlab -nodesktop -nodisplay -r "clear; "\
-"updateWesternUSMonthCubes("$SLURM_ARRAY_TASK_ID", ${yr}, ${mindays}, "\
+"MData = MODISData(); "\
+"tiles = MData.tilesFor('westernUS'); "\
+"updateRegionMonthCubes(tiles, "$SLURM_ARRAY_TASK_ID", ${yr}, ${mindays}, "\
 "'monthStart', ${monthStart}, 'monthStop', ${monthStop}, "\
 "'zthresh', ["${northZthresh}" "${southZthresh}"]); "\
 "exit(0);"
