@@ -38,6 +38,9 @@ echo "SLURM_ARRAY_JOB_ID=$SLURM_ARRAY_JOB_ID"
 
 #Make a unique temporary directory for matlab job storage
 mkdir -p $SLURM_SCRATCH/$SLURM_ARRAY_JOB_ID
+mkdir -p $SLURM_SCRATCH/$SLURM_ARRAY_JOB_ID/tmp
+export TMP=$SLURM_SCRATCH/$SLURM_ARRAY_JOB_ID/tmp
+export TMPDIR=$SLURM_SCRATCH/$SLURM_ARRAY_JOB_ID/tmp
 
 minSCF=10
 minZ=800
@@ -60,8 +63,6 @@ if [ "$SLURM_ARRAY_TASK_ID" -eq "10" ]; then
     sbatch --begin=16:00:00 scripts/runSnowTodayStep3.sh $waterYr $mindays $northZthresh $southZthresh
     
 fi
-
-
 
 #Clean up temporary directory for matlab job storage
 rm -rf $SLURM_SCRATCH/$SLURM_ARRAY_JOB_ID
