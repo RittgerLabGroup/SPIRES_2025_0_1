@@ -89,8 +89,7 @@ function runSummarizeSCA_SCDForLinePlots(...
      scd_sum_yr = NaN(nyrs, maxDaysPerYear, npartitions);
 
      % Start or connect to the local pool
-     S = configParPool('jobStorageLocation', ...
-         fullfile(getenv('SLURM_SCRATCH'), getenv('SLURM_JOB_ID')));
+     S = configParPool('jobStorageLocation', getenv('TMP'));
      addAttachedFiles(S.pool, {elevationFile});
 
      parfor y=1:length(yrs)

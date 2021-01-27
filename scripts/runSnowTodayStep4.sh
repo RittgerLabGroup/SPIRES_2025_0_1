@@ -12,7 +12,7 @@
 #SBATCH --ntasks-per-node=20
 #SBATCH --nodes=1
 #SBATCH --mem=90G
-#SBATCH -o /pl/active/rittger_esp/modis/archive_status/slurm_output/runSnowTodayStep4-%j.out
+#SBATCH -o /pl/active/rittger_esp/modis/archive_status/slurm_output/runSnowTodayStep4-%A_%a.out
 # Set the system up to notify upon completion
 #SBATCH --mail-type=END,FAIL,REQUEUE,STAGE_OUT
 #SBATCH --mail-user=brodzik@nsidc.org
@@ -42,7 +42,6 @@ echo "SLURM_ARRAY_JOB_ID=$SLURM_ARRAY_JOB_ID"
 mkdir -p $SLURM_SCRATCH/$SLURM_ARRAY_JOB_ID
 mkdir -p $SLURM_SCRATCH/$SLURM_ARRAY_JOB_ID/tmp
 export TMP=$SLURM_SCRATCH/$SLURM_ARRAY_JOB_ID/tmp
-export TMPDIR=$SLURM_SCRATCH/$SLURM_ARRAY_JOB_ID/tmp
 
 #Go here so that correct pathdef.m file is used
 cd /projects/brodzik/Documents/MATLAB/esp_staging

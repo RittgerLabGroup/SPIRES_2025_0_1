@@ -14,7 +14,7 @@
 #SBATCH --ntasks-per-node=20
 #SBATCH --mem=90G
 #SBATCH --nodes=1
-#SBATCH -o /pl/active/rittger_esp/modis/archive_status/slurm_output/runSnowTodayStep3-%j.out
+#SBATCH -o /pl/active/rittger_esp/modis/archive_status/slurm_output/runSnowTodayStep3-%A_%a.out
 # Set the system up to notify upon completion
 #SBATCH --mail-type=END,FAIL,REQUEUE,STAGE_OUT
 #SBATCH --mail-user=brodzik@nsidc.org
@@ -40,7 +40,6 @@ echo "SLURM_ARRAY_JOB_ID=$SLURM_ARRAY_JOB_ID"
 mkdir -p $SLURM_SCRATCH/$SLURM_ARRAY_JOB_ID
 mkdir -p $SLURM_SCRATCH/$SLURM_ARRAY_JOB_ID/tmp
 export TMP=$SLURM_SCRATCH/$SLURM_ARRAY_JOB_ID/tmp
-export TMPDIR=$SLURM_SCRATCH/$SLURM_ARRAY_JOB_ID/tmp
 
 minSCF=10
 minZ=800
@@ -59,8 +58,8 @@ if [ "$SLURM_ARRAY_TASK_ID" -eq "10" ]; then
     #schedule Step 4 to make today's plots after all these array jobs complete
     sbatch --dependency=afterok:$SLURM_ARRAY_JOB_ID scripts/runSnowTodayStep4.sh $mindays $northZthresh $southZthresh $minSCF $minZ
 
-    #schedule Step 3 to run this set of stats/plots the next time clock strikes 4pm
-    sbatch --begin=16:00:00 scripts/runSnowTodayStep3.sh $waterYr $mindays $northZthresh $southZthresh
+    #schedule Step 3 to run this set of stats/plots the next time clock strikes 2:55 pm
+    sbatch --begin=14:55:00 scripts/runSnowTodayStep3.sh $waterYr $mindays $northZthresh $southZthresh
     
 fi
 
