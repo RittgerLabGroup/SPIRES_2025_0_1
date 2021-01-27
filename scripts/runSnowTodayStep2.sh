@@ -35,8 +35,8 @@ echo "SLURM_SCRATCH=$SLURM_SCRATCH"
 echo "SLURM_JOB_ID=$SLURM_JOB_ID"
 
 #Go here so that correct pathdef.m file is used
-cd /projects/brodzik/Documents/MATLAB/esp_SnowToday_ops
-#cd /projects/brodzik/Documents/MATLAB/esp
+#cd /projects/brodzik/Documents/MATLAB/esp_SnowToday_ops
+cd /projects/brodzik/Documents/MATLAB/esp_staging
 matlab -nodesktop -nodisplay -r "clear; "\
 "varNames={'snow_fraction', 'viewable_snow_fraction', 'grain_size', "\
 "'drfs_grnsz', 'deltavis', 'radiative_forcing', "\
