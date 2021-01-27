@@ -59,7 +59,7 @@ if [ "$SLURM_ARRAY_TASK_ID" -eq "10" ]; then
     sbatch --dependency=afterok:$SLURM_ARRAY_JOB_ID scripts/runSnowTodayStep4.sh $mindays $northZthresh $southZthresh $minSCF $minZ
 
     #schedule Step 3 to run this set of stats/plots the next time clock strikes 2:55 pm
-    sbatch --begin=14:55:00 scripts/runSnowTodayStep3.sh $waterYr $mindays $northZthresh $southZthresh
+    #sbatch --begin=14:55:00 scripts/runSnowTodayStep3.sh $waterYr $mindays $northZthresh $southZthresh
     
 fi
 
