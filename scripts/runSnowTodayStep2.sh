@@ -7,14 +7,14 @@
 
 #SBATCH --qos normal
 #SBATCH --job-name runSnowTodayStep2
-#SBATCH --account=ucb135_summit2
+#SBATCH --account=ucb188_summit1
 #SBATCH --time=02:00:00
 #SBATCH --ntasks-per-node=10
 #SBATCH --nodes=1
 #SBATCH --mem=40G
 #SBATCH -o /pl/active/rittger_esp/modis/archive_status/slurm_output/runSnowTodayStep2-%j.out
 # Set the system up to notify upon completion
-#SBATCH --mail-type=END,FAIL,REQUEUE,STAGE_OUT
+#SBATCH --mail-type=FAIL,REQUEUE,STAGE_OUT
 #SBATCH --mail-user=brodzik@nsidc.org
 
 module purge
@@ -36,7 +36,8 @@ echo "SLURM_JOB_ID=$SLURM_JOB_ID"
 
 #Go here so that correct pathdef.m file is used
 cd /projects/brodzik/Documents/MATLAB/esp_SnowToday_ops
-#cd /projects/brodzik/Documents/MATLAB/esp
+#cd /projects/brodzik/Documents/MATLAB/esp_staging
+
 matlab -nodesktop -nodisplay -r "clear; "\
 "varNames={'snow_fraction', 'viewable_snow_fraction', 'grain_size', "\
 "'drfs_grnsz', 'deltavis', 'radiative_forcing', "\

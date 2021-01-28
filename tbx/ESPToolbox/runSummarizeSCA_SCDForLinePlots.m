@@ -1,4 +1,5 @@
-function runSummarizeSCA_SCDForLinePlots(regionName, ...
+function runSummarizeSCA_SCDForLinePlots(...
+    regionName, partitionNum, ...					 
     startWaterYr, stopWaterYr, ...
     minSCF, minZ, mindays, zthresh)
 % This script summarizes total snow cover fraction and median snow covered
@@ -6,7 +7,12 @@ function runSummarizeSCA_SCDForLinePlots(regionName, ...
 % It then calculates the interquartile range and median values
 %
 % Inputs
-%   regionName: regionName to summarize, currently only 'westernUS'
+%   regionName: regionName to summarize, currently only
+%   'westernUS' but eventually will include others
+%   partitionNum: partition number:
+%      10='westernUS_mask' (mask for full region)
+%      11='State_masks' (mask for each state)
+%      12='HUC2_masks', etc for 14, 16, 18
 %   startWaterYr: integer, 4-digit, begin water year
 %   stopWaterYr: integer, 4-digit, end water year
 %   minSCF: 0-100, fSCA threshold below which to ignore (percent)
@@ -23,6 +29,11 @@ function runSummarizeSCA_SCDForLinePlots(regionName, ...
 
 % Copyright 2020 The Regents of the University of Colorado
 
+    % for testing purposes, writes output file to test location
+    doTest = 0;
+
+    partitionName = Regions.getPartitionNameFor(partitionNum);
+    
      % Calculation will be for water years, beginning Oct 1.
      % In early October we should run this for 2001 (beginning of
      % first full water year of MODIS record) to this year.
@@ -63,46 +74,35 @@ function runSummarizeSCA_SCDForLinePlots(regionName, ...
      
      % Elevation dataset and elevation threshold to use
      elevationFile = myEnv.modisElevationFile(regionName);
-
-     % Preallocate vector of snow cover area and days for each
-     % year
-     maxDaysPerYear = 366;
-     sca_area_km2_yr = NaN(length(yrs), maxDaysPerYear);
-     scd_sum_yr = NaN(length(yrs), maxDaysPerYear);
-
-     % %Loop and run in parallel opening parpool for historocal
-     % if year(date)==yrs(end) && yrs(1)==yrs(end)
-     %     %delete(gcp)
-     %     parpool(1)%might need modification to run on cluster
-     % else
-     %     %delete(gcp)
-     %     parpool(5);%might need modification to run on cluster
-     % end
      
-     % If a pool is running already, use it
-     % otherwise start a new one
-     % Set JobStorageLocation to something that will be
-     % unique for each slurm process id and put it on
-     % local scratch so ~/.matlab/ doesn't grow indefinitely
-     if isempty(gcp('nocreate'))
-         myCluster = parcluster('local');
-         myCluster.JobStorageLocation = fullfile( ...
-             getenv('SLURM_SCRATCH'), ...
-             getenv('SLURM_JOB_ID'));
-         myPool = parpool(myCluster, myCluster.NumWorkers);
+     % Get the number of region partition areas
+     partitions = Regions(partitionName);
+     dim = size(partitions.LongName);
+     npartitions = dim(1);
+     LongName = partitions.LongName;
+     ShortName = partitions.ShortName;
 
-         myCluster
-         myPool
-     end
+     % Preallocate vector of snow cover area and days for each year
+     maxDaysPerYear = 366;
+     nyrs = length(yrs);
+     sca_area_km2_yr = NaN(nyrs, maxDaysPerYear, npartitions);
+     scd_sum_yr = NaN(nyrs, maxDaysPerYear, npartitions);
+
+     % Start or connect to the local pool
+     S = configParPool('jobStorageLocation', getenv('TMP'));
+     addAttachedFiles(S.pool, {elevationFile});
 
      parfor y=1:length(yrs)
+     %fprintf('%s: PARFOR LOOP FOR YEARS DISABLED FOR TESTING...\n', ...
+     %    mfilename());
+     %for y=1:length(yrs)
          
          elevationData = load(elevationFile, 'Z');
          
          yr = yrs(y);
-         [~, sca_area_km2_yr(y, :), scd_sum_yr(y, :)] = ...
+         [~, sca_area_km2_yr(y, :, :), scd_sum_yr(y, :, :)] = ...
              summarizeSCA_SCDForLinePlots(...
-             myEnv, version, regionName, labelName, ...
+             myEnv, version, regionName, partitions, labelName, ...
              yr, minSCF, elevationData.Z, minZ, ...
              MODISData.pixSize_500m, maxDaysPerYear);
      end
@@ -110,44 +110,60 @@ function runSummarizeSCA_SCDForLinePlots(regionName, ...
      % Save all (overwrites previous file)
      % line_plot_annual_SCA_SCD_in_context_line.m
      summaryFile = myEnv.SummarySnowFile(version, ...
-         regionName, yrs(1), yrs(end), minSCF, minZ);
+         regionName, partitionName, ...
+         yrs(1), yrs(end), minSCF, minZ);
+     if doTest
+         [folder, basename, ext] = fileparts(summaryFile);
+         folder = fullfile(folder, 'testRegions');
+         summaryFile = sprintf('%s/%s%s', folder, basename, ext);
+     end
      [folder, ~, ~] = fileparts(summaryFile);
      if ~exist(folder, 'dir')
          mkdir(folder);
      end
+    
      save(summaryFile, 'sca_area_km2_yr', 'scd_sum_yr', ...
          'yrs', 'elevationFile', 'minSCF', 'minZ', ...
-         'version', 'regionName', 'labelName', ...
-         'zthresh', 'mindays', 'myEnv');
+         'version', 'regionName', 'partitionName', ...
+         'LongName', 'ShortName', ...
+         'labelName', 'zthresh', 'mindays', 'myEnv');
      fprintf('%s: Saved summary to %s\n', mfilename(), summaryFile);
      
      % If it was the historical run, find the median, prctiles, min/max
+     % by region
      if yrs(1) ~= yrs(end)
          
-         % snow fraction
-         median_sca_area_km2 = median(sca_area_km2_yr);
-         prc25_sca_area_km2 = prctile(sca_area_km2_yr, 25);
-         prc75_sca_area_km2 = prctile(sca_area_km2_yr, 75);
-         sca_area_km2_yr_totalsum = nansum(sca_area_km2_yr, 2);
+         % snow fraction by day of year 
+         yrDim = 1;
+         doyDim = 2;
+         median_sca_area_km2 = median(sca_area_km2_yr, yrDim);
+         prc25_sca_area_km2 = prctile(sca_area_km2_yr, 25, yrDim);
+         prc75_sca_area_km2 = prctile(sca_area_km2_yr, 75, yrDim);
+         sca_area_km2_yr_totalsum = nansum(sca_area_km2_yr, doyDim);
          
-         % Select min/max year for plotting later
-         [~, indx_sca_sum] = sort(sca_area_km2_yr_totalsum, 'ascend');
-         yr_min = yrs(indx_sca_sum(1));
-         yr_max = yrs(indx_sca_sum(end));
+         % For each partition, find min/max year
+         yr_min = zeros(1, npartitions);
+         yr_max = zeros(1, npartitions);
+         for regIdx=1:npartitions
+             [~, indx_sca_sum] = sort(...
+                 sca_area_km2_yr_totalsum(:, regIdx), 'ascend');
+            yr_min(regIdx) = yrs(indx_sca_sum(1));
+            yr_max(regIdx) = yrs(indx_sca_sum(end));
+         end
          
          % snow cover days
-         median_scd_sum = median(scd_sum_yr);
-         prc25_scd_sum = prctile(scd_sum_yr, 25);
-         prc75_scd_sum = prctile(scd_sum_yr, 75);
-         %scd_sum_yr_totalsum=nansum(scd_sum_yr,2);
-        
+         median_scd_sum = median(scd_sum_yr, yrDim);
+         prc25_scd_sum = prctile(scd_sum_yr, 25, yrDim);
+         prc75_scd_sum = prctile(scd_sum_yr, 75, yrDim);
+                 
          save(summaryFile, 'median_sca_area_km2', ...
              'prc25_sca_area_km2', 'prc75_sca_area_km2', ...
              'sca_area_km2_yr_totalsum', 'yr_min', 'yr_max', ...
              'indx_sca_sum', ...
              'median_scd_sum', 'prc25_scd_sum', 'prc75_scd_sum', ...
              '-append');
-         fprintf('%s: Appended multi-year summary stats to %s\n', ...
+         fprintf(['%s: Appended multi-year, multi-region summary ' ...
+             'stats to %s\n'], ...
              mfilename(), summaryFile);
          
      end
