@@ -14,7 +14,7 @@
 #SBATCH --mem=90G
 #SBATCH -o /pl/active/rittger_esp/modis/archive_status/slurm_output/runSnowTodayStep4-%A_%a.out
 # Set the system up to notify upon completion
-#SBATCH --mail-type=END,FAIL,REQUEUE,STAGE_OUT
+#SBATCH --mail-type=FAIL,REQUEUE,STAGE_OUT
 #SBATCH --mail-user=brodzik@nsidc.org
 #SBATCH --array=10-12
 
@@ -44,7 +44,9 @@ mkdir -p $SLURM_SCRATCH/$SLURM_ARRAY_JOB_ID/tmp
 export TMP=$SLURM_SCRATCH/$SLURM_ARRAY_JOB_ID/tmp
 
 #Go here so that correct pathdef.m file is used
-cd /projects/brodzik/Documents/MATLAB/esp_staging
+cd /projects/brodzik/Documents/MATLAB/esp_SnowToday_ops
+#cd /projects/brodzik/Documents/MATLAB/esp_staging
+
 matlab -nodesktop -nodisplay -r "clear; "\
 "todayDt = datetime; "\
 "plotAnnualSCA_SCDInContext('westernUS', "$SLURM_ARRAY_TASK_ID", "\
