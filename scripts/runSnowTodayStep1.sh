@@ -46,6 +46,7 @@ echo "SLURM_ARRAY_JOB_ID=$SLURM_ARRAY_JOB_ID"
 
 #Make a unique temporary directory for matlab job storage
 mkdir -p $SLURM_SCRATCH/$SLURM_ARRAY_JOB_ID
+export TMP=$SLURM_SCRATCH/$SLURM_ARRAY_JOB_ID
 
 #Go here so that correct pathdef.m file is used
 cd /projects/brodzik/Documents/MATLAB/esp_SnowToday_ops
@@ -65,7 +66,7 @@ if [ "$SLURM_ARRAY_TASK_ID" -eq "1" ]; then
 fi
 
 #Clean up temporary directory for matlab job storage
-rm -rf $SLURM_SCRATCH/$SLURM_ARRAY_JOB_ID
+rm -rf $TMP
 
 thisDate=$(date)
 echo "$0: Done on hostname=$thisHost on $thisDate"

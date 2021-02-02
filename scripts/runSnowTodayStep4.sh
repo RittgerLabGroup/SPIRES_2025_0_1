@@ -66,7 +66,7 @@ if [ "$SLURM_ARRAY_TASK_ID" -eq "10" ]; then
 fi
 
 #Clean up temporary directory for matlab job storage
-rm -rf $SLURM_SCRATCH/$SLURM_ARRAY_JOB_ID
+rm -rf $TMP
 
 thisDate=$(date)
 echo "$0: Done on hostname=$thisHost on $thisDate"

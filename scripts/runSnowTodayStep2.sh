@@ -34,6 +34,11 @@ echo "$0: Begin on hostname=$thisHost on $thisDate for yr=$yr and mindays=$minda
 echo "SLURM_SCRATCH=$SLURM_SCRATCH"
 echo "SLURM_JOB_ID=$SLURM_JOB_ID"
 
+#Make a unique temporary directory for matlab job storage
+mkdir -p $SLURM_SCRATCH/$SLURM_JOB_ID
+mkdir -p $SLURM_SCRATCH/$SLURM_JOB_ID/tmp
+export TMP=$SLURM_SCRATCH/$SLURM_JOB_ID/tmp
+
 #Go here so that correct pathdef.m file is used
 cd /projects/brodzik/Documents/MATLAB/esp_SnowToday_ops
 #cd /projects/brodzik/Documents/MATLAB/esp_staging
@@ -55,6 +60,9 @@ if (( "$thisMonth" > "9" )); then
     waterYr=$(( $waterYr + 1 ))
 fi
 sbatch --dependency=afterok:$SLURM_JOB_ID scripts/runSnowTodayStep3.sh $waterYr $mindays $northZthresh $southZthresh
+
+#Clean up temporary directory for matlab job storage
+rm -rf $TMP
 
 thisDate=$(date)
 echo "$0: Done on hostname=$thisHost on $thisDate"
