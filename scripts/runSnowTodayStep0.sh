@@ -15,7 +15,7 @@
 #SBATCH --nodes=1
 #SBATCH -o /pl/active/rittger_esp/modis/archive_status/slurm_output/runSnowTodayStep0-%j.out
 # Set the system up to notify upon completion
-#SBATCH --mail-type=END,FAIL,REQUEUE,STAGE_OUT
+#SBATCH --mail-type=FAIL,REQUEUE,STAGE_OUT
 #SBATCH --mail-user=brodzik@nsidc.org
 
 module purge
@@ -35,7 +35,11 @@ echo "SLURM_JOB_ID=$SLURM_JOB_ID"
 #Go here so that correct pathdef.m file is used
 cd /projects/brodzik/Documents/MATLAB/esp_SnowToday_ops
 
-#matlab -nodesktop -nodisplay -r "clear; tiles=MODISData.tilesFor('westernUS'); batchUpdateModisArchive('nrt', tiles, 'startyyyymmdd', '20191220'); exit(0);"
+# matlab -nodesktop -nodisplay -r "clear; "\
+# "tiles=MODISData.tilesFor('westernUS'); "\
+# "batchUpdateModisArchive('nrt', tiles, 'startyyyymmdd', '20210603'); "\
+# "exit(0);"
+
 matlab -nodesktop -nodisplay -r "clear; "\
 "tiles=MODISData.tilesFor('westernUS'); "\
 "batchUpdateModisArchive('nrt', tiles); "\
