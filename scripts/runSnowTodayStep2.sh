@@ -54,7 +54,7 @@ matlab -nodesktop -nodisplay -r "clear; "\
 "exit(0);"
 
 #schedule Step 3 to update stats
-thisMonth=$(date +'%m')
+thisMonth=$(date +'%-m')
 waterYr=$yr
 if (( "$thisMonth" > "9" )); then
     waterYr=$(( $waterYr + 1 ))

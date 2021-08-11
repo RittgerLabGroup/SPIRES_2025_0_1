@@ -35,10 +35,10 @@ echo "SLURM_JOB_ID=$SLURM_JOB_ID"
 #Go here so that correct pathdef.m file is used
 cd /projects/brodzik/Documents/MATLAB/esp_SnowToday_ops
 
-# matlab -nodesktop -nodisplay -r "clear; "\
-# "tiles=MODISData.tilesFor('westernUS'); "\
-# "batchUpdateModisArchive('nrt', tiles, 'startyyyymmdd', '20210603'); "\
-# "exit(0);"
+#matlab -nodesktop -nodisplay -r "clear; "\
+#"tiles=MODISData.tilesFor('westernUS'); "\
+#"batchUpdateModisArchive('nrt', tiles, 'startyyyymmdd', '20210730'); "\
+#"exit(0);"
 
 matlab -nodesktop -nodisplay -r "clear; "\
 "tiles=MODISData.tilesFor('westernUS'); "\
@@ -47,7 +47,7 @@ matlab -nodesktop -nodisplay -r "clear; "\
 
 #schedule next job in SnowToday pipeline for today
 thisYear=$(date +'%Y')
-thisMonth=$(date +'%m')
+thisMonth=$(date +'%-m')
 startMonth=$(( $thisMonth - 2 ))
 if (( "$startMonth" < "1" )); then
     startMonth=1
