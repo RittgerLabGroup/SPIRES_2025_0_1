@@ -34,7 +34,7 @@ thisScriptDir="$( cd "$( dirname "${PROGNAME}" )" && pwd )"
 
 usage() {
     echo "" 1>&2
-    echo "Usage: ${PROGNAME} [-h] MINDAYS NORTHZTHRESH SOUTHZTHRESH" 1>&2
+    echo "Usage: ${PROGNAME} [-h] [-s YYYYMMDD] MINDAYS NORTHZTHRESH SOUTHZTHRESH" 1>&2
     echo "  Runs Step0 in SnowToday pipeline" 1>&2
     echo "    Fetch latest JPL data for 5 WesternUS tiles" 1>&2
     echo "    Update the SnowToday pull report" 1>&2
