@@ -8,23 +8,96 @@
 #
 
 #SBATCH --qos normal
-#SBATCH --job-name runSnowTodayStep0
+#SBATCH --job-name 0_SnowToday
 #SBATCH --account=ucb188_summit1
 #SBATCH --time=01:00:00
 #SBATCH --ntasks-per-node=6
 #SBATCH --nodes=1
-#SBATCH -o /pl/active/rittger_esp/modis/archive_status/slurm_output/runSnowTodayStep0-%j.out
+#SBATCH -o /scratch/summit/%u/slurm_out_SnowToday/runSnowTodayStep0-%j.out
 # Set the system up to notify upon completion
 #SBATCH --mail-type=FAIL,REQUEUE,STAGE_OUT
 #SBATCH --mail-user=brodzik@nsidc.org
+
+# Grab the full path to this script
+# depends on whether it's running as sbatch job
+isBatch=
+if [[ ${BASH_SOURCE} == *"slurm_script"* ]]; then
+    # Running as slurm
+    echo "Running as sbatch job..."
+    PROGNAME=(`scontrol show job ${SLURM_JOB_ID} | grep Command | tr -s ' ' | cut -d = -f 2`)
+    isBatch=1
+else
+    echo "Not running as sbatch..."
+    PROGNAME=${BASH_SOURCE[0]}
+fi
+thisScriptDir="$( cd "$( dirname "${PROGNAME}" )" && pwd )"
+
+usage() {
+    echo "" 1>&2
+    echo "Usage: ${PROGNAME} [-h] MINDAYS NORTHZTHRESH SOUTHZTHRESH" 1>&2
+    echo "  Runs Step0 in SnowToday pipeline" 1>&2
+    echo "    Fetch latest JPL data for 5 WesternUS tiles" 1>&2
+    echo "    Update the SnowToday pull report" 1>&2
+    echo "  If called by slurm:" 1>&2
+    echo "    starts Step1 for today, and" 1>&2
+    echo "    schedules Step0 for tomorrow" 1>&2
+    echo "Options: "  1>&2
+    echo "  -h: display help message and exit" 1>&2
+    echo "  -s YYYYMMDD: optional start day to look for new JPL data" 1>&2
+    echo "      overrides default which is 5 days prior to " 1>&2
+    echo "      last complete date (all 5 tiles) of data in archive" 1>&2
+    echo "Arguments: " 1>&2
+    echo "  MINDAYS : mindays threshold to pass to step 1" 1>&2
+    echo "  NORTHZTHRESH : Northern altitude threshold (m) to pass to step 1" 1>&2
+    echo "  SOUTHZTHRESH : Southern altitude threshold (m) to pass to step 1" 1>&2
+    echo "Output: " 1>&2
+    echo "  Output location is controlled in Matlab scripts " 1>&2
+    echo "Notes: " 1>&2
+    echo "  Scripts stdout/stderr are written to user's scratch " 1>&2
+    echo "  where directory /scratch/summit/$USER/slurm_out_SnowToday/ " 1>&2
+    echo "  is assumed to exist" 1>&2
+}
+
+error_exit() {
+    # Use for fatal program error
+    # Argument:
+    #   optional string containing descriptive error message
+    #   if no error message, prints "Unknown Error"
+
+    echo "${PROGNAME}: ERROR: ${1:-"Unknown Error"}" 1>&2
+    exit 1
+}
 
 module purge
 ml matlab/R2019b
 date
 
+startyyyymmdd=
+
+while getopts "s:h" opt
+do
+    case $opt in
+	s) startyyyymmdd="$OPTARG";;
+	h) usage
+	   exit 1;;
+	?) printf "Unknown option %s\n" $opt
+	   usage
+           exit 1;;
+	esac
+done
+
+shift $(($OPTIND - 1))
+
+[[ "$#" -eq 3 ]] || error_exit "Line $LINENO: Unexpected number of arguments."
+
 mindays=$1
 northZthresh=$2
 southZthresh=$3
+
+options=""
+if [ $startyyyymmdd ]; then
+    options="'startyyyymmdd', '$startyyyymmdd', "
+fi
 
 thisHost=$(hostname)
 thisDate=$(date)
@@ -32,30 +105,54 @@ echo "$0: Begin on hostname=$thisHost on $thisDate"
 echo "SLURM_SCRATCH=$SLURM_SCRATCH"
 echo "SLURM_JOB_ID=$SLURM_JOB_ID"
 
-#Go here so that correct pathdef.m file is used
-cd /projects/brodzik/Documents/MATLAB/esp_SnowToday_ops
+#Go to parent of this script, so that correct pathdef.m file is used
+cd "${thisScriptDir}/../"
 
-#matlab -nodesktop -nodisplay -r "clear; "\
-#"tiles=MODISData.tilesFor('westernUS'); "\
-#"batchUpdateModisArchive('nrt', tiles, 'startyyyymmdd', '20210730'); "\
-#"exit(0);"
-
+#fillOnly==true will only try to fill holes in inventory
+#fillOnly==false will try to re-pull data for every date
 matlab -nodesktop -nodisplay -r "clear; "\
 "tiles=MODISData.tilesFor('westernUS'); "\
-"batchUpdateModisArchive('nrt', tiles); "\
-"exit(0);"
+"batchUpdateModisArchive('nrt', tiles, "\
+"$options "\
+"'fillOnly', false); "\
+"exit(0);" || error_exit "Line $LINENO: matlab error."
 
-#schedule next job in SnowToday pipeline for today
-thisYear=$(date +'%Y')
-thisMonth=$(date +'%-m')
-startMonth=$(( $thisMonth - 2 ))
-if (( "$startMonth" < "1" )); then
-    startMonth=1
+if [ $isBatch ]; then
+    
+    # get current slurm info for mail-user and stdout
+    # Don't assume they are the same as at the top of this file,
+    # because they can be overridden at the command line
+    MAIL=`${thisScriptDir}/getSlurmMail.sh ${SLURM_JOB_ID}`
+
+    stdoutDir=$( dirname `${thisScriptDir}/getSlurmStdout.sh ${SLURM_JOB_ID}` )
+    STDOUT_STEP0="${stdoutDir}/runSnowTodayStep0-%j.out"
+    STDOUT_STEP1="${stdoutDir}/runSnowTodayStep1-%A_%a.out"
+
+    # schedule next job in Snow Today pipeline for today
+    # FIXME: make this work across calendar years
+    thisYear=$(date +'%Y')
+    thisMonth=$(date +'%-m')
+    startMonth=$(( $thisMonth - 2 ))
+    if (( "$startMonth" < "1" )); then
+	startMonth=1
+    fi
+
+    sbatch --dependency=afterok:$SLURM_JOB_ID \
+	   --mail-user=${MAIL} \
+	   --output=${STDOUT_STEP1} \
+	   ${thisScriptDir}/runSnowTodayStep1.sh \
+	   $thisYear $mindays $northZthresh $southZthresh $startMonth $thisMonth
+
+    # schedule Step0 for the next time clock strikes 10:30
+    sbatch --begin=10:30:00 \
+	   --mail-user=${MAIL} \
+	   --output=${STDOUT_STEP0} \
+	   ${thisScriptDir}/runSnowTodayStep0.sh \
+	   $mindays $northZthresh $southZthresh
+
+else
+    echo "${PROGNAME}: Not continuing pipeline for non-sbatch call."
 fi
-sbatch --dependency=afterok:$SLURM_JOB_ID scripts/runSnowTodayStep1.sh $thisYear $mindays $northZthresh $southZthresh $startMonth $thisMonth
-
-#schedule Step0 for the next time clock strikes noon
-sbatch --begin=10:30:00 scripts/runSnowTodayStep0.sh $mindays $northZthresh $southZthresh
 
 thisDate=$(date)
 echo "$0: Done on hostname=$thisHost on $thisDate"
