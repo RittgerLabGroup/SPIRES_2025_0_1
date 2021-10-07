@@ -11,7 +11,7 @@
 #SBATCH --time=02:00:00
 #SBATCH --ntasks-per-node=20
 #SBATCH --nodes=1
-#SBATCH --mem=90G
+#SBATCH --mem=80G
 #SBATCH -o /pl/active/rittger_esp/modis/archive_status/slurm_output/runSnowTodayStep4-%A_%a.out
 # Set the system up to notify upon completion
 #SBATCH --mail-type=FAIL,REQUEUE,STAGE_OUT
