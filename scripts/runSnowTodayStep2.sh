@@ -107,20 +107,40 @@ cd "${thisScriptDir}/../"
 matlab -nodesktop -nodisplay -r "clear; "\
 "varNames={'snow_fraction', 'viewable_snow_fraction', 'grain_size', "\
 "'drfs_grnsz', 'deltavis', 'radiative_forcing', "\
-"'albedo_clean_mu0', 'albedo_observed_mu0', "\
-"'albedo_clean_muZ', 'albedo_observed_muZ'}; "\
+"'albedo_mu0', 'albedo_muZ'}; "\
 "updateMosaicFor('westernUS', ${yr}, varNames, ${mindays}, "\
 "'monthStart', ${monthStart}, 'monthStop', ${monthStop}, "\
 "'zthresh', ["${northZthresh}" "${southZthresh}"]); "\
 "exit(0);" || error_exit "Line $LINENO: matlab error."
 
-#schedule Step 3 to update stats
-thisMonth=$(date +'%-m')
-waterYr=$yr
-if (( "$thisMonth" > "9" )); then
-    waterYr=$(( $waterYr + 1 ))
+if [ $isBatch ]; then
+    
+    # get current slurm info for mail-user and stdout
+    # Don't assume they are the same as at the top of this file,
+    # because they can be overridden at the command line
+    MAIL=`${thisScriptDir}/getSlurmMail.sh ${SLURM_JOB_ID}`
+
+    stdoutDir=$( dirname `${thisScriptDir}/getSlurmStdout.sh ${SLURM_JOB_ID}` )
+    STDOUT_STEP3="${stdoutDir}/runSnowTodayStep3-%A_%a.out"
+
+    #schedule Step 3 to update stats
+    thisMonth=$(date +'%-m')
+    waterYr=$yr
+    if (( "$thisMonth" > "9" )); then
+	waterYr=$(( $waterYr + 1 ))
+    fi
+    sbatch --dependency=afterok:$SLURM_JOB_ID \
+	   --mail-user=${MAIL} \
+	   --output=${STDOUT_STEP3} \
+	   ${thisScriptDir}/runSnowTodayStep3.sh \
+	   $waterYr $mindays $northZthresh $southZthresh
+
+else
+    
+    echo "${PROGNAME}: Not continuing pipeline for non-sbatch call."
+
 fi
-sbatch --dependency=afterok:$SLURM_JOB_ID scripts/runSnowTodayStep3.sh $waterYr $mindays $northZthresh $southZthresh
+
 
 #Clean up temporary directory for matlab job storage
 echo "${PROGNAME}: Removing TMPDIR=$TMPDIR..."
