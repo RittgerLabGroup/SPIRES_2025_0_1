@@ -5,6 +5,10 @@
 #   for region partitions (full region, States, HUC2, etc)
 #   for prior history to the current year
 #   for westernUS, longest job is 19 states, takes 1h40min
+# Job array is set for:
+#   10 = full region
+#   11 = States
+#   12 = HUC2
 #
 
 #SBATCH --qos normal
@@ -36,8 +40,9 @@ thisScriptDir="$( cd "$( dirname "${PROGNAME}" )" && pwd )"
 
 usage() {
     echo "" 1>&2
-    echo "Usage: ${PROGNAME} [-h] THISYR MINDAYS NORTHZTHRESH SOUTHZTHRESH" 1>&2
-    echo "  Calculates annual updates to ST statistics files" 1>&2
+    echo "Usage: ${PROGNAME} [-h] WATERYR MINDAYS NORTHZTHRESH SOUTHZTHRESH" 1>&2
+    echo "  Calculates annual updates to ST statistics files prior to WATERYR" 1>&2
+    echo "  So for this script to run in Oct 2021, set WATERYR to 2022" 1>&2
     echo "  Job array for each region group (10=westUS, 11=States, 12=HUC2)" 1>&2
     echo "  Run this script once annually, on or after Oct 1" 1>&2
     echo "Options: "  1>&2
@@ -87,7 +92,6 @@ southZthresh=$4
 
 module purge
 ml matlab/R2019b
-date
 
 startWaterYr=2001
 stopWaterYr=$(( $waterYr - 1 ))
