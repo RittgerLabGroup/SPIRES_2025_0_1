@@ -111,7 +111,7 @@ matlab -nodesktop -nodisplay -r "clear; "\
 "${waterYr}, ${waterYr}, "\
 "${minSCF}, ${minZ}, ${mindays}, "\
 "["${northZthresh}" "${southZthresh}"]); "\
-"exit(0);"
+"exit(0);" || error_exit "Line $LINENO: matlab error."
 
 #schedule next job in pipeline to run after entire job array completes
 if [ $isBatch ]; then

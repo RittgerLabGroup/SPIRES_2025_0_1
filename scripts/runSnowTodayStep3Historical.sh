@@ -119,7 +119,7 @@ matlab -nodesktop -nodisplay -r "clear; "\
 "${startWaterYr}, ${stopWaterYr}, "\
 "${minSCF}, ${minZ}, ${mindays}, "\
 "["${northZthresh}" "${southZthresh}"]); "\
-"exit(0);"
+"exit(0);"  || error_exit "Line $LINENO: matlab error."
 
 #Clean up temporary directory for matlab job storage
 echo "${PROGNAME}: Removing TMPDIR=$TMPDIR..."
