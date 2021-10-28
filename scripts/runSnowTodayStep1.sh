@@ -143,7 +143,7 @@ if [ $isBatch ]; then
 	sbatch --dependency=afterok:$SLURM_ARRAY_JOB_ID \
 	       --mail-user=${MAIL} \
 	       --output=${STDOUT_STEP2} \
-	       scripts/runSnowTodayStep2.sh \
+	       ${thisScriptDir}/runSnowTodayStep2.sh \
 	       $yr $mindays $northZthresh $southZthresh $monthStart $monthStop
 
     fi
