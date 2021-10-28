@@ -18,7 +18,7 @@
 #SBATCH --ntasks-per-node=20
 #SBATCH --mem=90G
 #SBATCH --nodes=1
-#SBATCH -o /scratch/summit/%u/slurm_out_SnowToday/runSnowTodayStep3Historical-%j.out
+#SBATCH -o /scratch/summit/%u/slurm_out_SnowToday/runSnowTodayStep3Historical-%A_%a.out
 # Set the system up to notify upon completion
 #SBATCH --mail-type=END,FAIL,REQUEUE,STAGE_OUT
 #SBATCH --mail-user=brodzik@nsidc.org
