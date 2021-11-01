@@ -8,66 +8,139 @@
 #
 
 #SBATCH --qos normal
-#SBATCH --job-name runSnowTodayStep3
+#SBATCH --job-name 3_SnowToday
 #SBATCH --account=ucb188_summit1
 #SBATCH --time=02:00:00
 #SBATCH --ntasks-per-node=20
 #SBATCH --mem=90G
 #SBATCH --nodes=1
-#SBATCH -o /pl/active/rittger_esp/modis/archive_status/slurm_output/runSnowTodayStep3-%A_%a.out
+#SBATCH -o /scratch/summit/%u/slurm_out_SnowToday/runSnowTodayStep3-%A_%a.out
 # Set the system up to notify upon completion
 #SBATCH --mail-type=FAIL,REQUEUE,STAGE_OUT
 #SBATCH --mail-user=brodzik@nsidc.org
 #SBATCH --array=10-12
 
-module purge
-ml matlab/R2019b
-date
+# Grab the full path to this script
+# depends on whether it's running as sbatch job
+isBatch=
+if [[ ${BASH_SOURCE} == *"slurm_script"* ]]; then
+    # Running as slurm
+    echo "Running as sbatch job..."
+    PROGNAME=(`scontrol show job ${SLURM_JOB_ID} | grep Command | tr -s ' ' | cut -d = -f 2`)
+    isBatch=1
+else
+    echo "Not running as sbatch..."
+    PROGNAME=${BASH_SOURCE[0]}
+fi
+thisScriptDir="$( cd "$( dirname "${PROGNAME}" )" && pwd )"
+
+usage() {
+    echo "" 1>&2
+    echo "Usage: ${PROGNAME} [-h] WATERYR MINDAYS NORTHZTHRESH SOUTHZTHRESH" 1>&2
+    echo "  Calculates ST statistics files to date for this WATERYR" 1>&2
+    echo "  Job array for each region group (10=westUS, 11=States, 12=HUC2)" 1>&2
+    echo "Options: "  1>&2
+    echo "  -h: display help message and exit" 1>&2
+    echo "Arguments: " 1>&2
+    echo "  THISYR : stats will be calculated for this WATERYR (begins Oct 1)" 1>&2
+    echo "  MINDAYS : mindays to use for mosaic directories" 1>&2
+    echo "  NORTHZTHRESH : Northern altitude threshold (m) " 1>&2
+    echo "  SOUTHZTHRESH : Southern altitude threshold (m) " 1>&2
+    echo "Output: " 1>&2
+    echo "  Output location is controlled in Matlab scripts " 1>&2
+    echo "Notes: " 1>&2
+    echo "  Scripts stdout/stderr are written to user's scratch " 1>&2
+    echo "  where directory /scratch/summit/$USER/slurm_out_SnowToday/ " 1>&2
+    echo "  is assumed to exist" 1>&2
+}
+
+error_exit() {
+    # Use for fatal program error
+    # Argument:
+    #   optional string containing descriptive error message
+    #   if no error message, prints "Unknown Error"
+
+    echo "${PROGNAME}: ERROR: ${1:-"Unknown Error"}" 1>&2
+    exit 1
+}
+
+while getopts "h" opt
+do
+    case $opt in
+	h) usage
+	   exit 1;;
+	?) printf "Unknown option %s\n" $opt
+	   usage
+           exit 1;;
+	esac
+done
+
+shift $(($OPTIND - 1))
+
+[[ "$#" -eq 4 ]] || error_exit "Line $LINENO: Unexpected number of arguments."
 
 waterYr=$1
 mindays=$2
 northZthresh=$3
 southZthresh=$4
 
+module purge
+ml matlab/R2019b
+
 thisHost=$(hostname)
 thisDate=$(date)
-echo "$0: Begin on hostname=$thisHost on $thisDate for waterYr=$waterYr and mindays=$mindays, zthresh=[$northZthresh $southZthresh]"
-echo "SLURM_SCRATCH=$SLURM_SCRATCH"
-echo "SLURM_JOB_ID=$SLURM_JOB_ID"
-echo "SLURM_ARRAY_JOB_ID=$SLURM_ARRAY_JOB_ID"
+echo "${PROGNAME}: Begin on hostname=$thisHost on $thisDate for waterYr=$waterYr and mindays=$mindays, zthresh=[$northZthresh $southZthresh]"
+echo "${PROGNAME}: SLURM_SCRATCH=$SLURM_SCRATCH"
+echo "${PROGNAME}: SLURM_JOB_ID=$SLURM_JOB_ID"
+echo "${PROGNAME}: SLURM_ARRAY_JOB_ID=$SLURM_ARRAY_JOB_ID"
 
 #Make a unique temporary directory for matlab job storage
+#Set TMPDIR to this location so job array uses it for tmp location
 mkdir -p $SLURM_SCRATCH/$SLURM_ARRAY_JOB_ID
-mkdir -p $SLURM_SCRATCH/$SLURM_ARRAY_JOB_ID/tmp
-export TMP=$SLURM_SCRATCH/$SLURM_ARRAY_JOB_ID/tmp
+export TMPDIR=$SLURM_SCRATCH/$SLURM_ARRAY_JOB_ID
 
+#Thresholds for statistics 
 minSCF=10
 minZ=800
 
-#Go here so that correct pathdef.m file is used
-cd /projects/brodzik/Documents/MATLAB/esp_SnowToday_ops
-#cd /projects/brodzik/Documents/MATLAB/esp_staging
+#Go to parent of this script, so that correct pathdef.m file is used
+cd "${thisScriptDir}/../"
 
 matlab -nodesktop -nodisplay -r "clear; "\
 "runSummarizeSCA_SCDForLinePlots('westernUS', "$SLURM_ARRAY_TASK_ID", "\
 "${waterYr}, ${waterYr}, "\
 "${minSCF}, ${minZ}, ${mindays}, "\
 "["${northZthresh}" "${southZthresh}"]); "\
-"exit(0);"
+"exit(0);" || error_exit "Line $LINENO: matlab error."
 
-if [ "$SLURM_ARRAY_TASK_ID" -eq "10" ]; then
+#schedule next job in pipeline to run after entire job array completes
+if [ $isBatch ]; then
     
-    #schedule Step 4 to make today's plots after all these array jobs complete
-    sbatch --dependency=afterok:$SLURM_ARRAY_JOB_ID scripts/runSnowTodayStep4.sh $mindays $northZthresh $southZthresh $minSCF $minZ
+    # get current slurm info for mail-user and stdout
+    # Don't assume they are the same as at the top of this file,
+    # because they can be overridden at the command line
+    MAIL=`${thisScriptDir}/getSlurmMail.sh ${SLURM_JOB_ID}`
+    stdoutDir=$( dirname `${thisScriptDir}/getSlurmStdout.sh ${SLURM_JOB_ID}` )
 
-    #schedule Step 3 to run this set of stats/plots the next time clock strikes 2:55 pm
-    #sbatch --begin=14:55:00 scripts/runSnowTodayStep3.sh $waterYr $mindays $northZthresh $southZthresh
+    if [ "$SLURM_ARRAY_TASK_ID" -eq "10" ]; then
+
+	STDOUT_STEP4="${stdoutDir}/runSnowTodayStep4-%A_%a.out"
+	
+	#schedule Step 4 to make today's plots after this set of array jobs complete
+	sbatch --dependency=afterok:$SLURM_ARRAY_JOB_ID \
+	       --mail-user=${MAIL} \
+	       --output=${STDOUT_STEP4} \
+	       ${thisScriptDir}/runSnowTodayStep4.sh \
+	       $mindays $northZthresh $southZthresh $minSCF $minZ
+
+    fi
     
 fi
 
 #Clean up temporary directory for matlab job storage
-rm -rf $TMP
+echo "${PROGNAME}: Removing TMPDIR=$TMPDIR..."
+rm -rf $TMPDIR
 
 thisDate=$(date)
-echo "$0: Done on hostname=$thisHost on $thisDate"
+echo "${PROGNAME}: Done on hostname=$thisHost on $thisDate"
 

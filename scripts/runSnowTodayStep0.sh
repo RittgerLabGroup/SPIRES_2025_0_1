@@ -34,7 +34,7 @@ thisScriptDir="$( cd "$( dirname "${PROGNAME}" )" && pwd )"
 
 usage() {
     echo "" 1>&2
-    echo "Usage: ${PROGNAME} [-h] MINDAYS NORTHZTHRESH SOUTHZTHRESH" 1>&2
+    echo "Usage: ${PROGNAME} [-h] [-s YYYYMMDD] MINDAYS NORTHZTHRESH SOUTHZTHRESH" 1>&2
     echo "  Runs Step0 in SnowToday pipeline" 1>&2
     echo "    Fetch latest JPL data for 5 WesternUS tiles" 1>&2
     echo "    Update the SnowToday pull report" 1>&2
@@ -101,9 +101,9 @@ fi
 
 thisHost=$(hostname)
 thisDate=$(date)
-echo "$0: Begin on hostname=$thisHost on $thisDate"
-echo "SLURM_SCRATCH=$SLURM_SCRATCH"
-echo "SLURM_JOB_ID=$SLURM_JOB_ID"
+echo "${PROGNAME}: Begin on hostname=$thisHost on $thisDate"
+echo "${PROGNAME}: SLURM_SCRATCH=$SLURM_SCRATCH"
+echo "${PROGNAME}: SLURM_JOB_ID=$SLURM_JOB_ID"
 
 #Go to parent of this script, so that correct pathdef.m file is used
 cd "${thisScriptDir}/../"
@@ -155,5 +155,5 @@ else
 fi
 
 thisDate=$(date)
-echo "$0: Done on hostname=$thisHost on $thisDate"
+echo "$${PROGNAME}: Done on hostname=$thisHost on $thisDate"
 
