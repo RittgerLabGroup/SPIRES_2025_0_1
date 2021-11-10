@@ -10,7 +10,7 @@
 #SBATCH --qos normal
 #SBATCH --job-name 3_SnowToday
 #SBATCH --account=ucb188_summit1
-#SBATCH --time=02:00:00
+#SBATCH --time=04:00:00
 #SBATCH --ntasks-per-node=20
 #SBATCH --mem=90G
 #SBATCH --nodes=1
@@ -99,17 +99,15 @@ echo "${PROGNAME}: SLURM_ARRAY_JOB_ID=$SLURM_ARRAY_JOB_ID"
 mkdir -p $SLURM_SCRATCH/$SLURM_ARRAY_JOB_ID
 export TMPDIR=$SLURM_SCRATCH/$SLURM_ARRAY_JOB_ID
 
-#Thresholds for statistics 
-minSCF=10
-minZ=800
-
 #Go to parent of this script, so that correct pathdef.m file is used
 cd "${thisScriptDir}/../"
 
 matlab -nodesktop -nodisplay -r "clear; "\
-"runSummarizeSCA_SCDForLinePlots('westernUS', "$SLURM_ARRAY_TASK_ID", "\
+"minSCP = minSCPForLinePlots(); "\
+"minZ = minZForLinePlots(); "\
+"runStatsForLinePlots('westernUS', "$SLURM_ARRAY_TASK_ID", "\
 "${waterYr}, ${waterYr}, "\
-"${minSCF}, ${minZ}, ${mindays}, "\
+"minSCP, minZ, ${mindays}, "\
 "["${northZthresh}" "${southZthresh}"]); "\
 "exit(0);" || error_exit "Line $LINENO: matlab error."
 
