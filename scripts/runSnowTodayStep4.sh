@@ -34,7 +34,7 @@ thisScriptDir="$( cd "$( dirname "${PROGNAME}" )" && pwd )"
 
 usage() {
     echo "" 1>&2
-    echo "Usage: ${PROGNAME} [-h] MINDAYS NORTHZTHRESH SOUTHZTHRESH MINSCF MINZ" 1>&2
+    echo "Usage: ${PROGNAME} [-h] MINDAYS NORTHZTHRESH SOUTHZTHRESH" 1>&2
     echo "  Calculates ST statistics files to date for this WATERYR" 1>&2
     echo "  Job array for each region group (10=westUS, 11=States, 12=HUC2)" 1>&2
     echo "Options: "  1>&2
@@ -43,8 +43,6 @@ usage() {
     echo "  MINDAYS : mindays to use for mosaic directories" 1>&2
     echo "  NORTHZTHRESH : Northern altitude threshold (m) " 1>&2
     echo "  SOUTHZTHRESH : Southern altitude threshold (m) " 1>&2
-    echo "  MINSCF : snow covered fraction minimum threshold to display " 1>&2
-    echo "  MINZ : elevation minimum threshold to display " 1>&2
     echo "Output: " 1>&2
     echo "  Output location is controlled in Matlab scripts " 1>&2
     echo "Notes: " 1>&2
@@ -76,13 +74,11 @@ done
 
 shift $(($OPTIND - 1))
 
-[[ "$#" -eq 5 ]] || error_exit "Line $LINENO: Unexpected number of arguments."
+[[ "$#" -eq 3 ]] || error_exit "Line $LINENO: Unexpected number of arguments."
 
 mindays=$1
 northZthresh=$2
 southZthresh=$3
-minSCF=$4
-minZ=$5
 
 module purge
 ml matlab/R2019b
@@ -101,6 +97,10 @@ export TMPDIR=$SLURM_SCRATCH/$SLURM_ARRAY_JOB_ID
 
 #SCD minimum days to include in the plots
 minSCD=14
+
+#Other values for plots--will need to be updated for RF and DV plots
+minSCF=10
+minZ=800
 
 #Go to parent of this script, so that correct pathdef.m file is used
 cd "${thisScriptDir}/../"
