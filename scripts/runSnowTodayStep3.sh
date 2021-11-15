@@ -129,7 +129,7 @@ if [ $isBatch ]; then
 	       --mail-user=${MAIL} \
 	       --output=${STDOUT_STEP4} \
 	       ${thisScriptDir}/runSnowTodayStep4.sh \
-	       $mindays $northZthresh $southZthresh $minSCF $minZ
+	       $mindays $northZthresh $southZthresh
 
     fi
     
