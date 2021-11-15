@@ -39,7 +39,7 @@ function runStatsForLinePlots(...
 % Copyright 2020 The Regents of the University of Colorado
 
     % for testing purposes, writes output file to test location
-    doTest = 1;
+    doTest = 0;
 
     partitionName = Regions.getPartitionNameFor(partitionNum);
     
