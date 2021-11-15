@@ -300,7 +300,7 @@ for d=1:length(datevalsYr)
     RF = readVarFromMosaic(mosaicFile, 'radiative_forcing', ...
 			  'W/m^2', 1);
     DV = readVarFromMosaic(mosaicFile, 'deltavis', ...
-			  'percent', 100);
+			  'percent', 1);
     percent2fraction = 100.;
     
     %% Loop for each partition
@@ -384,7 +384,9 @@ for d=1:length(datevalsYr)
         thisRF(RF.data == RF.missingValue) = NaN;
         
         % calculate median for this region and day
-        radiative_forcing_yr(1, d, regIdx) = nanmedian(thisRF(:));
+        % FIXME: figure out why the 500 values aren't set to RF.missingValue?
+        radiative_forcing_yr(1, d, regIdx) = nanmedian(...
+            thisRF(0 < thisRF & thisRF < 500));
 
         %%%%%%%% DV %%%%%%%%%
         % mask DV for only the area of this partition
@@ -399,7 +401,7 @@ for d=1:length(datevalsYr)
         thisDV(DV.data == DV.missingValue) = NaN;
         
         % calculate median albedo for this region and day
-        deltavis_yr(1, d, regIdx) = nanmedian(thisDV(:));
+        deltavis_yr(1, d, regIdx) = nanmedian(thisDV(thisDV > 0));
         
     end
     
@@ -420,7 +422,7 @@ function S = readVarFromMosaic( mosaicFile, varName, ...
     S.data = S.(varName);
     S = rmfield(S, varName);
     if ~strcmp(S.units, expectedUnits) || S.divisor ~= expectedDivisor
-        errorStruct.identifier = 'statsForLinePlots.MosaicError';
+        errorStruct.identifier = 'statsForLinePlots:MosaicError';
         errorStruct.message = sprintf(...
             ['%s: %s has unexpected %s units %s ' ...
             'or divisor %f\n'], ...
