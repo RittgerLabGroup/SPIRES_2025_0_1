@@ -39,7 +39,7 @@ function runStatsForLinePlots(...
 % Copyright 2020 The Regents of the University of Colorado
 
     % for testing purposes, writes output file to test location
-    doTest = 1;
+    doTest = 0;
 
     partitionName = Regions.getPartitionNameFor(partitionNum);
     
@@ -126,12 +126,7 @@ function runStatsForLinePlots(...
     
     % Save all (overwrites previous file)
     summaryFile = myEnv.SummarySnowFile(version, ...
-        regionName, partitionName, yrs(1), yrs(end));
-    if doTest
-        [folder, basename, ext] = fileparts(summaryFile);
-        folder = fullfile(folder, 'testRegions');
-        summaryFile = sprintf('%s/%s%s', folder, basename, ext);
-    end
+        regionName, partitionName, yrs(1), yrs(end), doTest);
     [folder, ~, ~] = fileparts(summaryFile);
     if ~exist(folder, 'dir')
         mkdir(folder);
