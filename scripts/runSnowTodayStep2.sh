@@ -33,13 +33,15 @@ thisScriptDir="$( cd "$( dirname "${PROGNAME}" )" && pwd )"
 
 usage() {
     echo "" 1>&2
-    echo "Usage: ${PROGNAME} [-h] YR MINDAYS NORTHZTHRESH SOUTHZTHRESH MONTHSTART MONTHSTOP" 1>&2
+    echo "Usage: ${PROGNAME} [-h] [-n] YR MINDAYS NORTHZTHRESH SOUTHZTHRESH" 1>&2
+    echo "       MONTHSTART MONTHSTOP" 1>&2
     echo "  Runs Step2 in SnowToday pipeline" 1>&2
     echo "  Updates WesternUS daily mosaic files for this year for all variables" 1>&2
     echo "  If called by slurm:" 1>&2
     echo "    starts SnowTodayStep3 for today" 1>&2
     echo "Options: "  1>&2
     echo "  -h: display help message and exit" 1>&2
+    echo "  -n: no pipeline: suppress starting next pipeline step" 1>&2
     echo "Arguments: " 1>&2
     echo "  YR : year to update" 1>&2
     echo "  MINDAYS : mindays to use for STC cubes, pass to step 3" 1>&2
@@ -65,11 +67,14 @@ error_exit() {
     exit 1
 }
 
+noPipeline=
+
 while getopts "h" opt
 do
     case $opt in
 	h) usage
 	   exit 1;;
+	n) noPipeline=1;;
 	?) printf "Unknown option %s\n" $opt
 	   usage
            exit 1;;
@@ -113,7 +118,7 @@ matlab -nodesktop -nodisplay -r "clear; "\
 "'zthresh', ["${northZthresh}" "${southZthresh}"]); "\
 "exit(0);" || error_exit "Line $LINENO: matlab error."
 
-if [ $isBatch ]; then
+if [ $isBatch ] && [ ! $noPipeline ]; then
     
     # get current slurm info for mail-user and stdout
     # Don't assume they are the same as at the top of this file,

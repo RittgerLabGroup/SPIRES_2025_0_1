@@ -34,11 +34,12 @@ thisScriptDir="$( cd "$( dirname "${PROGNAME}" )" && pwd )"
 
 usage() {
     echo "" 1>&2
-    echo "Usage: ${PROGNAME} [-h] MINDAYS NORTHZTHRESH SOUTHZTHRESH" 1>&2
+    echo "Usage: ${PROGNAME} [-h] [-n] MINDAYS NORTHZTHRESH SOUTHZTHRESH" 1>&2
     echo "  Calculates ST statistics files to date for this WATERYR" 1>&2
     echo "  Job array for each region group (10=westUS, 11=States, 12=HUC2)" 1>&2
     echo "Options: "  1>&2
     echo "  -h: display help message and exit" 1>&2
+    echo "  -n: no pipeline: suppress starting next pipeline step" 1>&2
     echo "Arguments: " 1>&2
     echo "  MINDAYS : mindays to use for mosaic directories" 1>&2
     echo "  NORTHZTHRESH : Northern altitude threshold (m) " 1>&2
@@ -61,11 +62,14 @@ error_exit() {
     exit 1
 }
 
+noPipeline=
+
 while getopts "h" opt
 do
     case $opt in
 	h) usage
 	   exit 1;;
+	n) noPipeline=1;;
 	?) printf "Unknown option %s\n" $opt
 	   usage
            exit 1;;
@@ -128,7 +132,7 @@ matlab -nodesktop -nodisplay -r "clear; "\
 "exit(0);" || error_exit "Line $LINENO: matlab error."
 
 #schedule next job in pipeline to run after entire job array completes
-if [ $isBatch ]; then
+if [ $isBatch ] && [ ! $noPipeline ]; then
     
     # get current slurm info for mail-user and stdout
     # Don't assume they are the same as at the top of this file,

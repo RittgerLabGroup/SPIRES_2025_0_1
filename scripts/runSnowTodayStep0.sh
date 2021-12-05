@@ -34,7 +34,8 @@ thisScriptDir="$( cd "$( dirname "${PROGNAME}" )" && pwd )"
 
 usage() {
     echo "" 1>&2
-    echo "Usage: ${PROGNAME} [-h] [-s YYYYMMDD] MINDAYS NORTHZTHRESH SOUTHZTHRESH" 1>&2
+    echo "Usage: ${PROGNAME} [-h] [-n] [-s YYYYMMDD] " 1>&2
+    echo "       MINDAYS NORTHZTHRESH SOUTHZTHRESH" 1>&2
     echo "  Runs Step0 in SnowToday pipeline" 1>&2
     echo "    Fetch latest JPL data for 5 WesternUS tiles" 1>&2
     echo "    Update the SnowToday pull report" 1>&2
@@ -43,6 +44,7 @@ usage() {
     echo "    schedules Step0 for tomorrow" 1>&2
     echo "Options: "  1>&2
     echo "  -h: display help message and exit" 1>&2
+    echo "  -n: no pipeline: suppress starting next pipeline step" 1>&2
     echo "  -s YYYYMMDD: optional start day to look for new JPL data" 1>&2
     echo "      overrides default which is 5 days prior to " 1>&2
     echo "      last complete date (all 5 tiles) of data in archive" 1>&2
@@ -74,10 +76,13 @@ date
 
 startyyyymmdd=
 
+noPipeline=
+
 while getopts "s:h" opt
 do
     case $opt in
 	s) startyyyymmdd="$OPTARG";;
+	n) noPipeline=1;;
 	h) usage
 	   exit 1;;
 	?) printf "Unknown option %s\n" $opt
@@ -117,7 +122,7 @@ matlab -nodesktop -nodisplay -r "clear; "\
 "'fillOnly', false); "\
 "exit(0);" || error_exit "Line $LINENO: matlab error."
 
-if [ $isBatch ]; then
+if [ $isBatch ] && [ ! $noPipeline ]; then
     
     # get current slurm info for mail-user and stdout
     # Don't assume they are the same as at the top of this file,
