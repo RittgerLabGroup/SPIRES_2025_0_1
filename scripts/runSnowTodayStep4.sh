@@ -105,15 +105,26 @@ minZ=800
 #Go to parent of this script, so that correct pathdef.m file is used
 cd "${thisScriptDir}/../"
 
+#showSCF_SCD will only work on the SCD parts, now
+#use showMostRecentVarMap for all but SCD
+#use showMostRecentVarInContext for all varNames
 matlab -nodesktop -nodisplay -r "clear; "\
 "todayDt = datetime; "\
-"plotAnnualSCA_SCDInContext('westernUS', "$SLURM_ARRAY_TASK_ID", "\
-"todayDt, "${mindays}", "\
+"varNames = {'snow_fraction', 'albedo', 'radiative_forcing', 'SCD'}; "\
+"for v=1:length(varNames); "\
+"plotMostRecentVarInContext('westernUS', "$SLURM_ARRAY_TASK_ID", "\
+"varNames{v}, todayDt, "${mindays}", "\
 "["${northZthresh}" "${southZthresh}"]); "\
+"end; "\
 "showSCF_SCD('westernUS', "$SLURM_ARRAY_TASK_ID", "\
 "todayDt, "\
 "${minSCF}, ${minSCD}, ${minZ}, ${mindays}, "\
 "["${northZthresh}" "${southZthresh}"]); "\
+"for v=1:length(varNames)-1; "\
+"showMostRecentVarMap('westernUS', "$SLURM_ARRAY_TASK_ID", "\
+"varNames{v}, todayDt, ${minSCF}, "${mindays}", "\
+"["${northZthresh}" "${southZthresh}"]); "\
+"end; "\
 "exit(0);" || error_exit "Line $LINENO: matlab error."
 
 #schedule next job in pipeline to run after entire job array completes
