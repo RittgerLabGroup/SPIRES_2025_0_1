@@ -287,6 +287,9 @@ for d=1:length(datevalsYr)
         continue;
     end
     
+    fprintf('%s: Reading mosaic variables from %s...\n', ...
+	    mfilename, mosaicFile);
+
     % Read layers and attributes from mosaic
     snow = readVarFromMosaic(mosaicFile, 'snow_fraction', ...
 			     'percent', 1);
@@ -297,7 +300,7 @@ for d=1:length(datevalsYr)
     DV = readVarFromMosaic(mosaicFile, 'deltavis', ...
 			  'percent', 1);
     percent2fraction = 100.;
-    
+
     %% Loop for each partition
     %fprintf('%s: DEBUG only doing last 3 regions...\n', ...
     %    mfilename());

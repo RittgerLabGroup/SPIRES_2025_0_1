@@ -8,7 +8,7 @@
 #SBATCH --qos normal
 #SBATCH --job-name 4_SnowToday
 #SBATCH --account=ucb188_summit1
-#SBATCH --time=02:00:00
+#SBATCH --time=00:20:00
 #SBATCH --ntasks-per-node=20
 #SBATCH --nodes=1
 #SBATCH --mem=80G
@@ -64,7 +64,7 @@ error_exit() {
 
 noPipeline=
 
-while getopts "h" opt
+while getopts "hn" opt
 do
     case $opt in
 	h) usage
@@ -79,6 +79,10 @@ done
 shift $(($OPTIND - 1))
 
 [[ "$#" -eq 3 ]] || error_exit "Line $LINENO: Unexpected number of arguments."
+
+if [ $noPipeline ]; then
+    echo "${PROGNAME}: noPipeline mode: this script will not continue pipeline"
+fi
 
 mindays=$1
 northZthresh=$2
@@ -114,47 +118,44 @@ cd "${thisScriptDir}/../"
 #use showMostRecentVarInContext for all varNames
 matlab -nodesktop -nodisplay -r "clear; "\
 "todayDt = datetime; "\
-"varNames = {'snow_fraction', 'albedo', 'radiative_forcing', 'SCD'}; "\
-"for v=1:length(varNames); "\
-"plotMostRecentVarInContext('westernUS', "$SLURM_ARRAY_TASK_ID", "\
-"varNames{v}, todayDt, "${mindays}", "\
-"["${northZthresh}" "${southZthresh}"]); "\
-"end; "\
-"showSCF_SCD('westernUS', "$SLURM_ARRAY_TASK_ID", "\
-"todayDt, "\
+"showSCF_SCD('westernUS', "$SLURM_ARRAY_TASK_ID", todayDt, "\
 "${minSCF}, ${minSCD}, ${minZ}, ${mindays}, "\
 "["${northZthresh}" "${southZthresh}"]); "\
-"for v=1:length(varNames)-1; "\
+"varNames = {'SCD', 'snow_fraction', 'albedo_observed_muZ', 'radiative_forcing'}; "\
+"for v=1:length(varNames); "\
 "showMostRecentVarMap('westernUS', "$SLURM_ARRAY_TASK_ID", "\
 "varNames{v}, todayDt, ${minSCF}, "${mindays}", "\
+"["${northZthresh}" "${southZthresh}"]); "\
+"plotMostRecentVarInContext('westernUS', "$SLURM_ARRAY_TASK_ID", "\
+"varNames{v}, todayDt, "${mindays}", "\
 "["${northZthresh}" "${southZthresh}"]); "\
 "end; "\
 "exit(0);" || error_exit "Line $LINENO: matlab error."
 
 #schedule next job in pipeline to run after entire job array completes
-if [ $isBatch ] && [ ! $noPipeline ]; then
+# if [ $isBatch ] && [ ! $noPipeline ]; then
     
-    # get current slurm info for mail-user and stdout
-    # Don't assume they are the same as at the top of this file,
-    # because they can be overridden at the command line
-    MAIL=`${thisScriptDir}/getSlurmMail.sh ${SLURM_JOB_ID}`
-    stdoutDir=$( dirname `${thisScriptDir}/getSlurmStdout.sh ${SLURM_JOB_ID}` )
+#     # get current slurm info for mail-user and stdout
+#     # Don't assume they are the same as at the top of this file,
+#     # because they can be overridden at the command line
+#     MAIL=`${thisScriptDir}/getSlurmMail.sh ${SLURM_JOB_ID}`
+#     stdoutDir=$( dirname `${thisScriptDir}/getSlurmStdout.sh ${SLURM_JOB_ID}` )
 
-    if [ "$SLURM_ARRAY_TASK_ID" -eq "10" ]; then
+#     if [ "$SLURM_ARRAY_TASK_ID" -eq "10" ]; then
 
-	STDOUT_STEP5="${stdoutDir}/runSnowTodayStep5-%j.out"
+# 	STDOUT_STEP5="${stdoutDir}/runSnowTodayStep5-%j.out"
 	
-	#schedule Step 5 to push all plots to NSIDC
-	creationDate=$(date +'%Y%m%d')
-	sbatch --dependency=afterok:$SLURM_ARRAY_JOB_ID \
-	       --mail-user=${MAIL} \
-	       --output=${STDOUT_STEP5} \
-	       ${thisScriptDir}/runSnowTodayStep5.sh \
-	       $creationDate $mindays $northZthresh $southZthresh
+# 	#schedule Step 5 to push all plots to NSIDC
+# 	creationDate=$(date +'%Y%m%d')
+# 	sbatch --dependency=afterok:$SLURM_ARRAY_JOB_ID \
+# 	       --mail-user=${MAIL} \
+# 	       --output=${STDOUT_STEP5} \
+# 	       ${thisScriptDir}/runSnowTodayStep5.sh \
+# 	       $creationDate $mindays $northZthresh $southZthresh
 
-    fi
+#     fi
 
-fi
+# fi
 
 #Clean up temporary directory for matlab job storage
 echo "${PROGNAME}: Removing TMPDIR=$TMPDIR..."

@@ -69,7 +69,7 @@ error_exit() {
 
 noPipeline=
 
-while getopts "h" opt
+while getopts "hn" opt
 do
     case $opt in
 	h) usage
@@ -84,6 +84,10 @@ done
 shift $(($OPTIND - 1))
 
 [[ "$#" -eq 6 ]] || error_exit "Line $LINENO: Unexpected number of arguments."
+
+if [ $noPipeline ]; then
+    echo "${PROGNAME}: noPipeline mode: this script will not continue pipeline"
+fi
 
 yr=$1
 mindays=$2

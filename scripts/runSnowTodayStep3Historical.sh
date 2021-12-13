@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # script to run SnowToday Step3 historical:
-#   update all westernUS SCF_SCD statistics files
+#   update all westernUS multivariate statistics files
 #   for region partitions (full region, States, HUC2, etc)
 #   for prior history to the current year
 #   for westernUS, longest job is 19 states, takes 1h40min
@@ -15,8 +15,8 @@
 #SBATCH --job-name 3_HistoricalST
 #SBATCH --account=ucb188_summit1
 #SBATCH --time=04:00:00
-#SBATCH --ntasks-per-node=20
-#SBATCH --mem=90G
+#SBATCH --ntasks-per-node=24
+#   SBATCH --mem=90G
 #SBATCH --nodes=1
 #SBATCH -o /scratch/summit/%u/slurm_out_SnowToday/runSnowTodayStep3Historical-%A_%a.out
 # Set the system up to notify upon completion
