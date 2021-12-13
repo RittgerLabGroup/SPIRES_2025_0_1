@@ -78,7 +78,7 @@ startyyyymmdd=
 
 noPipeline=
 
-while getopts "s:h" opt
+while getopts "hns:" opt
 do
     case $opt in
 	s) startyyyymmdd="$OPTARG";;
@@ -94,6 +94,10 @@ done
 shift $(($OPTIND - 1))
 
 [[ "$#" -eq 3 ]] || error_exit "Line $LINENO: Unexpected number of arguments."
+
+if [ $noPipeline ]; then
+    echo "${PROGNAME}: noPipeline mode: this script will not continue pipeline"
+fi
 
 mindays=$1
 northZthresh=$2
