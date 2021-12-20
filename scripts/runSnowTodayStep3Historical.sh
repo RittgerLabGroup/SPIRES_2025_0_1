@@ -13,7 +13,7 @@
 
 #SBATCH --qos normal
 #SBATCH --job-name 3_HistoricalST
-#SBATCH --account=ucb188_summit1
+#SBATCH --account=ucb188_summit2
 #SBATCH --time=04:00:00
 #SBATCH --ntasks-per-node=24
 #   SBATCH --mem=90G

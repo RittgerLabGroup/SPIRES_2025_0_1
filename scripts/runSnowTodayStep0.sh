@@ -9,7 +9,7 @@
 
 #SBATCH --qos normal
 #SBATCH --job-name 0_SnowToday
-#SBATCH --account=ucb188_summit1
+#SBATCH --account=ucb188_summit2
 #SBATCH --time=01:00:00
 #SBATCH --ntasks-per-node=6
 #SBATCH --nodes=1
