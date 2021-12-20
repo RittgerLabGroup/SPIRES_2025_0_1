@@ -9,7 +9,7 @@
 
 #SBATCH --qos normal
 #SBATCH --job-name 3_SnowToday
-#SBATCH --account=ucb188_summit1
+#SBATCH --account=ucb188_summit2
 #SBATCH --time=04:00:00
 #SBATCH --ntasks-per-node=20
 #SBATCH --mem=90G
@@ -36,11 +36,13 @@ thisScriptDir="$( cd "$( dirname "${PROGNAME}" )" && pwd )"
 
 usage() {
     echo "" 1>&2
-    echo "Usage: ${PROGNAME} [-h] WATERYR MINDAYS NORTHZTHRESH SOUTHZTHRESH" 1>&2
+    echo "Usage: ${PROGNAME} [-h] [-n] WATERYR " 1>&2
+    echo "       MINDAYS NORTHZTHRESH SOUTHZTHRESH" 1>&2
     echo "  Calculates ST statistics files to date for this WATERYR" 1>&2
     echo "  Job array for each region group (10=westUS, 11=States, 12=HUC2)" 1>&2
     echo "Options: "  1>&2
     echo "  -h: display help message and exit" 1>&2
+    echo "  -n: no pipeline: suppress starting next pipeline step" 1>&2
     echo "Arguments: " 1>&2
     echo "  THISYR : stats will be calculated for this WATERYR (begins Oct 1)" 1>&2
     echo "  MINDAYS : mindays to use for mosaic directories" 1>&2
@@ -64,11 +66,14 @@ error_exit() {
     exit 1
 }
 
-while getopts "h" opt
+noPipeline=
+
+while getopts "hn" opt
 do
     case $opt in
 	h) usage
 	   exit 1;;
+	n) noPipeline=1;;
 	?) printf "Unknown option %s\n" $opt
 	   usage
            exit 1;;
@@ -78,6 +83,10 @@ done
 shift $(($OPTIND - 1))
 
 [[ "$#" -eq 4 ]] || error_exit "Line $LINENO: Unexpected number of arguments."
+
+if [ $noPipeline ]; then
+    echo "${PROGNAME}: noPipeline mode: this script will not continue pipeline"
+fi
 
 waterYr=$1
 mindays=$2
@@ -112,7 +121,7 @@ matlab -nodesktop -nodisplay -r "clear; "\
 "exit(0);" || error_exit "Line $LINENO: matlab error."
 
 #schedule next job in pipeline to run after entire job array completes
-if [ $isBatch ]; then
+if [ $isBatch ] && [ ! $noPipeline ]; then
     
     # get current slurm info for mail-user and stdout
     # Don't assume they are the same as at the top of this file,

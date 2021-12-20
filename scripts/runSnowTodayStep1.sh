@@ -17,7 +17,7 @@
 
 #SBATCH --qos normal
 #SBATCH --job-name 1_SnowToday
-#SBATCH --account=ucb188_summit1
+#SBATCH --account=ucb188_summit2
 #SBATCH --time=06:00:00
 #SBATCH --ntasks-per-node=24
 #SBATCH --nodes=1
@@ -43,7 +43,8 @@ thisScriptDir="$( cd "$( dirname "${PROGNAME}" )" && pwd )"
 
 usage() {
     echo "" 1>&2
-    echo "Usage: ${PROGNAME} [-h] YR MINDAYS NORTHZTHRESH SOUTHZTHRESH MONTHSTART MONTHSTOP" 1>&2
+    echo "Usage: ${PROGNAME} [-h] [-n] YR MINDAYS " 1>&2
+    echo "       NORTHZTHRESH SOUTHZTHRESH MONTHSTART MONTHSTOP" 1>&2
     echo "  Runs Step1 in SnowToday pipeline" 1>&2
     echo "  Job array of each of 5 WesternUS tiles for this year" 1>&2
     echo "    from monthstart to monthstop:" 1>&2
@@ -53,6 +54,7 @@ usage() {
     echo "    starts SnowTodayStep2 for today, after job array completes" 1>&2
     echo "Options: "  1>&2
     echo "  -h: display help message and exit" 1>&2
+    echo "  -n: no pipeline: suppress starting next pipeline step" 1>&2
     echo "Arguments: " 1>&2
     echo "  YR : year to update" 1>&2
     echo "  MINDAYS : mindays to use for STC cubes, pass to step 2" 1>&2
@@ -78,11 +80,14 @@ error_exit() {
     exit 1
 }
 
-while getopts "h" opt
+noPipeline=
+
+while getopts "hn" opt
 do
     case $opt in
 	h) usage
 	   exit 1;;
+	n) noPipeline=1;;
 	?) printf "Unknown option %s\n" $opt
 	   usage
            exit 1;;
@@ -92,6 +97,10 @@ done
 shift $(($OPTIND - 1))
 
 [[ "$#" -eq 6 ]] || error_exit "Line $LINENO: Unexpected number of arguments."
+
+if [ $noPipeline ]; then
+    echo "${PROGNAME}: noPipeline mode: this script will not continue pipeline"
+fi
 
 yr=$1
 mindays=$2
@@ -127,7 +136,7 @@ matlab -nodesktop -nodisplay -r "clear; "\
 "exit(0);" || error_exit "Line $LINENO: matlab error."
 
 #schedule next job in pipeline to run after entire job array completes
-if [ $isBatch ]; then
+if [ $isBatch ] && [ ! $noPipeline ]; then
     
     # get current slurm info for mail-user and stdout
     # Don't assume they are the same as at the top of this file,
