@@ -133,29 +133,28 @@ matlab -nodesktop -nodisplay -r "clear; "\
 "exit(0);" || error_exit "Line $LINENO: matlab error."
 
 #schedule next job in pipeline to run after entire job array completes
-# if [ $isBatch ] && [ ! $noPipeline ]; then
+if [ $isBatch ] && [ ! $noPipeline ]; then
     
-#     # get current slurm info for mail-user and stdout
-#     # Don't assume they are the same as at the top of this file,
-#     # because they can be overridden at the command line
-#     MAIL=`${thisScriptDir}/getSlurmMail.sh ${SLURM_JOB_ID}`
-#     stdoutDir=$( dirname `${thisScriptDir}/getSlurmStdout.sh ${SLURM_JOB_ID}` )
+    # get current slurm info for mail-user and stdout
+    # Don't assume they are the same as at the top of this file,
+    # because they can be overridden at the command line
+    MAIL=`${thisScriptDir}/getSlurmMail.sh ${SLURM_JOB_ID}`
+    stdoutDir=$( dirname `${thisScriptDir}/getSlurmStdout.sh ${SLURM_JOB_ID}` )
 
-#     if [ "$SLURM_ARRAY_TASK_ID" -eq "10" ]; then
+    if [ "$SLURM_ARRAY_TASK_ID" -eq "10" ]; then
 
-# 	STDOUT_STEP5="${stdoutDir}/runSnowTodayStep5-%j.out"
-	
-# 	#schedule Step 5 to push all plots to NSIDC
-# 	creationDate=$(date +'%Y%m%d')
-# 	sbatch --dependency=afterok:$SLURM_ARRAY_JOB_ID \
-# 	       --mail-user=${MAIL} \
-# 	       --output=${STDOUT_STEP5} \
-# 	       ${thisScriptDir}/runSnowTodayStep5.sh \
-# 	       $creationDate $mindays $northZthresh $southZthresh
+	STDOUT_STEP5="${stdoutDir}/runSnowTodayStep5-%j.out"
 
-#     fi
+	#schedule Step 5 to push all plots to NSIDC
+	creationDate=$(date +'%Y%m%d')
+	sbatch --dependency=afterok:$SLURM_ARRAY_JOB_ID \
+	       --mail-user=${MAIL} \
+	       --output=${STDOUT_STEP5} \
+	       ${thisScriptDir}/runSnowTodayStep5.sh \
+	       $creationDate $mindays $northZthresh $southZthresh
 
-# fi
+    fi
+fi
 
 #Clean up temporary directory for matlab job storage
 echo "${PROGNAME}: Removing TMPDIR=$TMPDIR..."
