@@ -138,19 +138,23 @@ if [ $isBatch ] && [ ! $noPipeline ]; then
     STDOUT_STEP1="${stdoutDir}/runSnowTodayStep1-%A_%a.out"
 
     # schedule next job in Snow Today pipeline for today
-    # FIXME: make this work across calendar years
-    thisYear=$(date +'%Y')
-    thisMonth=$(date +'%-m')
-    startMonth=$(( $thisMonth - 2 ))
-    if (( "$startMonth" < "1" )); then
-	startMonth=1
+    # back up the cubes to be updated to this month - 2
+    yearStop=$(date +'%Y')
+    monthStop=$(date +'%-m')
+    monthStart=$(( $monthStop - 2 ))
+    if (( "$monthStart" < "1" )); then
+	monthStart=$(( $monthStart + 12 ))
+	yearStart=$(( $yearStop - 1 ))
+    else
+	yearStart=$yearStop
     fi
 
     sbatch --dependency=afterok:$SLURM_JOB_ID \
 	   --mail-user=${MAIL} \
 	   --output=${STDOUT_STEP1} \
 	   ${thisScriptDir}/runSnowTodayStep1.sh \
-	   $thisYear $mindays $northZthresh $southZthresh $startMonth $thisMonth
+	   $mindays $northZthresh $southZthresh \
+	   $yearStart $monthStart $yearStop $monthStop
 
     # schedule Step0 for the next time clock strikes 10:30
     sbatch --begin=10:30:00 \
