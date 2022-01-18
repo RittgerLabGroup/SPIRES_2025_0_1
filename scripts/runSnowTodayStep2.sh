@@ -33,21 +33,23 @@ thisScriptDir="$( cd "$( dirname "${PROGNAME}" )" && pwd )"
 
 usage() {
     echo "" 1>&2
-    echo "Usage: ${PROGNAME} [-h] [-n] YR MINDAYS NORTHZTHRESH SOUTHZTHRESH" 1>&2
-    echo "       MONTHSTART MONTHSTOP" 1>&2
+    echo "Usage: ${PROGNAME} [-h] [-n] MINDAYS NORTHZTHRESH SOUTHZTHRESH" 1>&2
+    echo "       YEARSTART MONTHSTART YEARSTOP MONTHSTOP" 1>&2
     echo "  Runs Step2 in SnowToday pipeline" 1>&2
-    echo "  Updates WesternUS daily mosaic files for this year for all variables" 1>&2
+    echo "  Updates WesternUS daily mosaic files for all variables" 1>&2
+    echo "    and the requested time period" 1>&2
     echo "  If called by slurm:" 1>&2
     echo "    starts SnowTodayStep3 for today" 1>&2
     echo "Options: "  1>&2
     echo "  -h: display help message and exit" 1>&2
     echo "  -n: no pipeline: suppress starting next pipeline step" 1>&2
     echo "Arguments: " 1>&2
-    echo "  YR : year to update" 1>&2
     echo "  MINDAYS : mindays to use for STC cubes, pass to step 3" 1>&2
     echo "  NORTHZTHRESH : Northern altitude threshold (m) to pass to step 3" 1>&2
     echo "  SOUTHZTHRESH : Southern altitude threshold (m) to pass to step 3" 1>&2
+    echo "  YEARSTART : year to begin" 1>&2
     echo "  MONTHSTART : month to begin" 1>&2
+    echo "  YEARSTOP : year to stop" 1>&2
     echo "  MONTHSTOP : month to stop" 1>&2
     echo "Output: " 1>&2
     echo "  Output location is controlled in Matlab scripts " 1>&2
@@ -83,18 +85,19 @@ done
 
 shift $(($OPTIND - 1))
 
-[[ "$#" -eq 6 ]] || error_exit "Line $LINENO: Unexpected number of arguments."
+[[ "$#" -eq 7 ]] || error_exit "Line $LINENO: Unexpected number of arguments."
 
 if [ $noPipeline ]; then
     echo "${PROGNAME}: noPipeline mode: this script will not continue pipeline"
 fi
 
-yr=$1
-mindays=$2
-northZthresh=$3
-southZthresh=$4
+mindays=$1
+northZthresh=$2
+southZthresh=$3
+yearStart=$4
 monthStart=$5
-monthStop=$6
+yearStop=$6
+monthStop=$7
 
 module purge
 ml matlab/R2019b
@@ -102,6 +105,8 @@ ml matlab/R2019b
 thisHost=$(hostname)
 thisDate=$(date)
 echo "${PROGNAME}: Begin on hostname=$thisHost on $thisDate for yr=$yr and mindays=$mindays"
+echo "${PROGNAME}: Start = $yearStart, $monthStart"
+echo "${PROGNAME}: Stop  = $yearStop, $monthStop"
 echo "${PROGNAME}: SLURM_SCRATCH=$SLURM_SCRATCH"
 echo "${PROGNAME}: SLURM_JOB_ID=$SLURM_JOB_ID"
 
@@ -114,12 +119,18 @@ export TMPDIR=$SLURM_SCRATCH/$SLURM_JOB_ID
 cd "${thisScriptDir}/../"
 
 matlab -nodesktop -nodisplay -r "clear; "\
+"try; "\
 "varNames={'snow_fraction', 'viewable_snow_fraction', 'grain_size', "\
 "'drfs_grnsz', 'deltavis', 'radiative_forcing', "\
 "'albedo_mu0', 'albedo_muZ'}; "\
-"updateMosaicFor('westernUS', ${yr}, varNames, ${mindays}, "\
-"'monthStart', ${monthStart}, 'monthStop', ${monthStop}, "\
+"updateMosaicFor('westernUS', "\
+"${yearStart}, ${monthStart}, ${yearStop}, ${monthStop}, "\
+"varNames, ${mindays}, "\
 "'zthresh', ["${northZthresh}" "${southZthresh}"]); "\
+"catch e; "\
+"fprintf('%s: %s\n', e.identifier, e.message); "\
+"exit(-1); "\
+"end; "\
 "exit(0);" || error_exit "Line $LINENO: matlab error."
 
 if [ $isBatch ] && [ ! $noPipeline ]; then
@@ -133,8 +144,9 @@ if [ $isBatch ] && [ ! $noPipeline ]; then
     STDOUT_STEP3="${stdoutDir}/runSnowTodayStep3-%A_%a.out"
 
     #schedule Step 3 to update stats
+    thisYear=$(date +'%Y')
     thisMonth=$(date +'%-m')
-    waterYr=$yr
+    waterYr=$thisYear
     if (( "$thisMonth" > "9" )); then
 	waterYr=$(( $waterYr + 1 ))
     fi
