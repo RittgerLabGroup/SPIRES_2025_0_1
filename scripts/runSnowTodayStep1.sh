@@ -117,6 +117,8 @@ ml matlab/R2019b
 thisHost=$(hostname)
 thisDate=$(date)
 echo "${PROGNAME}: Begin on hostname=$thisHost on $thisDate for mindays=$mindays"
+echo "${PROGNAME}: Start = $yearStart, $monthStart"
+echo "${PROGNAME}: Stop  = $yearStop, $monthStop"
 echo "${PROGNAME}: SLURM_SCRATCH=$SLURM_SCRATCH"
 echo "${PROGNAME}: SLURM_JOB_ID=$SLURM_JOB_ID"
 echo "${PROGNAME}: SLURM_ARRAY_JOB_ID=$SLURM_ARRAY_JOB_ID"

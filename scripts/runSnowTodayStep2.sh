@@ -105,6 +105,8 @@ ml matlab/R2019b
 thisHost=$(hostname)
 thisDate=$(date)
 echo "${PROGNAME}: Begin on hostname=$thisHost on $thisDate for yr=$yr and mindays=$mindays"
+echo "${PROGNAME}: Start = $yearStart, $monthStart"
+echo "${PROGNAME}: Stop  = $yearStop, $monthStop"
 echo "${PROGNAME}: SLURM_SCRATCH=$SLURM_SCRATCH"
 echo "${PROGNAME}: SLURM_JOB_ID=$SLURM_JOB_ID"
 
@@ -117,6 +119,7 @@ export TMPDIR=$SLURM_SCRATCH/$SLURM_JOB_ID
 cd "${thisScriptDir}/../"
 
 matlab -nodesktop -nodisplay -r "clear; "\
+"try; "\
 "varNames={'snow_fraction', 'viewable_snow_fraction', 'grain_size', "\
 "'drfs_grnsz', 'deltavis', 'radiative_forcing', "\
 "'albedo_mu0', 'albedo_muZ'}; "\
@@ -124,6 +127,10 @@ matlab -nodesktop -nodisplay -r "clear; "\
 "${yearStart}, ${monthStart}, ${yearStop}, ${monthStop}, "\
 "varNames, ${mindays}, "\
 "'zthresh', ["${northZthresh}" "${southZthresh}"]); "\
+"catch e; "\
+"fprintf('%s: %s\n', e.identifier, e.message); "\
+"exit(-1); "\
+"end; "\
 "exit(0);" || error_exit "Line $LINENO: matlab error."
 
 if [ $isBatch ] && [ ! $noPipeline ]; then
