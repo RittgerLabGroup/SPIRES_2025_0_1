@@ -112,12 +112,17 @@ export TMPDIR=$SLURM_SCRATCH/$SLURM_ARRAY_JOB_ID
 cd "${thisScriptDir}/../"
 
 matlab -nodesktop -nodisplay -r "clear; "\
+"try; "\
 "minSCP = minSCPForLinePlots(); "\
 "minZ = minZForLinePlots(); "\
 "runStatsForLinePlots('westernUS', "$SLURM_ARRAY_TASK_ID", "\
 "${waterYr}, ${waterYr}, "\
 "minSCP, minZ, ${mindays}, "\
 "["${northZthresh}" "${southZthresh}"]); "\
+"catch e; "\
+"fprintf('%s: %s\n', e.identifier, e.message); "\
+"exit(-1); "\
+"end; "\
 "exit(0);" || error_exit "Line $LINENO: matlab error."
 
 #schedule next job in pipeline to run after entire job array completes

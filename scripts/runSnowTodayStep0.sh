@@ -120,10 +120,15 @@ cd "${thisScriptDir}/../"
 #fillOnly==true will only try to fill holes in inventory
 #fillOnly==false will try to re-pull data for every date
 matlab -nodesktop -nodisplay -r "clear; "\
+"try; "\
 "tiles=MODISData.tilesFor('westernUS'); "\
 "batchUpdateModisArchive('nrt', tiles, "\
 "$options "\
 "'fillOnly', false); "\
+"catch e; "\
+"fprintf('%s: %s\n', e.identifier, e.message); "\
+"exit(-1); "\
+"end; "\
 "exit(0);" || error_exit "Line $LINENO: matlab error."
 
 if [ $isBatch ] && [ ! $noPipeline ]; then

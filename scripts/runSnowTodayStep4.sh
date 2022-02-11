@@ -117,6 +117,7 @@ cd "${thisScriptDir}/../"
 #use showMostRecentVarMap for all but SCD
 #use showMostRecentVarInContext for all varNames
 matlab -nodesktop -nodisplay -r "clear; "\
+"try; "\
 "todayDt = datetime; "\
 "showSCF_SCD('westernUS', "$SLURM_ARRAY_TASK_ID", todayDt, "\
 "${minSCF}, ${minSCD}, ${minZ}, ${mindays}, "\
@@ -129,6 +130,10 @@ matlab -nodesktop -nodisplay -r "clear; "\
 "plotMostRecentVarInContext('westernUS', "$SLURM_ARRAY_TASK_ID", "\
 "varNames{v}, todayDt, "${mindays}", "\
 "["${northZthresh}" "${southZthresh}"]); "\
+"end; "\
+"catch e; "\
+"fprintf('%s: %s\n', e.identifier, e.message); "\
+"exit(-1); "\
 "end; "\
 "exit(0);" || error_exit "Line $LINENO: matlab error."
 
