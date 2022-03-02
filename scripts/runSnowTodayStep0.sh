@@ -1,16 +1,16 @@
 #!/bin/bash
 #
 # script to run SnowToday Step0:
+#   schedule Step0 for tomorrow
 #   fetch latest JPL data
 #   update the JPL pull report
 #   kick off Step1 for today
-#   schedul Step0 for tomorrow
 #
 
 #SBATCH --qos normal
 #SBATCH --job-name 0_SnowToday
 #SBATCH --account=ucb188_summit2
-#SBATCH --time=01:00:00
+#SBATCH --time=02:30:00
 #SBATCH --ntasks-per-node=6
 #SBATCH --nodes=1
 #SBATCH -o /scratch/summit/%u/slurm_out_SnowToday/runSnowTodayStep0-%j.out
@@ -95,10 +95,6 @@ shift $(($OPTIND - 1))
 
 [[ "$#" -eq 3 ]] || error_exit "Line $LINENO: Unexpected number of arguments."
 
-if [ $noPipeline ]; then
-    echo "${PROGNAME}: noPipeline mode: this script will not continue pipeline"
-fi
-
 mindays=$1
 northZthresh=$2
 southZthresh=$3
@@ -113,6 +109,35 @@ thisDate=$(date)
 echo "${PROGNAME}: Begin on hostname=$thisHost on $thisDate"
 echo "${PROGNAME}: SLURM_SCRATCH=$SLURM_SCRATCH"
 echo "${PROGNAME}: SLURM_JOB_ID=$SLURM_JOB_ID"
+
+if [ $noPipeline ]; then
+    
+    echo "${PROGNAME}: noPipeline mode: this script will not continue pipeline"
+
+else
+
+    # schedule Step0 for the next time clock strikes 04:30
+    # do this first, so that it doesn't depend on success of today's
+    # Step0 processing
+    if [ $isBatch ] then
+    
+       # get current slurm info for mail-user and stdout
+       # Don't assume they are the same as at the top of this file,
+       # because they can be overridden at the command line
+       MAIL=`${thisScriptDir}/getSlurmMail.sh ${SLURM_JOB_ID}`
+
+       stdoutDir=$( dirname `${thisScriptDir}/getSlurmStdout.sh ${SLURM_JOB_ID}` )
+       STDOUT_STEP0="${stdoutDir}/runSnowTodayStep0-%j.out"
+
+       sbatch --begin=10:30:00 \
+	      --mail-user=${MAIL} \
+	      --output=${STDOUT_STEP0} \
+	      ${thisScriptDir}/runSnowTodayStep0.sh \
+	      $mindays $northZthresh $southZthresh
+
+    fi
+
+fi
 
 #Go to parent of this script, so that correct pathdef.m file is used
 cd "${thisScriptDir}/../"
@@ -133,13 +158,7 @@ matlab -nodesktop -nodisplay -r "clear; "\
 
 if [ $isBatch ] && [ ! $noPipeline ]; then
     
-    # get current slurm info for mail-user and stdout
-    # Don't assume they are the same as at the top of this file,
-    # because they can be overridden at the command line
-    MAIL=`${thisScriptDir}/getSlurmMail.sh ${SLURM_JOB_ID}`
-
-    stdoutDir=$( dirname `${thisScriptDir}/getSlurmStdout.sh ${SLURM_JOB_ID}` )
-    STDOUT_STEP0="${stdoutDir}/runSnowTodayStep0-%j.out"
+    # use the MAIL and stdoutDir settings from above
     STDOUT_STEP1="${stdoutDir}/runSnowTodayStep1-%A_%a.out"
 
     # schedule next job in Snow Today pipeline for today
@@ -154,6 +173,7 @@ if [ $isBatch ] && [ ! $noPipeline ]; then
 	yearStart=$yearStop
     fi
 
+    echo "${PROGNAME}: Continuing pipeline with Step1..."
     sbatch --dependency=afterok:$SLURM_JOB_ID \
 	   --mail-user=${MAIL} \
 	   --output=${STDOUT_STEP1} \
@@ -161,17 +181,8 @@ if [ $isBatch ] && [ ! $noPipeline ]; then
 	   $mindays $northZthresh $southZthresh \
 	   $yearStart $monthStart $yearStop $monthStop
 
-    # schedule Step0 for the next time clock strikes 10:30
-    sbatch --begin=10:30:00 \
-	   --mail-user=${MAIL} \
-	   --output=${STDOUT_STEP0} \
-	   ${thisScriptDir}/runSnowTodayStep0.sh \
-	   $mindays $northZthresh $southZthresh
-
-else
-    echo "${PROGNAME}: Not continuing pipeline for non-sbatch call."
 fi
 
 thisDate=$(date)
-echo "$${PROGNAME}: Done on hostname=$thisHost on $thisDate"
+echo "${PROGNAME}: Done on hostname=$thisHost on $thisDate"
 
