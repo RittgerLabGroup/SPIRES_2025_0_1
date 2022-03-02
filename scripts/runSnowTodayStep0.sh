@@ -119,7 +119,7 @@ else
     # schedule Step0 for the next time clock strikes 04:30
     # do this first, so that it doesn't depend on success of today's
     # Step0 processing
-    if [ $isBatch ] then
+    if [ $isBatch ]; then
     
        # get current slurm info for mail-user and stdout
        # Don't assume they are the same as at the top of this file,
