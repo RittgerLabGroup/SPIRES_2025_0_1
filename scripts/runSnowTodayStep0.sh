@@ -129,7 +129,7 @@ else
        stdoutDir=$( dirname `${thisScriptDir}/getSlurmStdout.sh ${SLURM_JOB_ID}` )
        STDOUT_STEP0="${stdoutDir}/runSnowTodayStep0-%j.out"
 
-       sbatch --begin=10:30:00 \
+       sbatch --begin=04:30:00 \
 	      --mail-user=${MAIL} \
 	      --output=${STDOUT_STEP0} \
 	      ${thisScriptDir}/runSnowTodayStep0.sh \
