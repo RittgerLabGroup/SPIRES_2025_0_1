@@ -8,7 +8,7 @@
 #SBATCH --qos normal
 #SBATCH --job-name 4_SnowToday
 #SBATCH --account=ucb188_summit2
-#SBATCH --time=00:20:00
+#SBATCH --time=02:00:00
 #SBATCH --ntasks-per-node=20
 #SBATCH --nodes=1
 #SBATCH --mem=80G
@@ -34,12 +34,14 @@ thisScriptDir="$( cd "$( dirname "${PROGNAME}" )" && pwd )"
 
 usage() {
     echo "" 1>&2
-    echo "Usage: ${PROGNAME} [-h] [-n] MINDAYS NORTHZTHRESH SOUTHZTHRESH" 1>&2
+    echo "Usage: ${PROGNAME} [-h] [-n] [-d YYYYMMDD] " 1>&2
+    echo "       MINDAYS NORTHZTHRESH SOUTHZTHRESH" 1>&2
     echo "  Calculates ST statistics files to date for this WATERYR" 1>&2
     echo "  Job array for each region group (10=westUS, 11=States, 12=HUC2)" 1>&2
     echo "Options: "  1>&2
     echo "  -h: display help message and exit" 1>&2
     echo "  -n: no pipeline: suppress starting next pipeline step" 1>&2
+    echo "  -d YYYYMMDD: analysis date, defaults to today" 1>&2
     echo "Arguments: " 1>&2
     echo "  MINDAYS : mindays to use for mosaic directories" 1>&2
     echo "  NORTHZTHRESH : Northern altitude threshold (m) " 1>&2
@@ -62,11 +64,13 @@ error_exit() {
     exit 1
 }
 
+yyyymmdd=
 noPipeline=
 
-while getopts "hn" opt
+while getopts "d:hn" opt
 do
     case $opt in
+	d) yyyymmdd="$OPTARG";;
 	h) usage
 	   exit 1;;
 	n) noPipeline=1;;
@@ -88,12 +92,20 @@ mindays=$1
 northZthresh=$2
 southZthresh=$3
 
+if [ ! $yyyymmdd ]; then
+    yyyymmdd=$(date +'%Y%m%d')
+fi
+echo "${PROGNAME}: Analysis date will be: $yyyymmdd"
+
 module purge
 ml matlab/R2019b
 
 thisHost=$(hostname)
 thisDate=$(date)
-echo "${PROGNAME}: Begin on hostname=$thisHost on $thisDate for partitionNum=$SLURM_ARRAY_TASK_ID and mindays=$mindays"
+echo "${PROGNAME}: Begin on hostname=$thisHost on $thisDate for "
+echo "${PROGNAME}:    analysis date=$yyyymmdd "
+echo "${PROGNAME}:    partitionNum=$SLURM_ARRAY_TASK_ID and "
+echo "${PROGNAME}:    mindays=$mindays"
 echo "${PROGNAME}: SLURM_SCRATCH=$SLURM_SCRATCH"
 echo "${PROGNAME}: SLURM_JOB_ID=$SLURM_JOB_ID"
 echo "${PROGNAME}: SLURM_ARRAY_JOB_ID=$SLURM_ARRAY_JOB_ID"
@@ -118,17 +130,17 @@ cd "${thisScriptDir}/../"
 #use showMostRecentVarInContext for all varNames
 matlab -nodesktop -nodisplay -r "clear; "\
 "try; "\
-"todayDt = datetime; "\
-"showSCF_SCD('westernUS', "$SLURM_ARRAY_TASK_ID", todayDt, "\
+"myDt = datetime('"$yyyymmdd"', 'InputFormat', 'yyyyMMdd'); "\
+"showSCF_SCD('westernUS', "$SLURM_ARRAY_TASK_ID", myDt, "\
 "${minSCF}, ${minSCD}, ${minZ}, ${mindays}, "\
 "["${northZthresh}" "${southZthresh}"]); "\
-"varNames = {'SCD', 'snow_fraction', 'albedo_observed_muZ', 'radiative_forcing'}; "\
-"for v=1:length(varNames); "\
+"vNs = {'SCD', 'snow_fraction', 'albedo_observed_muZ', 'radiative_forcing'}; "\
+"for v=1:length(vNs); "\
 "showMostRecentVarMap('westernUS', "$SLURM_ARRAY_TASK_ID", "\
-"varNames{v}, todayDt, ${minSCF}, "${mindays}", "\
+"vNs{v}, myDt, ${minSCF}, "${mindays}", "\
 "["${northZthresh}" "${southZthresh}"]); "\
 "plotMostRecentVarInContext('westernUS', "$SLURM_ARRAY_TASK_ID", "\
-"varNames{v}, todayDt, "${mindays}", "\
+"vNs{v}, myDt, "${mindays}", "\
 "["${northZthresh}" "${southZthresh}"]); "\
 "end; "\
 "catch e; "\
