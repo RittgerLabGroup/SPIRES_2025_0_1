@@ -19,7 +19,7 @@
 #SBATCH --qos normal
 #SBATCH --job-name 1_SnowToday
 #SBATCH --account=ucb188_summit2
-#SBATCH --time=06:00:00
+#SBATCH --time=10:00:00
 #SBATCH --ntasks-per-node=24
 #SBATCH --nodes=1
 #SBATCH -o /scratch/summit/%u/slurm_out_SnowToday/runSnowTodayStep1-%A_%a.out
