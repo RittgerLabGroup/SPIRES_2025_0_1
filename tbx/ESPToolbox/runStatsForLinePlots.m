@@ -131,7 +131,12 @@ function runStatsForLinePlots(...
     if ~exist(folder, 'dir')
         mkdir(folder);
     end
-    
+
+    % N.B. This file may also end up being accessed and read by
+    % SnowToday web app.  Currently requirement here is for it
+    % to not be -v7.3, since the web app will be using SciPy
+    % matlab reader.  If we need to set this file format to -v7.3,
+    % we should consult with web app developer.    
     save(summaryFile, 'sca_area_km2_yr', 'scd_sum_yr', ...
         'albedo_yr', 'radiative_forcing_yr', 'deltavis_yr', ...
         'minSCP', 'minZ', ... 
