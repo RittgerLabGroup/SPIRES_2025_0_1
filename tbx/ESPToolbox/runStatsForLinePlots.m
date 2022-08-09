@@ -74,12 +74,12 @@ function runStatsForLinePlots(...
     
     % set the file labelName with a version number for mosaic
     % files to read
-    labelName = sprintf('v%02d', MData.STCversion);
+    labelName = sprintf('v%s', MData.STCVersion);
     
     % Daily regional summary files are stored in this hierarchy
     myEnv.SCAGDRFSDir = fullfile(MData.archiveDir, ...
-        sprintf('scagdrfs_v%02d.zthresh%04d%04d_mindays%02dadj', ...
-        MData.STCversion, zthresh(1), zthresh(2), mindays));
+        sprintf('scagdrfs_v%s.zthresh%04d%04d_mindays%02dadj', ...
+        MData.STCVersion, zthresh(1), zthresh(2), mindays));
     
     % Elevation dataset and elevation threshold to use
     elevationFile = myEnv.modisElevationFile(regionName);
