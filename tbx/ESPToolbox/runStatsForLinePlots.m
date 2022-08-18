@@ -1,4 +1,4 @@
-function runStatsForLinePlots(...
+function runStatsForLinePlots(espEnv, mData, ...
     regionName, partitionNum, ...					 
     startWaterYr, stopWaterYr, ...
     minSCP, minZ, mindays, zthresh)
@@ -8,6 +8,8 @@ function runStatsForLinePlots(...
 % interquartile range and median values
 %
 % Inputs
+%   espEnv: ESPEnv object with local directory information
+%   mData: MODISData object with MODIS information
 %   regionName: regionName to summarize, currently only
 %   'westernUS' but eventually will include others
 %   partitionNum: partition number:
@@ -29,8 +31,8 @@ function runStatsForLinePlots(...
 %          counted for respective variables
 %          should default to 800 for all?
 %          N.B. these values are not excluded from SCA
-%   mindays: mindays for label on mosaic files to read
-%   zthresh: North/South elevation threshold on mosaic files to read
+%   mindays: mindays for metadata
+%   zthresh: North/South elevation threshold for metadata
 %
 % Outputs
 %   Output will be saved to summary statistic file
@@ -64,25 +66,8 @@ function runStatsForLinePlots(...
         error(errorStruct);
     end
     
-    MData = MODISData();
-    
-    % Set the environment to point to location with mosaic files
-    myEnv = ESPEnv();
-    
-    % MODIS data version
-    version = 6;
-    
-    % set the file labelName with a version number for mosaic
-    % files to read
-    labelName = sprintf('v%s', MData.STCVersion);
-    
-    % Daily regional summary files are stored in this hierarchy
-    myEnv.SCAGDRFSDir = fullfile(MData.archiveDir, ...
-        sprintf('scagdrfs_v%s.zthresh%04d%04d_mindays%02dadj', ...
-        MData.STCVersion, zthresh(1), zthresh(2), mindays));
-    
     % Elevation dataset and elevation threshold to use
-    elevationFile = myEnv.modisElevationFile(regionName);
+    elevationFile = espEnv.modisElevationFile(regionName);
     
     % Get the number of region partition areas
     partitions = Regions(partitionName);
@@ -119,13 +104,13 @@ function runStatsForLinePlots(...
             radiative_forcing_yr(y, :, :), ...
             deltavis_yr(y, :, :)] = ...
             statsForLinePlots(...
-            myEnv, version, regionName, partitions, labelName, ...
+            espEnv, mData, regionName, partitions, ...
             albedoName, yr, elevationData.Z, minSCP, minZ, ...
             maxDaysPerYear);
     end
     
     % Save all (overwrites previous file)
-    summaryFile = myEnv.SummarySnowFile(version, ...
+    summaryFile = espEnv.SummarySnowFile(mData, ...
         regionName, partitionName, yrs(1), yrs(end), doTest);
     [folder, ~, ~] = fileparts(summaryFile);
     if ~exist(folder, 'dir')
@@ -137,6 +122,7 @@ function runStatsForLinePlots(...
     % to not be -v7.3, since the web app will be using SciPy
     % matlab reader.  If we need to set this file format to -v7.3,
     % we should consult with web app developer.    
+    version = mData.versionOf.MODISCollection;
     save(summaryFile, 'sca_area_km2_yr', 'scd_sum_yr', ...
         'albedo_yr', 'radiative_forcing_yr', 'deltavis_yr', ...
         'minSCP', 'minZ', ... 
@@ -144,7 +130,7 @@ function runStatsForLinePlots(...
         'version', 'regionName', 'partitionName', ...
         'LongName', 'ShortName', ...
         'albedoName', ...
-        'labelName', 'zthresh', 'mindays', 'myEnv');
+        'zthresh', 'mindays', 'espEnv');
     fprintf('%s: Saved summary to %s\n', mfilename(), summaryFile);
     
     % If it was the historical run, find the median, prctiles, min/max
@@ -211,8 +197,8 @@ end
 
 function [datevalsYr, sca_area_km2_yr, scd_sum_yr, albedo_yr, ...
     radiative_forcing_yr, deltavis_yr] = ...
-    statsForLinePlots(myEnv, version, ...
-    regionName, partitions, labelName, albedoName, waterYr, Z, ...
+    statsForLinePlots(espEnv, mData, ...
+    regionName, partitions, albedoName, waterYr, Z, ...
     minSCP, minZ, maxDays)
 %statsForLinePlots summarizes total snow cover fraction, 
 %median snow covered days, median albedo, radiative_forcing and
@@ -220,10 +206,9 @@ function [datevalsYr, sca_area_km2_yr, scd_sum_yr, albedo_yr, ...
 %area, for use in line graphs
 %
 % Input
-%    myEnv : ESPEnv object with mosaic filename information
-%    version : MODIS version data
+%    espEnv : ESPEnv object with mosaic filename information
+%    mData : MODISData object with MODIS information
 %    partitions : structure with Regions object with partitions information, 
-%    labelName : labelName for mosaic files
 %    albedoName : name of albedo field to read from mosaicFile
 %    waterYr : water year to process (begins Oct of prior year)
 %    Z : array of elevations to match mosaic array
@@ -250,8 +235,6 @@ function [datevalsYr, sca_area_km2_yr, scd_sum_yr, albedo_yr, ...
 %
 
 % Copyright 2020 The Regents of the University of Colorado
-
-MData = MODISData();
 
 datevalsYr = datenum([waterYr-1 10 1 12 0 0]):...
     datenum([waterYr 9 30 12 0 0]);
@@ -282,8 +265,8 @@ for d=1:length(datevalsYr)
     thisYr = year(datevalsYr(d));
     thisMonth = month(datevalsYr(d));
     thisDay = day(datevalsYr(d));
-    mosaicFile = myEnv.MosaicFile(version, regionName, ...
-        thisYr, thisMonth, thisDay, labelName);
+    mosaicFile = espEnv.MosaicFile(mData, regionName, ...
+        thisYr, thisMonth, thisDay);
     
     % Warning if a date is missing
     if ~isfile(mosaicFile)
@@ -328,7 +311,7 @@ for d=1:length(datevalsYr)
         thisSnow(snowIsMissing) = 0;
         
         % Calculate area as an image and then sum for this day
-        ascag = (thisSnow) * (MData.pixSize_500m^2 / 1000^2);
+        ascag = (thisSnow) * (mData.pixSize_500m^2 / 1000^2);
         
         % should scale snow_fraction, but this is fast cause
         % 1 number instead of grid
