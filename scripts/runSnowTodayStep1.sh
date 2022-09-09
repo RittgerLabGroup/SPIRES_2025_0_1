@@ -17,16 +17,19 @@
 # southZthresh: Southern latitude limit for Zthresh (meters)
 
 #SBATCH --qos normal
-#SBATCH --job-name 1_SnowToday
-#SBATCH --account=ucb188_summit2
-#SBATCH --time=10:00:00
-#SBATCH --ntasks-per-node=24
-#SBATCH --nodes=1
-#SBATCH -o /scratch/summit/%u/slurm_out_SnowToday/runSnowTodayStep1-%A_%a.out
+#SBATCH --partition amilan
+#SBATCH --job-name 1SnTo
+#SBATCH --account ucb-general
+#SBATCH --time 10:00:00
+# On Summit, we asked for 24 tasks, but mem is less per task on alpine
+# On Alpine try, 36
+#SBATCH --ntasks-per-node 36
+#SBATCH --nodes 1
+#SBATCH -o /scratch/alpine/%u/slurm_out_SnowToday/%x-%A_%a.out
 # Set the system up to notify upon completion
-#SBATCH --mail-type=FAIL,REQUEUE,STAGE_OUT
-#SBATCH --mail-user=brodzik@nsidc.org
-#SBATCH --array=1-5
+#SBATCH --mail-type END,FAIL,INVALID_DEPEND,TIME_LIMIT,REQUEUE,STAGE_OUT
+#SBATCH --mail-user brodzik@colorado.edu
+#SBATCH --array 1-5
 
 # Grab the full path to this script
 # depends on whether it's running as sbatch job
@@ -44,7 +47,8 @@ thisScriptDir="$( cd "$( dirname "${PROGNAME}" )" && pwd )"
 
 usage() {
     echo "" 1>&2
-    echo "Usage: ${PROGNAME} [-h] [-n] MINDAYS NORTHZTHRESH SOUTHZTHRESH " 1>&2
+    echo "Usage: ${PROGNAME} [-h] [-n] [-t TESTLABEL] " 1>&2
+    echo "       MINDAYS NORTHZTHRESH SOUTHZTHRESH " 1>&2
     echo "       YEARSTART MONTHSTART YEARSTOP MONTHSTOP" 1>&2
     echo "  Runs Step1 in SnowToday pipeline" 1>&2
     echo "  Job array of each of 5 WesternUS tiles for this time period: " 1>&2
@@ -55,6 +59,8 @@ usage() {
     echo "Options: "  1>&2
     echo "  -h: display help message and exit" 1>&2
     echo "  -n: no pipeline: suppress starting next pipeline step" 1>&2
+    echo "  -t TESTLABEL: string with test label for directories" 1>&2
+    echo "     default is current operational directories" 1>&2
     echo "Arguments: " 1>&2
     echo "  MINDAYS : mindays to use for STC cubes, pass to step 2" 1>&2
     echo "  NORTHZTHRESH : Northern altitude threshold (m) to pass to step 2" 1>&2
@@ -64,10 +70,10 @@ usage() {
     echo "  YEARSTOP : year to stop" 1>&2
     echo "  MONTHSTOP : month to stop" 1>&2
     echo "Output: " 1>&2
-    echo "  Output location is controlled in Matlab scripts " 1>&2
+    echo "  Output location is controlled in Matlab scripts and -t TESTLABEL " 1>&2
     echo "Notes: " 1>&2
     echo "  Scripts stdout/stderr are written to user's scratch " 1>&2
-    echo "  where directory /scratch/summit/$USER/slurm_out_SnowToday/ " 1>&2
+    echo "  where directory /scratch/alpine/$USER/slurm_out_SnowToday/ " 1>&2
     echo "  is assumed to exist" 1>&2
 }
 
@@ -82,13 +88,15 @@ error_exit() {
 }
 
 noPipeline=
+TESTLABEL=
 
-while getopts "hn" opt
+while getopts "hnt:" opt
 do
     case $opt in
 	h) usage
 	   exit 1;;
 	n) noPipeline=1;;
+	t) TESTLABEL="$OPTARG";;
 	?) printf "Unknown option %s\n" $opt
 	   usage
            exit 1;;
@@ -111,8 +119,13 @@ monthStart=$5
 yearStop=$6
 monthStop=$7
 
+options=""
+if [ $TESTLABEL ]; then
+    options="'label', '$TESTLABEL'"
+fi
+
 module purge
-ml matlab/R2019b
+ml matlab/R2021b
 
 thisHost=$(hostname)
 thisDate=$(date)
@@ -124,26 +137,47 @@ echo "${PROGNAME}: SLURM_JOB_ID=$SLURM_JOB_ID"
 echo "${PROGNAME}: SLURM_ARRAY_JOB_ID=$SLURM_ARRAY_JOB_ID"
 
 #Make a unique temporary directory for matlab job storage
-#Set TMPDIR to this location so job array uses it for tmp location
-mkdir -p $SLURM_SCRATCH/$SLURM_ARRAY_JOB_ID
-export TMPDIR=$SLURM_SCRATCH/$SLURM_ARRAY_JOB_ID
+#Set TMPDIR/TMP to this location so job array uses it for tmp location
+tmpDir=/scratch/alpine/${USER}/matlabTmp/alpine-$SLURM_ARRAY_JOB_ID
+mkdir -p $tmpDir
+export TMPDIR=$tmpDir
+export TMP=$tmpDir
 
-#Go to parent of this script, so that correct pathdef.m file is used
+# Go to parent of this script, so that correct pathdef.m file is used
 cd "${thisScriptDir}/../"
+
+# Do the scratch shuffle on NRT MOD09/SCAG/DRFS inputs
+for dataType in mod09ga modscag moddrfs; do
+    for tile in h08v04 h08v05 h09v04 h09v05 h10v04; do
+	${thisScriptDir}/scratchShuffle.sh TO ${dataType}/NRT ${tile} \
+			${yearStart} ${yearStop} || \
+	    error_exit "Line $LINENO: scratchShuffle error ${dataType} ${tile}"
+    done
+done
 
 matlab -nodesktop -nodisplay -r "clear; "\
 "try; "\
-"MData = MODISData(); "\
+"mData = MODISData($options); "\
 "tiles = MData.tilesFor('westernUS'); "\
 "updateRegionMonthCubes(tiles, "$SLURM_ARRAY_TASK_ID", "\
 "${yearStart}, ${monthStart}, ${yearStop}, ${monthStop}, "\
 "${mindays}, "\
-"'zthresh', ["${northZthresh}" "${southZthresh}"]); "\
+"'zthresh', ["${northZthresh}" "${southZthresh}"], "\
+"'mData', mData); "\
 "catch e; "\
 "fprintf('%s: %s\n', e.identifier, e.message); "\
 "exit(-1); "\
 "end; "\
 "exit(0);" || error_exit "Line $LINENO: matlab error."
+
+# Do the scratch shuffle on Raw/Gap/STC outputs (back from scratch to archive)
+for dataType in mod09_raw scagdrfs_raw scagdrfs_gap scagdrfs_stc; do
+    for tile in h08v04 h08v05 h09v04 h09v05 h10v04; do
+	${thisScriptDir}/scratchShuffle.sh FROM ${dataType}_$TESTLABEL ${tile} \
+			${yearStart} ${yearStop} || \
+	    error_exit "Line $LINENO: scratchShuffle error ${dataType} ${tile}"
+    done
+done
 
 #schedule next job in pipeline to run after entire job array completes
 if [ $isBatch ] && [ ! $noPipeline ]; then
@@ -158,7 +192,7 @@ if [ $isBatch ] && [ ! $noPipeline ]; then
 
 	STDOUT_STEP2="${stdoutDir}/runSnowTodayStep2-%j.out"
 
-	# schedule next job in Indux regional pipeline for today
+	# schedule next job in pipeline for today
 	sbatch --dependency=afterok:$SLURM_ARRAY_JOB_ID \
 	       --mail-user=${MAIL} \
 	       --output=${STDOUT_STEP2} \
