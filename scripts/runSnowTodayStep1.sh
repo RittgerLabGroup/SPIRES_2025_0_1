@@ -47,7 +47,7 @@ thisScriptDir="$( cd "$( dirname "${PROGNAME}" )" && pwd )"
 
 usage() {
     echo "" 1>&2
-    echo "Usage: ${PROGNAME} [-h] [-n] [-t TESTLABEL] " 1>&2
+    echo "Usage: ${PROGNAME} [-h] [-n] [-L LABEL] " 1>&2
     echo "       MINDAYS NORTHZTHRESH SOUTHZTHRESH " 1>&2
     echo "       YEARSTART MONTHSTART YEARSTOP MONTHSTOP" 1>&2
     echo "  Runs Step1 in SnowToday pipeline" 1>&2
@@ -59,8 +59,8 @@ usage() {
     echo "Options: "  1>&2
     echo "  -h: display help message and exit" 1>&2
     echo "  -n: no pipeline: suppress starting next pipeline step" 1>&2
-    echo "  -t TESTLABEL: string with test label for directories" 1>&2
-    echo "     default is current operational directories" 1>&2
+    echo "  -L LABEL: string with version label for directories" 1>&2
+    echo "     e.g. for operational processing, use -L v2023.x" 1>&2
     echo "Arguments: " 1>&2
     echo "  MINDAYS : mindays to use for STC cubes, pass to step 2" 1>&2
     echo "  NORTHZTHRESH : Northern altitude threshold (m) to pass to step 2" 1>&2
@@ -70,7 +70,7 @@ usage() {
     echo "  YEARSTOP : year to stop" 1>&2
     echo "  MONTHSTOP : month to stop" 1>&2
     echo "Output: " 1>&2
-    echo "  Output location is controlled in Matlab scripts and -t TESTLABEL " 1>&2
+    echo "  Output location is controlled in Matlab scripts and -L LABEL " 1>&2
     echo "Notes: " 1>&2
     echo "  Scripts stdout/stderr are written to user's scratch " 1>&2
     echo "  where directory /scratch/alpine/$USER/slurm_out_SnowToday/ " 1>&2
@@ -88,15 +88,15 @@ error_exit() {
 }
 
 noPipeline=
-TESTLABEL=
+LABEL=
 
-while getopts "hnt:" opt
+while getopts "hnL:" opt
 do
     case $opt in
 	h) usage
 	   exit 1;;
 	n) noPipeline=1;;
-	t) TESTLABEL="$OPTARG";;
+	L) LABEL="$OPTARG";;
 	?) printf "Unknown option %s\n" $opt
 	   usage
            exit 1;;
@@ -120,8 +120,8 @@ yearStop=$6
 monthStop=$7
 
 options=""
-if [ $TESTLABEL ]; then
-    options="'label', '$TESTLABEL'"
+if [ $LABEL ]; then
+    options="'label', '$LABEL'"
 fi
 
 module purge
@@ -155,14 +155,23 @@ for dataType in mod09ga modscag moddrfs; do
     done
 done
 
+# Do scratch shuffle for required ancillary data
+# FIXME (maybe): it *might* be better to do this shuffle once at the end of Step0,
+# instead of doing it for every Step1 array job
+${thisScriptDir}/scratchShuffleAncillary.sh || \
+    error_exit "Line $LINENO: scratchShuffleAncilllary error"
+
+# The default 
 matlab -nodesktop -nodisplay -r "clear; "\
 "try; "\
+"espEnv = ESPEnv(); "\
 "mData = MODISData($options); "\
 "tiles = MData.tilesFor('westernUS'); "\
 "updateRegionMonthCubes(tiles, "$SLURM_ARRAY_TASK_ID", "\
 "${yearStart}, ${monthStart}, ${yearStop}, ${monthStop}, "\
 "${mindays}, "\
 "'zthresh', ["${northZthresh}" "${southZthresh}"], "\
+"'espEnv', espEnv, "\
 "'mData', mData); "\
 "catch e; "\
 "fprintf('%s: %s\n', e.identifier, e.message); "\
@@ -173,7 +182,7 @@ matlab -nodesktop -nodisplay -r "clear; "\
 # Do the scratch shuffle on Raw/Gap/STC outputs (back from scratch to archive)
 for dataType in mod09_raw scagdrfs_raw scagdrfs_gap scagdrfs_stc; do
     for tile in h08v04 h08v05 h09v04 h09v05 h10v04; do
-	${thisScriptDir}/scratchShuffle.sh FROM ${dataType}_$TESTLABEL ${tile} \
+	${thisScriptDir}/scratchShuffle.sh FROM ${dataType}_$LABEL ${tile} \
 			${yearStart} ${yearStop} || \
 	    error_exit "Line $LINENO: scratchShuffle error ${dataType} ${tile}"
     done
@@ -197,6 +206,7 @@ if [ $isBatch ] && [ ! $noPipeline ]; then
 	       --mail-user=${MAIL} \
 	       --output=${STDOUT_STEP2} \
 	       ${thisScriptDir}/runSnowTodayStep2.sh \
+	       -L $LABEL \
 	       $mindays $northZthresh $southZthresh \
 	       $yearStart $monthStart $yearStop $monthStop
 
