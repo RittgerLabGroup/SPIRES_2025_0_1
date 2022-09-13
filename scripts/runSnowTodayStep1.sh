@@ -23,7 +23,7 @@
 #SBATCH --time 10:00:00
 # On Summit, we asked for 24 tasks, but mem is less per task on alpine
 # On Alpine try, 36
-#SBATCH --ntasks-per-node 36
+#SBATCH --ntasks 32
 #SBATCH --nodes 1
 #SBATCH -o /scratch/alpine/%u/slurm_out_SnowToday/%x-%A_%a.out
 # Set the system up to notify upon completion
@@ -166,7 +166,7 @@ matlab -nodesktop -nodisplay -r "clear; "\
 "try; "\
 "espEnv = ESPEnv(); "\
 "mData = MODISData($options); "\
-"tiles = MData.tilesFor('westernUS'); "\
+"tiles = mData.tilesFor('westernUS'); "\
 "updateRegionMonthCubes(tiles, "$SLURM_ARRAY_TASK_ID", "\
 "${yearStart}, ${monthStart}, ${yearStop}, ${monthStop}, "\
 "${mindays}, "\
