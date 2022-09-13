@@ -10,9 +10,9 @@
 #SBATCH --job-name 2SnTo
 #SBATCH --account ucb-general
 #SBATCH --time=02:00:00
+# Assumes 3.74 GB/per node for total of 52.36 GB RAM
 #SBATCH --ntasks-per-node=14
 #SBATCH --nodes=1
-#SBATCH --mem=40G
 #SBATCH -o /scratch/alpine/%u/slurm_out_SnowToday/%x-%j.out
 # Set the system up to notify upon completion
 #SBATCH --mail-type END,FAIL,INVALID_DEPEND,TIME_LIMIT,REQUEUE,STAGE_OUT
@@ -140,6 +140,12 @@ for dataType in scagdrfs_stc; do
     done
 done
 
+# Do scratch shuffle for required ancillary data
+${thisScriptDir}/scratchShuffleAncillary.sh || \
+    error_exit "Line $LINENO: scratchShuffleAncilllary error"
+
+regionName='westernUS'
+
 matlab -nodesktop -nodisplay -r "clear; "\
 "try; "\
 "espEnv = ESPEnv(); "\
@@ -147,15 +153,24 @@ matlab -nodesktop -nodisplay -r "clear; "\
 "varNames={'snow_fraction', 'viewable_snow_fraction', 'grain_size', "\
 "'drfs_grnsz', 'deltavis', 'radiative_forcing', "\
 "'albedo_mu0', 'albedo_muZ'}; "\
-"updateMosaicFor('westernUS', "\
+"updateMosaicFor('"$regionName"', "\
 "${yearStart}, ${monthStart}, ${yearStop}, ${monthStop}, "\
-"varNames, ${mindays}, "\
-"'zthresh', ["${northZthresh}" "${southZthresh}"]); "\
+"varNames, "\
+"'espEnv', espEnv, "\
+"'mData', mData); "\
 "catch e; "\
 "fprintf('%s: %s\n', e.identifier, e.message); "\
 "exit(-1); "\
 "end; "\
 "exit(0);" || error_exit "Line $LINENO: matlab error."
+
+# Do the scratch shuffle on output daily Mosaics (back from scratch to archive)
+for dataType in scagdrfs; do
+    ${thisScriptDir}/scratchShuffle.sh FROM ${dataType}_$LABEL ${regionName} \
+		    ${yearStart} ${yearStop} || \
+	error_exit "Line $LINENO: scratchShuffle error ${dataType} ${tile}"
+done
+
 
 if [ $isBatch ] && [ ! $noPipeline ]; then
     
@@ -178,6 +193,7 @@ if [ $isBatch ] && [ ! $noPipeline ]; then
 	   --mail-user=${MAIL} \
 	   --output=${STDOUT_STEP3} \
 	   ${thisScriptDir}/runSnowTodayStep3.sh \
+	   -L $LABEL \
 	   $waterYr $mindays $northZthresh $southZthresh
 
 else
