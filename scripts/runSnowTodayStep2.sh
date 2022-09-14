@@ -35,7 +35,6 @@ thisScriptDir="$( cd "$( dirname "${PROGNAME}" )" && pwd )"
 usage() {
     echo "" 1>&2
     echo "Usage: ${PROGNAME} [-h] [-n] [-L LABEL] " 1>&2
-    echo "       MINDAYS NORTHZTHRESH SOUTHZTHRESH" 1>&2
     echo "       YEARSTART MONTHSTART YEARSTOP MONTHSTOP" 1>&2
     echo "  Runs Step2 in SnowToday pipeline" 1>&2
     echo "  Updates WesternUS daily mosaic files for all variables" 1>&2
@@ -48,9 +47,6 @@ usage() {
     echo "  -L LABEL: string with version label for directories" 1>&2
     echo "     e.g. for operational processing, use -L v2023.x" 1>&2
     echo "Arguments: " 1>&2
-    echo "  MINDAYS : mindays to use for STC cubes, pass to step 3" 1>&2
-    echo "  NORTHZTHRESH : Northern altitude threshold (m) to pass to step 3" 1>&2
-    echo "  SOUTHZTHRESH : Southern altitude threshold (m) to pass to step 3" 1>&2
     echo "  YEARSTART : year to begin" 1>&2
     echo "  MONTHSTART : month to begin" 1>&2
     echo "  YEARSTOP : year to stop" 1>&2
@@ -91,19 +87,16 @@ done
 
 shift $(($OPTIND - 1))
 
-[[ "$#" -eq 7 ]] || error_exit "Line $LINENO: Unexpected number of arguments."
+[[ "$#" -eq 4 ]] || error_exit "Line $LINENO: Unexpected number of arguments."
 
 if [ $noPipeline ]; then
     echo "${PROGNAME}: noPipeline mode: this script will not continue pipeline"
 fi
 
-mindays=$1
-northZthresh=$2
-southZthresh=$3
-yearStart=$4
-monthStart=$5
-yearStop=$6
-monthStop=$7
+yearStart=$1
+monthStart=$2
+yearStop=$3
+monthStop=$4
 
 options=""
 if [ $LABEL ]; then
@@ -115,7 +108,7 @@ ml matlab/R2021b
 
 thisHost=$(hostname)
 thisDate=$(date)
-echo "${PROGNAME}: Begin on hostname=$thisHost on $thisDate for yr=$yr and mindays=$mindays"
+echo "${PROGNAME}: Begin on hostname=$thisHost on $thisDate for yr=$yr and options=$options"
 echo "${PROGNAME}: Start = $yearStart, $monthStart"
 echo "${PROGNAME}: Stop  = $yearStop, $monthStop"
 echo "${PROGNAME}: SLURM_SCRATCH=$SLURM_SCRATCH"
@@ -168,7 +161,7 @@ matlab -nodesktop -nodisplay -r "clear; "\
 for dataType in scagdrfs; do
     ${thisScriptDir}/scratchShuffle.sh FROM ${dataType}_$LABEL ${regionName} \
 		    ${yearStart} ${yearStop} || \
-	error_exit "Line $LINENO: scratchShuffle error ${dataType} ${tile}"
+	error_exit "Line $LINENO: scratchShuffle error ${dataType} ${LABEL} ${regionName}"
 done
 
 
@@ -193,8 +186,7 @@ if [ $isBatch ] && [ ! $noPipeline ]; then
 	   --mail-user=${MAIL} \
 	   --output=${STDOUT_STEP3} \
 	   ${thisScriptDir}/runSnowTodayStep3.sh \
-	   -L $LABEL \
-	   $waterYr $mindays $northZthresh $southZthresh
+	   -L $LABEL $waterYr
 
 else
     

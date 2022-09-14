@@ -8,16 +8,17 @@
 #
 
 #SBATCH --qos normal
-#SBATCH --job-name 3_SnowToday
-#SBATCH --account=ucb188_summit2
+#SBATCH --partition amilan
+#SBATCH --job-name 3SnTo
+#SBATCH --account=ucb-general
 #SBATCH --time=08:00:00
-#SBATCH --ntasks-per-node=20
-#SBATCH --mem=90G
+# Assumes 3.74 GB/per node for total of 89.76 GB RAM
+#SBATCH --ntasks-per-node=24
 #SBATCH --nodes=1
-#SBATCH -o /scratch/summit/%u/slurm_out_SnowToday/runSnowTodayStep3-%A_%a.out
+#SBATCH -o /scratch/alpine/%u/slurm_out_SnowToday/%x_%a.out
 # Set the system up to notify upon completion
-#SBATCH --mail-type=FAIL,REQUEUE,STAGE_OUT
-#SBATCH --mail-user=brodzik@nsidc.org
+#SBATCH --mail-type END,FAIL,INVALID_DEPEND,TIME_LIMIT,REQUEUE,STAGE_OUT
+#SBATCH --mail-user brodzik@colorado.edu
 #SBATCH --array=10-12
 
 # Grab the full path to this script
@@ -36,23 +37,21 @@ thisScriptDir="$( cd "$( dirname "${PROGNAME}" )" && pwd )"
 
 usage() {
     echo "" 1>&2
-    echo "Usage: ${PROGNAME} [-h] [-n] WATERYR " 1>&2
-    echo "       MINDAYS NORTHZTHRESH SOUTHZTHRESH" 1>&2
+    echo "Usage: ${PROGNAME} [-h] [-n] [-L LABEL] WATERYR" 1>&2
     echo "  Calculates ST statistics files to date for this WATERYR" 1>&2
     echo "  Job array for each region group (10=westUS, 11=States, 12=HUC2)" 1>&2
     echo "Options: "  1>&2
     echo "  -h: display help message and exit" 1>&2
     echo "  -n: no pipeline: suppress starting next pipeline step" 1>&2
+    echo "  -L LABEL: string with version label for directories" 1>&2
+    echo "     e.g. for operational processing, use -L v2023.x" 1>&2
     echo "Arguments: " 1>&2
     echo "  THISYR : stats will be calculated for this WATERYR (begins Oct 1)" 1>&2
-    echo "  MINDAYS : mindays to use for mosaic directories" 1>&2
-    echo "  NORTHZTHRESH : Northern altitude threshold (m) " 1>&2
-    echo "  SOUTHZTHRESH : Southern altitude threshold (m) " 1>&2
     echo "Output: " 1>&2
     echo "  Output location is controlled in Matlab scripts " 1>&2
     echo "Notes: " 1>&2
     echo "  Scripts stdout/stderr are written to user's scratch " 1>&2
-    echo "  where directory /scratch/summit/$USER/slurm_out_SnowToday/ " 1>&2
+    echo "  where directory /scratch/alpine/$USER/slurm_out_SnowToday/ " 1>&2
     echo "  is assumed to exist" 1>&2
 }
 
@@ -67,13 +66,15 @@ error_exit() {
 }
 
 noPipeline=
+LABEL=
 
-while getopts "hn" opt
+while getopts "hnL:" opt
 do
     case $opt in
 	h) usage
 	   exit 1;;
 	n) noPipeline=1;;
+	L) LABEL="$OPTARG";;
 	?) printf "Unknown option %s\n" $opt
 	   usage
            exit 1;;
@@ -82,48 +83,68 @@ done
 
 shift $(($OPTIND - 1))
 
-[[ "$#" -eq 4 ]] || error_exit "Line $LINENO: Unexpected number of arguments."
+[[ "$#" -eq 1 ]] || error_exit "Line $LINENO: Unexpected number of arguments."
 
 if [ $noPipeline ]; then
     echo "${PROGNAME}: noPipeline mode: this script will not continue pipeline"
 fi
 
 waterYr=$1
-mindays=$2
-northZthresh=$3
-southZthresh=$4
+
+options=""
+if [ $LABEL ]; then
+    options="'label', '$LABEL'"
+fi
 
 module purge
-ml matlab/R2019b
+ml matlab/R2021b
 
 thisHost=$(hostname)
 thisDate=$(date)
-echo "${PROGNAME}: Begin on hostname=$thisHost on $thisDate for waterYr=$waterYr and mindays=$mindays, zthresh=[$northZthresh $southZthresh]"
+echo "${PROGNAME}: Begin on hostname=$thisHost on $thisDate for waterYr=$waterYr and options=$options"
 echo "${PROGNAME}: SLURM_SCRATCH=$SLURM_SCRATCH"
 echo "${PROGNAME}: SLURM_JOB_ID=$SLURM_JOB_ID"
 echo "${PROGNAME}: SLURM_ARRAY_JOB_ID=$SLURM_ARRAY_JOB_ID"
 
 #Make a unique temporary directory for matlab job storage
-#Set TMPDIR to this location so job array uses it for tmp location
-mkdir -p $SLURM_SCRATCH/$SLURM_ARRAY_JOB_ID
-export TMPDIR=$SLURM_SCRATCH/$SLURM_ARRAY_JOB_ID
+#Set TMPDIR/TMP to this location so job array uses it for tmp location
+tmpDir=/scratch/alpine/${USER}/matlabTmp/alpine-$SLURM_ARRAY_JOB_ID
+mkdir -p $tmpDir
+export TMPDIR=$tmpDir
+export TMP=$tmpDir
 
 #Go to parent of this script, so that correct pathdef.m file is used
 cd "${thisScriptDir}/../"
 
+# Do the scratch shuffle on input daily Mosaics (to scratch for speed)
+regionName='westernUS'
+for dataType in scagdrfs; do
+    ${thisScriptDir}/scratchShuffle.sh TO ${dataType}_$LABEL ${regionName} \
+		    ${yearStart} ${yearStop} || \
+	error_exit "Line $LINENO: scratchShuffle error ${dataType} ${LABEL} ${regionName}"
+done
+
+# Do scratch shuffle for required ancillary data
+${thisScriptDir}/scratchShuffleAncillary.sh || \
+    error_exit "Line $LINENO: scratchShuffleAncillary error"
+    
 matlab -nodesktop -nodisplay -r "clear; "\
 "try; "\
+"espEnv = ESPEnv(); "\
+"mData = MODISData($options); "\
 "minSCP = minSCPForLinePlots(); "\
 "minZ = minZForLinePlots(); "\
-"runStatsForLinePlots('westernUS', "$SLURM_ARRAY_TASK_ID", "\
-"${waterYr}, ${waterYr}, "\
-"minSCP, minZ, ${mindays}, "\
-"["${northZthresh}" "${southZthresh}"]); "\
+"runStatsForLinePlots(espEnv, mData, "\
+"'westernUS', "$SLURM_ARRAY_TASK_ID", ${waterYr}, ${waterYr}, "\
+"minSCP, minZ); "\
 "catch e; "\
 "fprintf('%s: %s\n', e.identifier, e.message); "\
 "exit(-1); "\
 "end; "\
 "exit(0);" || error_exit "Line $LINENO: matlab error."
+
+# Do scratch shuffle on output statistics files back from scratch to archive
+#TBD
 
 #schedule next job in pipeline to run after entire job array completes
 if [ $isBatch ] && [ ! $noPipeline ]; then
@@ -142,8 +163,7 @@ if [ $isBatch ] && [ ! $noPipeline ]; then
 	sbatch --dependency=afterok:$SLURM_ARRAY_JOB_ID \
 	       --mail-user=${MAIL} \
 	       --output=${STDOUT_STEP4} \
-	       ${thisScriptDir}/runSnowTodayStep4.sh \
-	       $mindays $northZthresh $southZthresh
+	       ${thisScriptDir}/runSnowTodayStep4.sh -L $LABEL
 
     fi
     

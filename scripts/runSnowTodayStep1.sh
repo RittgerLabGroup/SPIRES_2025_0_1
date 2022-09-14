@@ -62,9 +62,9 @@ usage() {
     echo "  -L LABEL: string with version label for directories" 1>&2
     echo "     e.g. for operational processing, use -L v2023.x" 1>&2
     echo "Arguments: " 1>&2
-    echo "  MINDAYS : mindays to use for STC cubes, pass to step 2" 1>&2
-    echo "  NORTHZTHRESH : Northern altitude threshold (m) to pass to step 2" 1>&2
-    echo "  SOUTHZTHRESH : Southern altitude threshold (m) to pass to step 2" 1>&2
+    echo "  MINDAYS : mindays to use for STC cubes" 1>&2
+    echo "  NORTHZTHRESH : Northern altitude threshold (m)" 1>&2
+    echo "  SOUTHZTHRESH : Southern altitude threshold (m)" 1>&2
     echo "  YEARSTART : year to begin" 1>&2
     echo "  MONTHSTART : month to begin" 1>&2
     echo "  YEARSTOP : year to stop" 1>&2
@@ -158,11 +158,9 @@ for dataType in mod09ga modscag moddrfs; do
 done
 
 # Do scratch shuffle for required ancillary data
-# FIXME (maybe): it *might* be better to do this shuffle once at the end of Step0,
-# instead of doing it for every Step1 array job
 ${thisScriptDir}/scratchShuffleAncillary.sh || \
-    error_exit "Line $LINENO: scratchShuffleAncilllary error"
-
+    error_exit "Line $LINENO: scratchShuffleAncillary error"
+    
 # The default 
 matlab -nodesktop -nodisplay -r "clear; "\
 "try; "\
@@ -207,7 +205,6 @@ if [ $isBatch ] && [ ! $noPipeline ]; then
 	       --output=${STDOUT_STEP2} \
 	       ${thisScriptDir}/runSnowTodayStep2.sh \
 	       -L $LABEL \
-	       $mindays $northZthresh $southZthresh \
 	       $yearStart $monthStart $yearStop $monthStop
 
     fi
