@@ -72,7 +72,7 @@ error_exit() {
 }
 
 module purge
-ml matlab/R2019b
+ml matlab/R2021b
 date
 
 startyyyymmdd=

@@ -12,16 +12,17 @@
 #
 
 #SBATCH --qos normal
-#SBATCH --job-name 3_HistoricalST
-#SBATCH --account=ucb188_summit2
+#SBATCH --partition amilan
+#SBATCH --job-name 3HistST
+#SBATCH --account=ucb-general
 #SBATCH --time=04:00:00
+# Assumes 3.74 GB/per node for total of 89.76 GB RAM
 #SBATCH --ntasks-per-node=24
-#   SBATCH --mem=90G
 #SBATCH --nodes=1
-#SBATCH -o /scratch/summit/%u/slurm_out_SnowToday/runSnowTodayStep3Historical-%A_%a.out
+#SBATCH -o /scratch/alpine/%u/slurm_out_SnowToday/%x-%A_%a.out
 # Set the system up to notify upon completion
-#SBATCH --mail-type=END,FAIL,REQUEUE,STAGE_OUT
-#SBATCH --mail-user=brodzik@nsidc.org
+#SBATCH --mail-type END,FAIL,INVALID_DEPEND,TIME_LIMIT,REQUEUE,STAGE_OUT
+#SBATCH --mail-user brodzik@colorado.edu
 #SBATCH --array=10-12
 
 # Grab the full path to this script
@@ -40,23 +41,22 @@ thisScriptDir="$( cd "$( dirname "${PROGNAME}" )" && pwd )"
 
 usage() {
     echo "" 1>&2
-    echo "Usage: ${PROGNAME} [-h] WATERYR MINDAYS NORTHZTHRESH SOUTHZTHRESH" 1>&2
+    echo "Usage: ${PROGNAME} [-h] [-L LABEL] WATERYR" 1>&2
     echo "  Calculates annual updates to ST statistics files prior to WATERYR" 1>&2
     echo "  So for this script to run in Oct 2021, set WATERYR to 2022" 1>&2
     echo "  Job array for each region group (10=westUS, 11=States, 12=HUC2)" 1>&2
     echo "  Run this script once annually, on or after Oct 1" 1>&2
     echo "Options: "  1>&2
     echo "  -h: display help message and exit" 1>&2
+    echo "  -L LABEL: string with version label for directories" 1>&2
+    echo "     e.g. for operational processing, use -L v2023.x" 1>&2
     echo "Arguments: " 1>&2
     echo "  THISYR : stats will be calculated for 2001 to (THISYR - 1)" 1>&2
-    echo "  MINDAYS : mindays to use for mosaic directories" 1>&2
-    echo "  NORTHZTHRESH : Northern altitude threshold (m) " 1>&2
-    echo "  SOUTHZTHRESH : Southern altitude threshold (m) " 1>&2
     echo "Output: " 1>&2
     echo "  Output location is controlled in Matlab scripts " 1>&2
     echo "Notes: " 1>&2
     echo "  Scripts stdout/stderr are written to user's scratch " 1>&2
-    echo "  where directory /scratch/summit/$USER/slurm_out_SnowToday/ " 1>&2
+    echo "  where directory /scratch/alpine/$USER/slurm_out_SnowToday/ " 1>&2
     echo "  is assumed to exist" 1>&2
 }
 
@@ -70,11 +70,14 @@ error_exit() {
     exit 1
 }
 
-while getopts "h" opt
+LABEL=
+
+while getopts "hL:" opt
 do
     case $opt in
 	h) usage
 	   exit 1;;
+	L) LABEL="$OPTARG";;
 	?) printf "Unknown option %s\n" $opt
 	   usage
            exit 1;;
@@ -83,41 +86,65 @@ done
 
 shift $(($OPTIND - 1))
 
-[[ "$#" -eq 4 ]] || error_exit "Line $LINENO: Unexpected number of arguments."
+[[ "$#" -eq 1 ]] || error_exit "Line $LINENO: Unexpected number of arguments."
 
 waterYr=$1
-mindays=$2
-northZthresh=$3
-southZthresh=$4
+
+options=""
+if [ $LABEL ]; then
+    options="'label', '$LABEL'"
+fi
 
 module purge
-ml matlab/R2019b
+ml matlab/R2021b
 
 startWaterYr=2001
 stopWaterYr=$(( $waterYr - 1 ))
 
 thisHost=$(hostname)
 thisDate=$(date)
-echo "${PROGNAME}: Begin on hostname=$thisHost on $thisDate for array job=$SLURM_ARRAY_TASK_ID and WY=$startWaterYr to $stopWaterYr and mindays=$mindays, zthresh=[$northZthresh $southZthresh]"
+echo "${PROGNAME}: Begin on hostname=$thisHost on $thisDate for array job=$SLURM_ARRAY_TASK_ID and WY=$startWaterYr to $stopWaterYr and options=$options"
 echo "${PROGNAME}: SLURM_SCRATCH=$SLURM_SCRATCH"
 echo "${PROGNAME}: SLURM_JOB_ID=$SLURM_JOB_ID"
 echo "${PROGNAME}: SLURM_ARRAY_JOB_ID=$SLURM_ARRAY_JOB_ID"
 
 #Make a unique temporary directory for matlab job storage
-#Set TMPDIR to this location so job array uses it for tmp location
-mkdir -p $SLURM_SCRATCH/$SLURM_ARRAY_JOB_ID
-export TMPDIR=$SLURM_SCRATCH/$SLURM_ARRAY_JOB_ID
+#Set TMPDIR/TMP to this location so job array uses it for tmp location
+tmpDir=/scratch/alpine/${USER}/matlabTmp/alpine-$SLURM_ARRAY_JOB_ID
+mkdir -p $tmpDir
+export TMPDIR=$tmpDir
+export TMP=$tmpDir
 
 #Go to parent of this script, so that correct pathdef.m file is used
 cd "${thisScriptDir}/../"
 
+# Do the scratch shuffle on complete set of input daily Mosaics (to scratch for speed)
+regionName='westernUS'
+yearStart=$(( $startWaterYr - 1 ))
+yearStop=$waterYr
+for dataType in scagdrfs; do
+    ${thisScriptDir}/scratchShuffle.sh TO ${dataType}_$LABEL ${regionName} \
+		    ${yearStart} ${yearStop} || \
+	error_exit "Line $LINENO: scratchShuffle error ${dataType} ${LABEL} ${regionName}"
+done
+
+# Do scratch shuffle for required ancillary data
+${thisScriptDir}/scratchShuffleAncillary.sh || \
+    error_exit "Line $LINENO: scratchShuffleAncillary error"
+    
 matlab -nodesktop -nodisplay -r "clear; "\
+"try; "\
+"espEnv = ESPEnv(); "\
+"mData = MODISData($options); "\
 "minSCP = minSCPForLinePlots(); "\
 "minZ = minZForLinePlots(); "\
-"runStatsForLinePlots('westernUS', "$SLURM_ARRAY_TASK_ID", "\
-"${startWaterYr}, ${stopWaterYr}, "\
-"minSCP, minZ, ${mindays}, "\
-"["${northZthresh}" "${southZthresh}"]); "\
+"runStatsForLinePlots(espEnv, mData, "\
+"'westernUS', "$SLURM_ARRAY_TASK_ID", ${startWaterYr}, ${stopWaterYr}, "\
+"minSCP, minZ); "\
+"catch e; "\
+"fprintf('%s: %s\n', e.identifier, e.message); "\
+"exit(-1); "\
+"end; "\
 "exit(0);"  || error_exit "Line $LINENO: matlab error."
 
 #Clean up temporary directory for matlab job storage
