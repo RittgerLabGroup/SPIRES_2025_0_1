@@ -152,8 +152,8 @@ cd "${thisScriptDir}/../"
 TILES=(h08v04 h08v05 h09v04 h09v05 h10v04)
 idx=$((SLURM_ARRAY_TASK_ID - 1));
 for dataType in mod09ga modscag moddrfs; do
-    ${thisScriptDir}/scratchShuffle.sh TO ${dataType}/NRT ${TILES[$idx]} \
-		    ${yearStart} ${yearStop} || \
+    ${thisScriptDir}/scratchShuffle.sh TO -b ${yearStart} -e ${yearStop} \
+		    ${dataType}/NRT ${TILES[$idx]} || \
 	error_exit "Line $LINENO: scratchShuffle error ${dataType} ${tile}"
 done
 
@@ -181,8 +181,8 @@ matlab -nodesktop -nodisplay -r "clear; "\
 
 # Do the scratch shuffle on Raw/Gap/STC outputs (back from scratch to archive)
 for dataType in mod09_raw scagdrfs_raw scagdrfs_gap scagdrfs_stc; do
-    ${thisScriptDir}/scratchShuffle.sh FROM ${dataType}_$LABEL ${TILES[$idx]} \
-		    ${yearStart} ${yearStop} || \
+    ${thisScriptDir}/scratchShuffle.sh FROM -b ${yearStart} -e ${yearStop} \
+		    intermediary/${dataType}_$LABEL ${TILES[$idx]} || \
 	error_exit "Line $LINENO: scratchShuffle error ${dataType} ${tile}"
 done
 

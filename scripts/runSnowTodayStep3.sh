@@ -118,9 +118,9 @@ cd "${thisScriptDir}/../"
 
 # Do the scratch shuffle on input daily Mosaics (to scratch for speed)
 regionName='westernUS'
-for dataType in scagdrfs; do
-    ${thisScriptDir}/scratchShuffle.sh TO ${dataType}_$LABEL ${regionName} \
-		    ${yearStart} ${yearStop} || \
+for dataType in scagdrfs_mat; do
+    ${thisScriptDir}/scratchShuffle.sh -b ${yearStart} -e ${yearStop} \
+		    TO variables/${dataType}_$LABEL ${regionName} || \
 	error_exit "Line $LINENO: scratchShuffle error ${dataType} ${LABEL} ${regionName}"
 done
 
@@ -144,7 +144,9 @@ matlab -nodesktop -nodisplay -r "clear; "\
 "exit(0);" || error_exit "Line $LINENO: matlab error."
 
 # Do scratch shuffle on output statistics files back from scratch to archive
-#TBD
+dataType=regional_stats/scagdrfs_mat
+${thisScriptDir}/scratchShuffle.sh FROM ${dataType}_$LABEL ${regionName} || \
+    error_exit "Line $LINENO: scratchShuffle error ${dataType} ${LABEL} ${regionName}"
 
 #schedule next job in pipeline to run after entire job array completes
 if [ $isBatch ] && [ ! $noPipeline ]; then
