@@ -38,9 +38,6 @@ function runStatsForLinePlots(espEnv, mData, ...
 
 % Copyright 2020 The Regents of the University of Colorado
 
-    % for testing purposes, writes output file to test location
-    doTest = 0;
-
     partitionName = Regions.getPartitionNameFor(partitionNum);
     
     % Calculation will be for water years, beginning Oct 1.
@@ -109,7 +106,7 @@ function runStatsForLinePlots(espEnv, mData, ...
     
     % Save all (overwrites previous file)
     summaryFile = espEnv.SummarySnowFile(mData, ...
-        regionName, partitionName, yrs(1), yrs(end), doTest);
+        regionName, partitionName, yrs(1), yrs(end));
     [folder, ~, ~] = fileparts(summaryFile);
     if ~exist(folder, 'dir')
         mkdir(folder);
