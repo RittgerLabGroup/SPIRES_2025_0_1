@@ -8,15 +8,16 @@
 #
 
 #SBATCH --qos normal
-#SBATCH --job-name 0_SnowToday
-#SBATCH --account=ucb188_summit2
-#SBATCH --time=05:00:00
-#SBATCH --ntasks-per-node=6
+#SBATCH --partition amilan
+#SBATCH --job-name 0SnTo
+#SBATCH --account ucb-general
+#SBATCH --time 05:00:00
+#SBATCH --ntasks-per-node 6
 #SBATCH --nodes=1
-#SBATCH -o /scratch/summit/%u/slurm_out_SnowToday/runSnowTodayStep0-%j.out
+#SBATCH -o /scratch/alpine/%u/slurm_out_SnowToday/%x-%j.out
 # Set the system up to notify upon completion
-#SBATCH --mail-type=FAIL,REQUEUE,STAGE_OUT
-#SBATCH --mail-user=brodzik@nsidc.org
+#SBATCH --mail-type END,FAIL,INVALID_DEPEND,TIME_LIMIT,REQUEUE,STAGE_OUT
+#SBATCH --mail-user brodzik@colorado.edu
 
 # Grab the full path to this script
 # depends on whether it's running as sbatch job
@@ -71,7 +72,7 @@ error_exit() {
 }
 
 module purge
-ml matlab/R2019b
+ml matlab/R2021b
 date
 
 startyyyymmdd=
