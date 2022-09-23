@@ -6,16 +6,17 @@
 #
 
 #SBATCH --qos normal
-#SBATCH --job-name 2_SnowToday
-#SBATCH --account=ucb188_summit2
+#SBATCH --partition amilan
+#SBATCH --job-name 2SnTo
+#SBATCH --account ucb-general
 #SBATCH --time=02:00:00
-#SBATCH --ntasks-per-node=10
+# Assumes 3.74 GB/per node for total of 52.36 GB RAM
+#SBATCH --ntasks-per-node=14
 #SBATCH --nodes=1
-#SBATCH --mem=40G
-#SBATCH -o /scratch/summit/%u/slurm_out_SnowToday/runSnowTodayStep2-%j.out
+#SBATCH -o /scratch/alpine/%u/slurm_out_SnowToday/%x-%j.out
 # Set the system up to notify upon completion
-#SBATCH --mail-type=FAIL,REQUEUE,STAGE_OUT
-#SBATCH --mail-user=brodzik@nsidc.org
+#SBATCH --mail-type END,FAIL,INVALID_DEPEND,TIME_LIMIT,REQUEUE,STAGE_OUT
+#SBATCH --mail-user brodzik@colorado.edu
 
 # Grab the full path to this script
 # depends on whether it's running as sbatch job
@@ -33,7 +34,7 @@ thisScriptDir="$( cd "$( dirname "${PROGNAME}" )" && pwd )"
 
 usage() {
     echo "" 1>&2
-    echo "Usage: ${PROGNAME} [-h] [-n] MINDAYS NORTHZTHRESH SOUTHZTHRESH" 1>&2
+    echo "Usage: ${PROGNAME} [-h] [-n] [-L LABEL] " 1>&2
     echo "       YEARSTART MONTHSTART YEARSTOP MONTHSTOP" 1>&2
     echo "  Runs Step2 in SnowToday pipeline" 1>&2
     echo "  Updates WesternUS daily mosaic files for all variables" 1>&2
@@ -43,19 +44,18 @@ usage() {
     echo "Options: "  1>&2
     echo "  -h: display help message and exit" 1>&2
     echo "  -n: no pipeline: suppress starting next pipeline step" 1>&2
+    echo "  -L LABEL: string with version label for directories" 1>&2
+    echo "     e.g. for operational processing, use -L v2023.x" 1>&2
     echo "Arguments: " 1>&2
-    echo "  MINDAYS : mindays to use for STC cubes, pass to step 3" 1>&2
-    echo "  NORTHZTHRESH : Northern altitude threshold (m) to pass to step 3" 1>&2
-    echo "  SOUTHZTHRESH : Southern altitude threshold (m) to pass to step 3" 1>&2
     echo "  YEARSTART : year to begin" 1>&2
     echo "  MONTHSTART : month to begin" 1>&2
     echo "  YEARSTOP : year to stop" 1>&2
     echo "  MONTHSTOP : month to stop" 1>&2
     echo "Output: " 1>&2
-    echo "  Output location is controlled in Matlab scripts " 1>&2
+    echo "  Output location is controlled in Matlab scripts and -L LABEL " 1>&2
     echo "Notes: " 1>&2
     echo "  Scripts stdout/stderr are written to user's scratch " 1>&2
-    echo "  where directory /scratch/summit/$USER/slurm_out_SnowToday/ " 1>&2
+    echo "  where directory /scratch/alpine/$USER/slurm_out_SnowToday/ " 1>&2
     echo "  is assumed to exist" 1>&2
 }
 
@@ -70,13 +70,15 @@ error_exit() {
 }
 
 noPipeline=
+LABEL=
 
-while getopts "hn" opt
+while getopts "hnL:" opt
 do
     case $opt in
 	h) usage
 	   exit 1;;
 	n) noPipeline=1;;
+	L) LABEL="$OPTARG";;
 	?) printf "Unknown option %s\n" $opt
 	   usage
            exit 1;;
@@ -85,53 +87,83 @@ done
 
 shift $(($OPTIND - 1))
 
-[[ "$#" -eq 7 ]] || error_exit "Line $LINENO: Unexpected number of arguments."
+[[ "$#" -eq 4 ]] || error_exit "Line $LINENO: Unexpected number of arguments."
 
 if [ $noPipeline ]; then
     echo "${PROGNAME}: noPipeline mode: this script will not continue pipeline"
 fi
 
-mindays=$1
-northZthresh=$2
-southZthresh=$3
-yearStart=$4
-monthStart=$5
-yearStop=$6
-monthStop=$7
+yearStart=$1
+monthStart=$2
+yearStop=$3
+monthStop=$4
+
+options=""
+if [ $LABEL ]; then
+    options="'label', '$LABEL'"
+fi
 
 module purge
-ml matlab/R2019b
+ml matlab/R2021b
 
 thisHost=$(hostname)
 thisDate=$(date)
-echo "${PROGNAME}: Begin on hostname=$thisHost on $thisDate for yr=$yr and mindays=$mindays"
+echo "${PROGNAME}: Begin on hostname=$thisHost on $thisDate for yr=$yr and options=$options"
 echo "${PROGNAME}: Start = $yearStart, $monthStart"
 echo "${PROGNAME}: Stop  = $yearStop, $monthStop"
 echo "${PROGNAME}: SLURM_SCRATCH=$SLURM_SCRATCH"
 echo "${PROGNAME}: SLURM_JOB_ID=$SLURM_JOB_ID"
 
 #Make a unique temporary directory for matlab job storage
-#Set TMPDIR to this location so job array uses it for tmp location
-mkdir -p $SLURM_SCRATCH/$SLURM_JOB_ID
-export TMPDIR=$SLURM_SCRATCH/$SLURM_JOB_ID
+#Set TMPDIR/TMP to this location so job array uses it for tmp location
+tmpDir=/scratch/alpine/${USER}/matlabTmp/alpine-$SLURM_JOB_ID
+mkdir -p $tmpDir
+export TMPDIR=$tmpDir
+export TMP=$tmpDir
 
 #Go to parent of this script, so that correct pathdef.m file is used
 cd "${thisScriptDir}/../"
 
+# Do the scratch shuffle on required STC inputs
+for dataType in scagdrfs_stc; do
+    for tile in h08v04 h08v05 h09v04 h09v05 h10v04; do
+	${thisScriptDir}/scratchShuffle.sh TO -b ${yearStart} -e ${yearStop} \
+			intermediary/${dataType}_$LABEL ${tile} || \
+	    error_exit "Line $LINENO: scratchShuffle error ${dataType} ${tile}"
+    done
+done
+
+# Do scratch shuffle for required ancillary data
+${thisScriptDir}/scratchShuffleAncillary.sh || \
+    error_exit "Line $LINENO: scratchShuffleAncilllary error"
+
+regionName='westernUS'
+
 matlab -nodesktop -nodisplay -r "clear; "\
 "try; "\
+"espEnv = ESPEnv(); "\
+"mData = MODISData($options); "\
 "varNames={'snow_fraction', 'viewable_snow_fraction', 'grain_size', "\
 "'drfs_grnsz', 'deltavis', 'radiative_forcing', "\
 "'albedo_mu0', 'albedo_muZ'}; "\
-"updateMosaicFor('westernUS', "\
+"updateMosaicFor('"$regionName"', "\
 "${yearStart}, ${monthStart}, ${yearStop}, ${monthStop}, "\
-"varNames, ${mindays}, "\
-"'zthresh', ["${northZthresh}" "${southZthresh}"]); "\
+"varNames, "\
+"'espEnv', espEnv, "\
+"'mData', mData); "\
 "catch e; "\
 "fprintf('%s: %s\n', e.identifier, e.message); "\
 "exit(-1); "\
 "end; "\
 "exit(0);" || error_exit "Line $LINENO: matlab error."
+
+# Do the scratch shuffle on output daily Mosaics (back from scratch to archive)
+for dataType in scagdrfs_mat; do
+    ${thisScriptDir}/scratchShuffle.sh -b ${yearStart} -e ${yearStop} \
+		    FROM variables/${dataType}_$LABEL ${regionName} || \
+	error_exit "Line $LINENO: scratchShuffle error ${dataType} ${LABEL} ${regionName}"
+done
+
 
 if [ $isBatch ] && [ ! $noPipeline ]; then
     
@@ -154,7 +186,7 @@ if [ $isBatch ] && [ ! $noPipeline ]; then
 	   --mail-user=${MAIL} \
 	   --output=${STDOUT_STEP3} \
 	   ${thisScriptDir}/runSnowTodayStep3.sh \
-	   $waterYr $mindays $northZthresh $southZthresh
+	   -L $LABEL $waterYr
 
 else
     
