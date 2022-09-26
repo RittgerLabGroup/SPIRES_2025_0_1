@@ -17,7 +17,7 @@
 #SBATCH -o /scratch/alpine/%u/slurm_out_SnowToday/%x-%j.out
 # Set the system up to notify upon completion
 #SBATCH --mail-type END,FAIL,INVALID_DEPEND,TIME_LIMIT,REQUEUE,STAGE_OUT
-#SBATCH --mail-user brodzik@colorado.edu
+#SBATCH --mail-user brodzik@colorado.edu,crumlyd@nsidc.org
 
 # Grab the full path to this script
 # depends on whether it's running as sbatch job
