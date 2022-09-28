@@ -75,8 +75,10 @@ module purge
 ml matlab/R2021b
 date
 
-startyyyymmdd=
+# Start the stopwatch
+SECONDS=0
 
+startyyyymmdd=
 noPipeline=
 
 while getopts "hns:" opt
@@ -183,6 +185,10 @@ if [ $isBatch ] && [ ! $noPipeline ]; then
 	   $yearStart $monthStart $yearStop $monthStop
 
 fi
+
+# Stop the stopwatch and report elapsed time
+elapsedSeconds=$SECONDS
+TZ=UTC0 printf '${PROGNAME}: Duration: %(%H:%M:%S)T\n' "$elapsedSeconds"
 
 thisDate=$(date)
 echo "${PROGNAME}: Done on hostname=$thisHost on $thisDate"

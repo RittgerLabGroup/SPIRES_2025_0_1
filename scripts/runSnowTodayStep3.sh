@@ -99,6 +99,9 @@ fi
 module purge
 ml matlab/R2021b
 
+# Start the stopwatch
+SECONDS=0
+
 thisHost=$(hostname)
 thisDate=$(date)
 echo "${PROGNAME}: Begin on hostname=$thisHost on $thisDate for waterYr=$waterYr and options=$options"
@@ -174,6 +177,10 @@ fi
 #Clean up temporary directory for matlab job storage
 echo "${PROGNAME}: Removing TMPDIR=$TMPDIR..."
 rm -rf $TMPDIR
+
+# Stop the stopwatch and report elapsed time
+elapsedSeconds=$SECONDS
+TZ=UTC0 printf '${PROGNAME}: Duration: %(%H:%M:%S)T\n' "$elapsedSeconds"
 
 thisDate=$(date)
 echo "${PROGNAME}: Done on hostname=$thisHost on $thisDate"
