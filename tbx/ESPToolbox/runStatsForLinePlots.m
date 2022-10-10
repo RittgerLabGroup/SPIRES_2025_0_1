@@ -62,7 +62,8 @@ function runStatsForLinePlots(espEnv, mData, ...
     end
     
     % Elevation dataset and elevation threshold to use
-    elevationFile = espEnv.modisElevationFile(regionName);
+    regions = Regions(regionName, [regionName '_mask'], espEnv, mData);
+    elevationFile = espEnv.elevationFile(regions);
     
     % Get the number of region partition areas
     partitions = Regions(partitionName);
@@ -232,6 +233,7 @@ function [datevalsYr, sca_area_km2_yr, scd_sum_yr, albedo_yr, ...
 
 % Copyright 2020 The Regents of the University of Colorado
 
+regions = Regions(regionName, [regionName '_mask'], espEnv, mData);
 datevalsYr = datenum([waterYr-1 10 1 12 0 0]):...
     datenum([waterYr 9 30 12 0 0]);
 
@@ -261,8 +263,8 @@ for d=1:length(datevalsYr)
     thisYr = year(datevalsYr(d));
     thisMonth = month(datevalsYr(d));
     thisDay = day(datevalsYr(d));
-    mosaicFile = espEnv.MosaicFile(mData, regionName, ...
-        thisYr, thisMonth, thisDay);
+    thisDatetime = datetime(thisYr, thisMonth, thisDay);
+    mosaicFile = espEnv.MosaicFile(regions, thisDatetime);
     
     % Warning if a date is missing
     if ~isfile(mosaicFile)
