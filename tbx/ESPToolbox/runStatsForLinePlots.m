@@ -61,8 +61,15 @@ function runStatsForLinePlots(espEnv, mData, ...
         error(errorStruct);
     end
     
+    for y=1:length(yrs)        
+        datetimes(y) = datetime(yrs(y), 9, 30);
+    end
+    if yrs(end) == year(datetime) 
+        datetimes(end) = datetime();
+    end
+    
     % Elevation dataset and elevation threshold to use
-    regions = Regions(regionName, [regionName '_mask'], espEnv, mData);
+    regions = Regions(regionName, partitionName, espEnv, mData);
     elevationFile = espEnv.elevationFile(regions);
     
     % Get the number of region partition areas
@@ -84,7 +91,7 @@ function runStatsForLinePlots(espEnv, mData, ...
 
     % Start or connect to the local pool
     % Assumes that caller has set this!
-    S = configParPool('jobStorageLocation', getenv('TMPDIR'));
+    S = espEnv.configParallelismPool();
     addAttachedFiles(S.pool, {elevationFile});
     
     %fprintf(['%s: PARFOR LOOP FOR YEARS DISABLED ' ...
@@ -189,6 +196,13 @@ function runStatsForLinePlots(espEnv, mData, ...
         
     end
 
+    parfor dateIdx=1:length(datetimes)
+        waterYearDate = WaterYearDate(datetimes(dateIdx), 12);
+        regions.runWriteStats(waterYearDate);
+    end
+    fprintf(['%s: Stats written in csv files\n'], ...
+            mfilename());
+    
 end
 
 function [datevalsYr, sca_area_km2_yr, scd_sum_yr, albedo_yr, ...
