@@ -62,7 +62,8 @@ function runStatsForLinePlots(espEnv, mData, ...
     end
     
     for y=1:length(yrs)        
-        datetimes(y) = datetime(yrs(y), 9, 30);
+        datetimes(y) = datetime(yrs(y), ...
+            WaterYearDate.waterYearLastMonth, WaterYearDate.waterYearLastDay);
     end
     if yrs(end) == year(datetime) 
         datetimes(end) = datetime();
