@@ -61,8 +61,17 @@ function runStatsForLinePlots(espEnv, mData, ...
         error(errorStruct);
     end
     
+    for y=1:length(yrs)        
+        datetimes(y) = datetime(yrs(y), ...
+            WaterYearDate.waterYearLastMonth, WaterYearDate.waterYearLastDay);
+    end
+    if yrs(end) == year(datetime) 
+        datetimes(end) = datetime();
+    end
+    
     % Elevation dataset and elevation threshold to use
-    elevationFile = espEnv.modisElevationFile(regionName);
+    regions = Regions(regionName, partitionName, espEnv, mData);
+    elevationFile = espEnv.elevationFile(regions);
     
     % Get the number of region partition areas
     partitions = Regions(partitionName);
@@ -83,7 +92,7 @@ function runStatsForLinePlots(espEnv, mData, ...
 
     % Start or connect to the local pool
     % Assumes that caller has set this!
-    S = configParPool('jobStorageLocation', getenv('TMPDIR'));
+    S = espEnv.configParallelismPool();
     addAttachedFiles(S.pool, {elevationFile});
     
     %fprintf(['%s: PARFOR LOOP FOR YEARS DISABLED ' ...
@@ -188,6 +197,13 @@ function runStatsForLinePlots(espEnv, mData, ...
         
     end
 
+    parfor dateIdx=1:length(datetimes)
+        waterYearDate = WaterYearDate(datetimes(dateIdx), 12);
+        regions.runWriteStats(waterYearDate);
+    end
+    fprintf(['%s: Stats written in csv files\n'], ...
+            mfilename());
+    
 end
 
 function [datevalsYr, sca_area_km2_yr, scd_sum_yr, albedo_yr, ...
@@ -232,6 +248,7 @@ function [datevalsYr, sca_area_km2_yr, scd_sum_yr, albedo_yr, ...
 
 % Copyright 2020 The Regents of the University of Colorado
 
+regions = Regions(regionName, [regionName '_mask'], espEnv, mData);
 datevalsYr = datenum([waterYr-1 10 1 12 0 0]):...
     datenum([waterYr 9 30 12 0 0]);
 
@@ -261,8 +278,8 @@ for d=1:length(datevalsYr)
     thisYr = year(datevalsYr(d));
     thisMonth = month(datevalsYr(d));
     thisDay = day(datevalsYr(d));
-    mosaicFile = espEnv.MosaicFile(mData, regionName, ...
-        thisYr, thisMonth, thisDay);
+    thisDatetime = datetime(thisYr, thisMonth, thisDay);
+    mosaicFile = espEnv.MosaicFile(regions, thisDatetime);
     
     % Warning if a date is missing
     if ~isfile(mosaicFile)
