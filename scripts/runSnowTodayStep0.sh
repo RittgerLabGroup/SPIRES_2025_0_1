@@ -6,6 +6,25 @@
 #   update the JPL pull report
 #   kick off Step1 for today
 #
+# General notes about SLURM environment variables:
+# $SLURM_JOB_ID: system jobID ("process ID")-guaranteed to be unique
+#                can be used to get information about a completed
+#                job, for e.g. sacct -j <jobID> -o JobID,MaxRSS
+#                will display maximum memory used by that job
+# $SLURM_SCRATCH: this is supposed to be location of node-specific scratch
+#                but occasionally (pretty regularly) I have seen
+#                cases where it is not set, so I do not depend on it
+#
+# The following will only be set for array jobs ("#SBATCH --array=x1-x2")
+# $SLURM_ARRAY_JOB_ID: system jobID for a particular array job, this
+#                is different from the main jobID
+# $SLURM_ARRAY_TASK_ID: integer value of this job array task, so if
+#                --array=1-12, then the first one will have
+#                $SLURM_ARRAY_TASK_ID set to 1, and so on
+#
+# For more notes and tricks, see Confluence pages:
+# https://nsidc.org/confluence/pages/viewpage.action?pageId=284590088
+#
 
 #SBATCH --qos normal
 #SBATCH --partition amilan
