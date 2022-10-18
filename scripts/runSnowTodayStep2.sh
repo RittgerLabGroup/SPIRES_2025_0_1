@@ -148,6 +148,7 @@ matlab -nodesktop -nodisplay -r "clear; "\
 "mData = MODISData($options); "\
 "varNames={'snow_fraction', 'viewable_snow_fraction', 'grain_size', "\
 "'drfs_grnsz', 'deltavis', 'radiative_forcing', "\
+"'solar_azimuth', 'solar_zenith', "\
 "'snow_cover_days', 'albedo_mu0', 'albedo_muZ'}; "\
 "updateMosaicFor('"$regionName"', "\
 "${yearStart}, ${monthStart}, ${yearStop}, ${monthStop}, "\
