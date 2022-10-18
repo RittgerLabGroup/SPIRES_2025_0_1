@@ -22,7 +22,7 @@
 #SBATCH --account ucb-general
 #SBATCH --time 10:00:00
 # On Summit, we asked for 24 tasks, but mem is less per task on alpine
-# On Alpine try, 36
+# On Alpine try, 32
 #SBATCH --ntasks 32
 #SBATCH --nodes 1
 #SBATCH -o /scratch/alpine/%u/slurm_out_SnowToday/%x-%A_%a.out
@@ -127,6 +127,9 @@ fi
 module purge
 ml matlab/R2021b
 
+# Start the stopwatch
+SECONDS=0
+
 thisHost=$(hostname)
 thisDate=$(date)
 echo "${PROGNAME}: Begin on hostname=$thisHost on $thisDate for mindays=$mindays"
@@ -216,6 +219,10 @@ fi
 #Clean up temporary directory for matlab job storage
 echo "${PROGNAME}: Removing TMPDIR=$TMPDIR..."
 rm -rf $TMPDIR
+
+# Stop the stopwatch and report elapsed time
+elapsedSeconds=$SECONDS
+TZ=UTC0 printf '${PROGNAME}: Duration: %(%H:%M:%S)T\n' "$elapsedSeconds"
 
 thisDate=$(date)
 echo "${PROGNAME}: Done on hostname=$thisHost on $thisDate"

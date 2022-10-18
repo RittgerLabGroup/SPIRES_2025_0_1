@@ -6,6 +6,25 @@
 #   update the JPL pull report
 #   kick off Step1 for today
 #
+# General notes about SLURM environment variables:
+# $SLURM_JOB_ID: system jobID ("process ID")-guaranteed to be unique
+#                can be used to get information about a completed
+#                job, for e.g. sacct -j <jobID> -o JobID,MaxRSS
+#                will display maximum memory used by that job
+# $SLURM_SCRATCH: this is supposed to be location of node-specific scratch
+#                but occasionally (pretty regularly) I have seen
+#                cases where it is not set, so I do not depend on it
+#
+# The following will only be set for array jobs ("#SBATCH --array=x1-x2")
+# $SLURM_ARRAY_JOB_ID: system jobID for a particular array job, this
+#                is different from the main jobID
+# $SLURM_ARRAY_TASK_ID: integer value of this job array task, so if
+#                --array=1-12, then the first one will have
+#                $SLURM_ARRAY_TASK_ID set to 1, and so on
+#
+# For more notes and tricks, see Confluence pages:
+# https://nsidc.org/confluence/pages/viewpage.action?pageId=284590088
+#
 
 #SBATCH --qos normal
 #SBATCH --partition amilan
@@ -17,7 +36,7 @@
 #SBATCH -o /scratch/alpine/%u/slurm_out_SnowToday/%x-%j.out
 # Set the system up to notify upon completion
 #SBATCH --mail-type END,FAIL,INVALID_DEPEND,TIME_LIMIT,REQUEUE,STAGE_OUT
-#SBATCH --mail-user brodzik@colorado.edu
+#SBATCH --mail-user brodzik@colorado.edu,crumlyd@nsidc.org
 
 # Grab the full path to this script
 # depends on whether it's running as sbatch job
@@ -75,8 +94,10 @@ module purge
 ml matlab/R2021b
 date
 
-startyyyymmdd=
+# Start the stopwatch
+SECONDS=0
 
+startyyyymmdd=
 noPipeline=
 
 while getopts "hns:" opt
@@ -183,6 +204,10 @@ if [ $isBatch ] && [ ! $noPipeline ]; then
 	   $yearStart $monthStart $yearStop $monthStop
 
 fi
+
+# Stop the stopwatch and report elapsed time
+elapsedSeconds=$SECONDS
+TZ=UTC0 printf '${PROGNAME}: Duration: %(%H:%M:%S)T\n' "$elapsedSeconds"
 
 thisDate=$(date)
 echo "${PROGNAME}: Done on hostname=$thisHost on $thisDate"

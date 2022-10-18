@@ -16,7 +16,7 @@
 #SBATCH -o /scratch/alpine/%u/slurm_out_SnowToday/%x-%j.out
 # Set the system up to notify upon completion
 #SBATCH --mail-type END,FAIL,INVALID_DEPEND,TIME_LIMIT,REQUEUE,STAGE_OUT
-#SBATCH --mail-user brodzik@colorado.edu
+#SBATCH --mail-user brodzik@colorado.edu,crumlyd@nsidc.org
 
 # Grab the full path to this script
 # depends on whether it's running as sbatch job
@@ -106,6 +106,9 @@ fi
 module purge
 ml matlab/R2021b
 
+# Start the stopwatch
+SECONDS=0
+
 thisHost=$(hostname)
 thisDate=$(date)
 echo "${PROGNAME}: Begin on hostname=$thisHost on $thisDate for yr=$yr and options=$options"
@@ -145,6 +148,7 @@ matlab -nodesktop -nodisplay -r "clear; "\
 "mData = MODISData($options); "\
 "varNames={'snow_fraction', 'viewable_snow_fraction', 'grain_size', "\
 "'drfs_grnsz', 'deltavis', 'radiative_forcing', "\
+"'solar_azimuth', 'solar_zenith', "\
 "'snow_cover_days', 'albedo_mu0', 'albedo_muZ'}; "\
 "updateMosaicFor('"$regionName"', "\
 "${yearStart}, ${monthStart}, ${yearStop}, ${monthStop}, "\
@@ -198,6 +202,10 @@ fi
 #Clean up temporary directory for matlab job storage
 echo "${PROGNAME}: Removing TMPDIR=$TMPDIR..."
 rm -rf $TMPDIR
+
+# Stop the stopwatch and report elapsed time
+elapsedSeconds=$SECONDS
+TZ=UTC0 printf '${PROGNAME}: Duration: %(%H:%M:%S)T\n' "$elapsedSeconds"
 
 thisDate=$(date)
 echo "${PROGNAME}: Done on hostname=$thisHost on $thisDate"
