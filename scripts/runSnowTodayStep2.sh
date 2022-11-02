@@ -155,6 +155,9 @@ matlab -nodesktop -nodisplay -r "clear; "\
 "varNames, "\
 "'espEnv', espEnv, "\
 "'mData', mData); "\
+"regions = Regions('"$regionName"', '"$regionName"_mask', espEnv, mData);"\
+"waterYearDate = WaterYearDate(datetime(), 1);"\
+"regions.runWriteGeotiffs(waterYearDate);"\
 "catch e; "\
 "fprintf('%s: %s\n', e.identifier, e.message); "\
 "exit(-1); "\
