@@ -163,19 +163,20 @@ done
 # Do scratch shuffle for required ancillary data
 ${thisScriptDir}/scratchShuffleAncillary.sh || \
     error_exit "Line $LINENO: scratchShuffleAncillary error"
-    
+
+# Eventually this string should be an input to this script
+regionName='westernUS'
+
 # The default 
 matlab -nodesktop -nodisplay -r "clear; "\
 "try; "\
 "espEnv = ESPEnv(); "\
 "mData = MODISData($options); "\
-"tiles = mData.tilesFor('westernUS'); "\
-"updateRegionMonthCubes(tiles, "$SLURM_ARRAY_TASK_ID", "\
-"${yearStart}, ${monthStart}, ${yearStop}, ${monthStop}, "\
-"${mindays}, "\
-"'zthresh', ["${northZthresh}" "${southZthresh}"], "\
-"'espEnv', espEnv, "\
-"'mData', mData); "\
+"tiles = mData.tilesFor('"${regionName}"'); "\
+"region = Regions('"${regionName}"', '"${regionName}"_mask'], "\
+"espEnv, mData); "\
+"updateRegionMonthCubes(region, tiles, "$SLURM_ARRAY_TASK_ID", "\
+"${yearStart}, ${monthStart}, ${yearStop}, ${monthStop}); "\
 "catch e; "\
 "fprintf('%s: %s\n', e.identifier, e.message); "\
 "exit(-1); "\
