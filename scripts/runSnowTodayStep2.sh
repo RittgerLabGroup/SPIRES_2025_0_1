@@ -146,17 +146,12 @@ matlab -nodesktop -nodisplay -r "clear; "\
 "try; "\
 "espEnv = ESPEnv(); "\
 "mData = MODISData($options); "\
-"varNames={'snow_fraction', 'viewable_snow_fraction', 'grain_size', "\
-"'drfs_grnsz', 'deltavis', 'radiative_forcing', "\
-"'solar_azimuth', 'solar_zenith', "\
-"'snow_cover_days', 'albedo_mu0', 'albedo_muZ'}; "\
-"updateMosaicFor('"$regionName"', "\
-"${yearStart}, ${monthStart}, ${yearStop}, ${monthStop}, "\
-"varNames, "\
-"'espEnv', espEnv, "\
-"'mData', mData); "\
-"regions = Regions('"$regionName"', '"$regionName"_mask', espEnv, mData);"\
-"waterYearDate = WaterYearDate(datetime(), 1);"\
+"regions = Regions('"$regionName"', ['"$regionName"' '_mask'], espEnv, mData); "\
+"waterYearDate = WaterYearDate(datetime(), 12);"\
+"mosaic = Mosaic(regions); "\
+"mosaic.runWriteFiles(waterYearDate); "\
+"variables = Variables(regions); "\
+"variables.calcAlbedos(waterYearDate); "\
 "regions.runWriteGeotiffs(waterYearDate);"\
 "catch e; "\
 "fprintf('%s: %s\n', e.identifier, e.message); "\
