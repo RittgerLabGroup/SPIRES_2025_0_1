@@ -152,6 +152,8 @@ cd "${thisScriptDir}/../"
 # Do the scratch shuffle on NRT MOD09/SCAG/DRFS inputs
 # Note that Matlab array indexing is 1-based, but
 # bash array indexing is 0-based
+# N.B. It is assumed that the item order of this array matches
+# the item order in the region_masks files
 TILES=(h08v04 h08v05 h09v04 h09v05 h10v04)
 idx=$((SLURM_ARRAY_TASK_ID - 1));
 for dataType in mod09ga modscag moddrfs; do
@@ -163,19 +165,19 @@ done
 # Do scratch shuffle for required ancillary data
 ${thisScriptDir}/scratchShuffleAncillary.sh || \
     error_exit "Line $LINENO: scratchShuffleAncillary error"
-    
+
+# Eventually this string should be an input to this script
+regionName='westernUS'
+
 # The default 
 matlab -nodesktop -nodisplay -r "clear; "\
 "try; "\
 "espEnv = ESPEnv(); "\
 "mData = MODISData($options); "\
-"tiles = mData.tilesFor('westernUS'); "\
-"updateRegionMonthCubes(tiles, "$SLURM_ARRAY_TASK_ID", "\
-"${yearStart}, ${monthStart}, ${yearStop}, ${monthStop}, "\
-"${mindays}, "\
-"'zthresh', ["${northZthresh}" "${southZthresh}"], "\
-"'espEnv', espEnv, "\
-"'mData', mData); "\
+"region = Regions('"${regionName}"', '"${regionName}"_mask'], "\
+"espEnv, mData); "\
+"updateRegionMonthCubes(region, "$SLURM_ARRAY_TASK_ID", "\
+"${yearStart}, ${monthStart}, ${yearStop}, ${monthStop}); "\
 "catch e; "\
 "fprintf('%s: %s\n', e.identifier, e.message); "\
 "exit(-1); "\
