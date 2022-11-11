@@ -142,12 +142,13 @@ ${thisScriptDir}/scratchShuffleAncillary.sh || \
 
 regionName='westernUS'
 
+# FIXIT: add the month window as a parameter of the bash, with 3 as default value
 matlab -nodesktop -nodisplay -r "clear; "\
 "try; "\
 "espEnv = ESPEnv(); "\
 "mData = MODISData($options); "\
 "regions = Regions('"$regionName"', ['"$regionName"' '_mask'], espEnv, mData); "\
-"waterYearDate = WaterYearDate(datetime(), 12);"\
+"waterYearDate = WaterYearDate(datetime(), 3);"\
 "mosaic = Mosaic(regions); "\
 "mosaic.runWriteFiles(waterYearDate); "\
 "variables = Variables(regions); "\
