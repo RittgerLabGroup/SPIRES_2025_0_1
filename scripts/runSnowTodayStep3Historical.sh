@@ -19,7 +19,7 @@
 # Assumes 3.74 GB/per node for total of 89.76 GB RAM
 #SBATCH --ntasks-per-node=24
 #SBATCH --nodes=1
-#SBATCH -o /scratch/alpine/%u/slurm_out_SnowToday/%x-%A_%a.out
+#SBATCH -o /scratch/alpine/%u/slurm_out/%x-%A_%a.out
 # Set the system up to notify upon completion
 #SBATCH --mail-type END,FAIL,INVALID_DEPEND,TIME_LIMIT,REQUEUE,STAGE_OUT
 #SBATCH --mail-user brodzik@colorado.edu
@@ -136,11 +136,11 @@ matlab -nodesktop -nodisplay -r "clear; "\
 "try; "\
 "espEnv = ESPEnv(); "\
 "mData = MODISData($options); "\
+"partitionName = Regions.getPartitionNameFor("${SLURM_ARRAY_TASK_ID"); "\
+"region = Regions('"${REGIONNAME}"', partitionName, espEnv, mData); "\
 "minSCP = minSCPForLinePlots(); "\
 "minZ = minZForLinePlots(); "\
-"runStatsForLinePlots(espEnv, mData, "\
-"'westernUS', "$SLURM_ARRAY_TASK_ID", ${startWaterYr}, ${stopWaterYr}, "\
-"minSCP, minZ); "\
+"runStatsForLinePlots(region, ${startWaterYr}, ${stopWaterYr}, minSCP, minZ); "\
 "catch e; "\
 "fprintf('%s: %s\n', e.identifier, e.message); "\
 "exit(-1); "\

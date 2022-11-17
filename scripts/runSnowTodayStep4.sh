@@ -154,6 +154,9 @@ matlab -nodesktop -nodisplay -r "clear; "\
 "for v=1:length(vNs); "\
 "showMostRecentVarMap(espEnv, mData, 'westernUS', "$SLURM_ARRAY_TASK_ID", "\
 "vNs{v}, myDt, ${minSCF}); "\
+# Set up the WY to be only current month because geotiffs are memory pigs
+"region.runWriteGeotiffs(waterYearDate);"\
+
 "end; "\
 "catch e; "\
 "fprintf('%s: %s\n', e.identifier, e.message); "\
@@ -161,7 +164,7 @@ matlab -nodesktop -nodisplay -r "clear; "\
 "end; "\
 "exit(0);" || error_exit "Line $LINENO: matlab error."
 
-# Do the scratch shuffle to copy the geotiffs back from scratch to archive
+# Do the scratch shuffle to copy the geotiffs and csvs back from scratch to archive
 #TBD
 
 #schedule next job in pipeline to run after entire job array completes

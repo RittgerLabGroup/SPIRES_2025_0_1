@@ -30,7 +30,7 @@
 #SBATCH --partition amilan
 #SBATCH --job-name 0SnTo
 #SBATCH --account ucb-general
-#SBATCH --time 05:00:00
+#SBATCH --time 02:00:00
 #SBATCH --ntasks-per-node 1
 #SBATCH --nodes=1
 #SBATCH -o /scratch/alpine/%u/slurm_out_SnowToday/%x-%j.out
@@ -95,7 +95,7 @@ mail_summary() {
     # Mails the region inventory summary to selected recipients
     # An alternative way to control recipient list would be
     # at command line or with a bash env variable.
-    NOTIFYLIST="${USER}@colorado.edu,crumlyd@nsidc.org"
+    NOTIFYLIST="${USER}@colorado.edu,crumlyd@nsidc.org,karl.rittger@colorado.edu"
 
     thisDate=$(date)
     SUBJECT="SnowToday0 archive updated ${thisDate} ${1}"
@@ -173,7 +173,7 @@ else
        MAIL=`${thisScriptDir}/getSlurmMail.sh ${SLURM_JOB_ID}`
 
        stdoutDir=$( dirname `${thisScriptDir}/getSlurmStdout.sh ${SLURM_JOB_ID}` )
-       STDOUT_STEP0="${stdoutDir}/runSnowTodayStep0-%j.out"
+       STDOUT_STEP0="${stdoutDir}/0SnTo-%j.out"
 
        # Assume that startyyyymmdd should be ignored and tomorrow's
        # Step0 will default to most recent data
@@ -208,18 +208,16 @@ matlab -nodesktop -nodisplay -r "clear; "\
 "end; "\
 "exit(0);" || error_exit "Line $LINENO: matlab error."
 
-# FORCING NO STEP 1 FOR NOW
-noPipeline=1
-
 if [ $isBatch ] && [ ! $noPipeline ]; then
     
     # use the MAIL and stdoutDir settings from above
-    STDOUT_STEP1="${stdoutDir}/runSnowTodayStep1-%A_%a.out"
+    STDOUT_STEP1="${stdoutDir}/1SnTo-%A_%a.out"
 
     # schedule next job in Snow Today pipeline for today
     # back up the cubes to be updated to this month - 2
     yearStop=$(date +'%Y')
     monthStop=$(date +'%-m')
+    dayStop=$(date +'%d')
     monthStart=$(( $monthStop - 2 ))
     if (( "$monthStart" < "1" )); then
 	monthStart=$(( $monthStart + 12 ))
@@ -233,7 +231,7 @@ if [ $isBatch ] && [ ! $noPipeline ]; then
 	   --mail-user=${MAIL} \
 	   --output=${STDOUT_STEP1} \
 	   ${thisScriptDir}/runSnowTodayStep1.sh ${s1_label} \
-	   $yearStart $monthStart $yearStop $monthStop
+	   $yearStart $monthStart $yearStop $monthStop $dayStop
 
 fi
 
