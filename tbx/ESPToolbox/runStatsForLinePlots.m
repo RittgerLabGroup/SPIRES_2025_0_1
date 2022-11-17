@@ -1,23 +1,15 @@
-function runStatsForLinePlots(espEnv, mData, ...
-    regionName, partitionNum, ...					 
-    startWaterYr, stopWaterYr, ...
-    minSCP, minZ)
+function runStatsForLinePlots(region, startWaterYr, stopWaterYr, minSCP, minZ)
 % This script summarizes total snow cover fraction and median snow covered
 % days for each day of each year for line graphs for multiple years
 % When startWaterYr ~= stopWaterYr, it also calculates the
 % interquartile range and median values
 %
 % Inputs
-%   espEnv: ESPEnv object with local directory information
-%   mData: MODISData object with MODIS information
-%   regionName: regionName to summarize, currently only
-%   'westernUS' but eventually will include others
-%   partitionNum: partition number:
-%      10='westernUS_mask' (mask for full region)
-%      11='State_masks' (mask for each state)
-%      12='HUC2_masks', etc for 14, 16, 18
+%   region: Regions object for a multi-tile region,
+%      initialized to the region mask that is to be processed
 %   startWaterYr: integer, 4-digit, begin water year
 %   stopWaterYr: integer, 4-digit, end water year
+%   FIXME: move these 2 sets of thresholds to the region object
 %   minSCP: structure with minimum snow covemindaysred fraction to use
 %           in each variable's statistics, expected values for
 %           .snow, .albedo, .radiative_forcing and .deltavis, 
@@ -38,8 +30,6 @@ function runStatsForLinePlots(espEnv, mData, ...
 
 % Copyright 2020 The Regents of the University of Colorado
 
-    partitionName = Regions.getPartitionNameFor(partitionNum);
-    
     % Calculation will be for water years, beginning Oct 1.
     % In early October annually, we should run this for 2001 (beginning of
     % first full water year of MODIS record) to this year.
@@ -70,15 +60,13 @@ function runStatsForLinePlots(espEnv, mData, ...
     end
     
     % Elevation dataset and elevation threshold to use
-    regions = Regions(regionName, partitionName, espEnv, mData);
-    elevationFile = espEnv.elevationFile(regions);
+    elevationFile = region.espEnv.elevationFile(region);
     
     % Get the number of region partition areas
-    partitions = Regions(partitionName);
-    dim = size(partitions.LongName);
+    dim = size(region.LongName);
     npartitions = dim(1);
-    LongName = partitions.LongName;
-    ShortName = partitions.ShortName;
+    LongName = region.LongName;
+    ShortName = region.ShortName;
     
     % Preallocate vector of snow cover area and days for each year
     maxDaysPerYear = 366;
@@ -115,7 +103,7 @@ function runStatsForLinePlots(espEnv, mData, ...
     
     % Save all (overwrites previous file)
     summaryFile = espEnv.SummarySnowFile(mData, ...
-        regionName, partitionName, yrs(1), yrs(end));
+        region.regionName, region.maskName, yrs(1), yrs(end));
     [folder, ~, ~] = fileparts(summaryFile);
     if ~exist(folder, 'dir')
         mkdir(folder);
@@ -127,14 +115,20 @@ function runStatsForLinePlots(espEnv, mData, ...
     % matlab reader.  If we need to set this file format to -v7.3,
     % we should consult with web app developer.    
     version = mData.versionOf.MODISCollection;
+    espEnv = region.espEnv;
+    modisData = region.modisData;
+    regionName = region.regionName;
+    maskName = region.maskName;
+    ShortName = region.ShortName;
+    LongName = region.LongName;
+    STC = region.STC;
     save(summaryFile, 'sca_area_km2_yr', 'scd_sum_yr', ...
         'albedo_yr', 'radiative_forcing_yr', 'deltavis_yr', ...
         'minSCP', 'minZ', ... 
         'yrs', 'elevationFile', ...
-        'version', 'regionName', 'partitionName', ...
-        'LongName', 'ShortName', ...
+        'version', 'regionName', 'maskName', 'LongName', 'ShortName', ...
         'albedoName', ...
-        'zthresh', 'mindays', 'espEnv');
+        'STC', 'espEnv', 'modisData');
     fprintf('%s: Saved summary to %s\n', mfilename(), summaryFile);
     
     % If it was the historical run, find the median, prctiles, min/max
