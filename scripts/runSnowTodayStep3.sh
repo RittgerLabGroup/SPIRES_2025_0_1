@@ -15,7 +15,7 @@
 # Assumes 3.74 GB/per node for total of 89.76 GB RAM
 #SBATCH --ntasks-per-node=24
 #SBATCH --nodes=1
-#SBATCH -o /scratch/alpine/%u/slurm_out_SnowToday/%x_%a.out
+#SBATCH -o /scratch/alpine/%u/slurm_out_SnowToday/%x-%A_%a.out
 # Set the system up to notify upon completion
 #SBATCH --mail-type END,FAIL,INVALID_DEPEND,TIME_LIMIT,REQUEUE,STAGE_OUT
 #SBATCH --mail-user brodzik@colorado.edu
@@ -46,9 +46,9 @@ usage() {
     echo "  -L LABEL: string with version label for directories" 1>&2
     echo "     e.g. for operational processing, use -L v2023.x" 1>&2
     echo "Arguments: " 1>&2
-    echo "  THISYR : stats will be calculated for this WATERYR (begins Oct 1)" 1>&2
+    echo "  WATERYR : stats will be calculated for this WATERYR (begins Oct 1 of WATERYR-1)" 1>&2
     echo "Output: " 1>&2
-    echo "  Output location is controlled in Matlab scripts " 1>&2
+    echo "  Output location is controlled in Matlab scripts and -L LABEL" 1>&2
     echo "Notes: " 1>&2
     echo "  Scripts stdout/stderr are written to user's scratch " 1>&2
     echo "  where directory /scratch/alpine/$USER/slurm_out_SnowToday/ " 1>&2
@@ -89,7 +89,7 @@ if [ $noPipeline ]; then
     echo "${PROGNAME}: noPipeline mode: this script will not continue pipeline"
 fi
 
-waterYr=$1
+WATERYR=$1
 
 options=""
 if [ $LABEL ]; then
@@ -104,14 +104,14 @@ SECONDS=0
 
 thisHost=$(hostname)
 thisDate=$(date)
-echo "${PROGNAME}: Begin on hostname=$thisHost on $thisDate for waterYr=$waterYr and options=$options"
+echo "${PROGNAME}: Begin on hostname=$thisHost on $thisDate for WATERYR=$WATERYR and options=$options"
 echo "${PROGNAME}: SLURM_SCRATCH=$SLURM_SCRATCH"
 echo "${PROGNAME}: SLURM_JOB_ID=$SLURM_JOB_ID"
 echo "${PROGNAME}: SLURM_ARRAY_JOB_ID=$SLURM_ARRAY_JOB_ID"
 
 #Make a unique temporary directory for matlab job storage
 #Set TMPDIR/TMP to this location so job array uses it for tmp location
-tmpDir=/scratch/alpine/${USER}/matlabTmp/alpine-$SLURM_ARRAY_JOB_ID
+tmpDir=/scratch/alpine/${USER}/.matlabTmp/alpine-$SLURM_ARRAY_JOB_ID
 mkdir -p $tmpDir
 export TMPDIR=$tmpDir
 export TMP=$tmpDir
@@ -119,37 +119,44 @@ export TMP=$tmpDir
 #Go to parent of this script, so that correct pathdef.m file is used
 cd "${thisScriptDir}/../"
 
-# Do the scratch shuffle on input daily Mosaics (to scratch for speed)
-regionName='westernUS'
+# Do the scratch shuffle on daily Mosaics from input water year (to scratch for speed)
+REGIONNAME='westernUS'
+yearStart=$(( $WATERYR - 1 ))
 for dataType in scagdrfs_mat; do
-    ${thisScriptDir}/scratchShuffle.sh -b ${yearStart} -e ${yearStop} \
-		    TO variables/${dataType}_$LABEL ${regionName} || \
-	error_exit "Line $LINENO: scratchShuffle error ${dataType} ${LABEL} ${regionName}"
+    ${thisScriptDir}/scratchShuffle.sh -b ${yearStart} -e ${WATERYR} \
+		    TO variables/${dataType}_$LABEL ${REGIONNAME} || \
+	error_exit "Line $LINENO: scratchShuffle error ${dataType} ${LABEL} ${REGIONNAME}"
 done
 
 # Do scratch shuffle for required ancillary data
 ${thisScriptDir}/scratchShuffleAncillary.sh || \
     error_exit "Line $LINENO: scratchShuffleAncillary error"
+
+echo "${PROGNAME}: Done with shuffle TO scratch..."
     
 matlab -nodesktop -nodisplay -r "clear; "\
 "try; "\
 "espEnv = ESPEnv(); "\
 "mData = MODISData($options); "\
+"partitionName = Regions.getPartitionNameFor("${SLURM_ARRAY_TASK_ID}"); "\
+"region = Regions('"${REGIONNAME}"', partitionName, espEnv, mData); "\
 "minSCP = minSCPForLinePlots(); "\
 "minZ = minZForLinePlots(); "\
-"runStatsForLinePlots(espEnv, mData, "\
-"'westernUS', "$SLURM_ARRAY_TASK_ID", ${waterYr}, ${waterYr}, "\
-"minSCP, minZ); "\
+"runStatsForLinePlots(region, ${WATERYR}, ${WATERYR}, minSCP, minZ); "\
 "catch e; "\
 "fprintf('%s: %s\n', e.identifier, e.message); "\
 "exit(-1); "\
 "end; "\
 "exit(0);" || error_exit "Line $LINENO: matlab error."
 
-# Do scratch shuffle on output statistics files back from scratch to archive
-dataType=regional_stats/scagdrfs_mat
-${thisScriptDir}/scratchShuffle.sh FROM ${dataType}_$LABEL ${regionName} || \
-    error_exit "Line $LINENO: scratchShuffle error ${dataType} ${LABEL} ${regionName}"
+# Do the scratch shuffle on output regional_stats back from scratch
+echo "${PROGNAME}: Doing with shuffle FROM scratch..."
+for dataType in scagdrfs_mat; do
+    ${thisScriptDir}/scratchShuffle.sh \
+		    FROM regional_stats/${dataType}_$LABEL ${REGIONNAME} || \
+	error_exit "Line $LINENO: scratchShuffle FROM error ${dataType} ${LABEL} ${REGIONNAME}"
+done
+echo "${PROGNAME}: Done with shuffle FROM scratch..."
 
 #schedule next job in pipeline to run after entire job array completes
 if [ $isBatch ] && [ ! $noPipeline ]; then
@@ -162,7 +169,7 @@ if [ $isBatch ] && [ ! $noPipeline ]; then
 
     if [ "$SLURM_ARRAY_TASK_ID" -eq "10" ]; then
 
-	STDOUT_STEP4="${stdoutDir}/runSnowTodayStep4-%A_%a.out"
+	STDOUT_STEP4="${stdoutDir}/4SnTo-%A_%a.out"
 	
 	#schedule Step 4 to make today's plots after this set of array jobs complete
 	sbatch --dependency=afterok:$SLURM_ARRAY_JOB_ID \
@@ -180,8 +187,8 @@ rm -rf $TMPDIR
 
 # Stop the stopwatch and report elapsed time
 elapsedSeconds=$SECONDS
-TZ=UTC0 printf '${PROGNAME}: Duration: %(%H:%M:%S)T\n' "$elapsedSeconds"
+duration=$(TZ=UTC0 printf 'Duration: %(%H:%M:%S)T\n' "$elapsedSeconds")
 
 thisDate=$(date)
-echo "${PROGNAME}: Done on hostname=$thisHost on $thisDate"
+echo "${PROGNAME}: Done on hostname=$thisHost on $thisDate [${duration}]"
 

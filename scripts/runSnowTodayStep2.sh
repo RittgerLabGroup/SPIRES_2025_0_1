@@ -12,7 +12,7 @@
 #SBATCH --time=02:00:00
 #SBATCH --ntasks-per-node=20
 #SBATCH --nodes=1
-#SBATCH -o /scratch/alpine/%u/slurm_out_SnowToday/%x-%j.out
+#SBATCH -o /scratch/alpine/%u/slurm_out_SnowToday/%x-%A_%a.out
 # Set the system up to notify upon completion
 #SBATCH --mail-type FAIL,INVALID_DEPEND,TIME_LIMIT,REQUEUE,STAGE_OUT
 #SBATCH --mail-user brodzik@colorado.edu,crumlyd@nsidc.org
@@ -112,7 +112,7 @@ SECONDS=0
 
 thisHost=$(hostname)
 thisDate=$(date)
-echo "${PROGNAME}: Begin on hostname=$thisHost on $thisDate for yr=$yr and options=$options"
+echo "${PROGNAME}: Begin on hostname=$thisHost on $thisDate for options=$options"
 echo "${PROGNAME}: Start = $yearStart, $monthStart"
 echo "${PROGNAME}: Stop  = $yearStop, $monthStop, $dayStop"
 echo "${PROGNAME}: SLURM_SCRATCH=$SLURM_SCRATCH"
@@ -120,7 +120,7 @@ echo "${PROGNAME}: SLURM_JOB_ID=$SLURM_JOB_ID"
 
 #Make a unique temporary directory for matlab job storage
 #Set TMPDIR/TMP to this location so job array uses it for tmp location
-tmpDir=/scratch/alpine/${USER}/matlabTmp/alpine-$SLURM_JOB_ID
+tmpDir=/scratch/alpine/${USER}/.matlabTmp/alpine-$SLURM_JOB_ID
 mkdir -p $tmpDir
 export TMPDIR=$tmpDir
 export TMP=$tmpDir

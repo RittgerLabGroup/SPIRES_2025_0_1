@@ -196,7 +196,7 @@ if [ $isBatch ] && [ ! $noPipeline ]; then
 
     if [ "$SLURM_ARRAY_TASK_ID" -eq "1" ]; then
 
-	STDOUT_STEP2="${stdoutDir}/2SnTo-%j.out"
+	STDOUT_STEP2="${stdoutDir}/2SnTo-%A_%a.out"
 
 	# We might be able to speed this processing up by limiting
 	# the mosaics to [monthStop - 1, monthStop]
