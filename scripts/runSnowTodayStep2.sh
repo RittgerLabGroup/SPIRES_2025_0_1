@@ -183,9 +183,6 @@ for dataType in scagdrfs_mat; do
 	error_exit "Line $LINENO: scratchShuffle error ${dataType} ${LABEL} ${regionName}"
 done
 
-# FORCE NO PIPELINE FOR NOW
-noPipeline=1
-
 if [ $isBatch ] && [ ! $noPipeline ]; then
     
     # get current slurm info for mail-user and stdout
@@ -204,7 +201,7 @@ if [ $isBatch ] && [ ! $noPipeline ]; then
     sbatch --dependency=afterok:$SLURM_JOB_ID \
 	   --mail-user=${MAIL} \
 	   --output=${STDOUT_STEP3} \
-	   ${thisScriptDir}/runSnowTodayStep3.sh -L $LABEL $waterYr
+	   ${thisScriptDir}/runSnowTodayStep3.sh -n -L $LABEL $waterYr
 
 else
     
