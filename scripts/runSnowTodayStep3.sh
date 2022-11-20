@@ -143,6 +143,7 @@ matlab -nodesktop -nodisplay -r "clear; "\
 "minSCP = minSCPForLinePlots(); "\
 "minZ = minZForLinePlots(); "\
 "runStatsForLinePlots(region, ${WATERYR}, ${WATERYR}, minSCP, minZ); "\
+"region.runWriteStats(waterYearDate()); "\
 "catch e; "\
 "fprintf('%s: %s\n', e.identifier, e.message); "\
 "exit(-1); "\
