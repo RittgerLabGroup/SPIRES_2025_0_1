@@ -182,7 +182,7 @@ if [ $isBatch ] && [ ! $noPipeline ]; then
 	sbatch --dependency=afterok:$SLURM_ARRAY_JOB_ID \
 	       --mail-user=${MAIL} \
 	       --output=${STDOUT_STEP4} \
-	       ${thisScriptDir}/runSnowTodayStep4.sh -L $LABEL
+	       ${thisScriptDir}/runSnowTodayStep4.sh -L $LABEL $WATERYR
 
     fi
     
