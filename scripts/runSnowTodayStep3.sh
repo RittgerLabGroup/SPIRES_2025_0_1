@@ -133,7 +133,10 @@ ${thisScriptDir}/scratchShuffleAncillary.sh || \
     error_exit "Line $LINENO: scratchShuffleAncillary error"
 
 echo "${PROGNAME}: Done with shuffle TO scratch..."
-    
+
+# Make the year-to-date Statistics files
+# Make the csv versions of the stats in historical context
+# (only for main region array=10), make geotiffs for that last available date
 matlab -nodesktop -nodisplay -r "clear; "\
 "try; "\
 "espEnv = ESPEnv(); "\
@@ -143,18 +146,21 @@ matlab -nodesktop -nodisplay -r "clear; "\
 "minSCP = minSCPForLinePlots(); "\
 "minZ = minZForLinePlots(); "\
 "runStatsForLinePlots(region, ${WATERYR}, ${WATERYR}, minSCP, minZ); "\
+"waterYearDate = WaterYearDate(); "\
 "region.runWriteStats(waterYearDate()); "\
+"if "${SLURM_ARRAY_TASK_ID}" == 10; "\
+"region.runWriteGeotiffs(true, waterYearDate); "\
+"end; "\
 "catch e; "\
 "fprintf('%s: %s\n', e.identifier, e.message); "\
 "exit(-1); "\
 "end; "\
 "exit(0);" || error_exit "Line $LINENO: matlab error."
 
-# Do the scratch shuffle on output regional_stats back from scratch
+# Do the scratch shuffle on output regional_stats, csv files and geotiffs  back from scratch
 echo "${PROGNAME}: Doing with shuffle FROM scratch..."
-for dataType in scagdrfs_mat; do
-    ${thisScriptDir}/scratchShuffle.sh \
-		    FROM regional_stats/${dataType}_$LABEL ${REGIONNAME} || \
+for dataType in regional_stats/scagdrfs_mat regional_stats/scagdrfs_csv variables/scagdrfs_geotiff; do
+    ${thisScriptDir}/scratchShuffle.sh FROM ${dataType}_$LABEL ${REGIONNAME} || \
 	error_exit "Line $LINENO: scratchShuffle FROM error ${dataType} ${LABEL} ${REGIONNAME}"
 done
 echo "${PROGNAME}: Done with shuffle FROM scratch..."
