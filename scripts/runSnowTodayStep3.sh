@@ -17,7 +17,7 @@
 #SBATCH --nodes=1
 #SBATCH -o /scratch/alpine/%u/slurm_out_SnowToday/%x-%A_%a.out
 # Set the system up to notify upon completion
-#SBATCH --mail-type END,FAIL,INVALID_DEPEND,TIME_LIMIT,REQUEUE,STAGE_OUT
+#SBATCH --mail-type FAIL,INVALID_DEPEND,TIME_LIMIT,REQUEUE,STAGE_OUT
 #SBATCH --mail-user brodzik@colorado.edu
 #SBATCH --array=10-12
 
@@ -147,9 +147,11 @@ matlab -nodesktop -nodisplay -r "clear; "\
 "minZ = minZForLinePlots(); "\
 "runStatsForLinePlots(region, ${WATERYR}, ${WATERYR}, minSCP, minZ); "\
 "waterYearDate = WaterYearDate(); "\
-"region.runWriteStats(waterYearDate()); "\
+"region.runWriteStats(waterYearDate); "\
 "if "${SLURM_ARRAY_TASK_ID}" == 10; "\
-"region.runWriteGeotiffs(true, waterYearDate); "\
+"mosaic = Mosaic(region); "\
+"waterYearDate = WaterYearDate(mosaic.getMostRecentMosaicDt(waterYearDate), 0); "\
+"region.runWriteGeotiffs(waterYearDate); "\
 "end; "\
 "catch e; "\
 "fprintf('%s: %s\n', e.identifier, e.message); "\
@@ -176,7 +178,7 @@ if [ $isBatch ] && [ ! $noPipeline ]; then
 
     if [ "$SLURM_ARRAY_TASK_ID" -eq "10" ]; then
 
-	STDOUT_STEP4="${stdoutDir}/4SnTo-%A_%a.out"
+	STDOUT_STEP4="${stdoutDir}/4SnTo-%j.out"
 	
 	#schedule Step 4 to make today's plots after this set of array jobs complete
 	sbatch --dependency=afterok:$SLURM_ARRAY_JOB_ID \
