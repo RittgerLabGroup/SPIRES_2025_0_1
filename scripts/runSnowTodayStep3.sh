@@ -119,12 +119,13 @@ export TMP=$tmpDir
 #Go to parent of this script, so that correct pathdef.m file is used
 cd "${thisScriptDir}/../"
 
-# Do the scratch shuffle on daily Mosaics from input water year (to scratch for speed)
+# Do the scratch shuffle on daily Mosaics from input water year
+# and for historical regional-stats files (to scratch for speed)
 REGIONNAME='westernUS'
 yearStart=$(( $WATERYR - 1 ))
-for dataType in scagdrfs_mat; do
+for dataType in regional_stats/scagdrfs_mat variables/scagdrfs_mat; do
     ${thisScriptDir}/scratchShuffle.sh -b ${yearStart} -e ${WATERYR} \
-		    TO variables/${dataType}_$LABEL ${REGIONNAME} || \
+		    TO ${dataType}_$LABEL ${REGIONNAME} || \
 	error_exit "Line $LINENO: scratchShuffle error ${dataType} ${LABEL} ${REGIONNAME}"
 done
 
