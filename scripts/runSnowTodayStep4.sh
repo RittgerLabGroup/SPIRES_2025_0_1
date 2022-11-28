@@ -91,10 +91,6 @@ destDir="/share/apps/snow-today/incoming/snow-surface-properties/plot_csv/"
 cd ${srcDir}
 scp -i ~/.ssh/id_rsa_snowToday *.csv snow_today@nusnow.colorado.edu:${destDir}
 
-# DO CSV TRIGGER HERE
-touch TRIGGER
-scp -i ~/.ssh/id_rsa_snowToday TRIGGER snow_today@nusnow.colorado.edu:${destDir}
-
 echo "${PROGNAME}: Copying geotiffs to NSIDC staging directory..."
 srcDir="/pl/active/rittger_esp/modis/variables/scagdrfs_geotiff_${LABEL}/v006/westernUS/EPSG_3857/LZW/"
 destDir="/share/apps/snow-today/incoming/snow-surface-properties/tif/"
@@ -103,6 +99,7 @@ for f in $(find ${srcDir} -type f -cmin -120); do
 done
 
 # DO TRIGGER HERE
+destDir="/share/apps/snow-today/incoming/snow-surface-properties/"
 touch TRIGGER
 scp -i ~/.ssh/id_rsa_snowToday TRIGGER snow_today@nusnow.colorado.edu:${destDir}
 
