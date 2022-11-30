@@ -10,12 +10,11 @@
 #SBATCH --job-name 2SnTo
 #SBATCH --account ucb-general
 #SBATCH --time=02:00:00
-# Assumes 3.74 GB/per node for total of 52.36 GB RAM
-#SBATCH --ntasks-per-node=14
+#SBATCH --ntasks-per-node=20
 #SBATCH --nodes=1
 #SBATCH -o /scratch/alpine/%u/slurm_out_SnowToday/%x-%j.out
 # Set the system up to notify upon completion
-#SBATCH --mail-type END,FAIL,INVALID_DEPEND,TIME_LIMIT,REQUEUE,STAGE_OUT
+#SBATCH --mail-type FAIL,INVALID_DEPEND,TIME_LIMIT,REQUEUE,STAGE_OUT
 #SBATCH --mail-user brodzik@colorado.edu,crumlyd@nsidc.org
 
 # Grab the full path to this script
@@ -35,7 +34,7 @@ thisScriptDir="$( cd "$( dirname "${PROGNAME}" )" && pwd )"
 usage() {
     echo "" 1>&2
     echo "Usage: ${PROGNAME} [-h] [-n] [-L LABEL] " 1>&2
-    echo "       YEARSTART MONTHSTART YEARSTOP MONTHSTOP" 1>&2
+    echo "       YEARSTART MONTHSTART YEARSTOP MONTHSTOP DAYSTOP" 1>&2
     echo "  Runs Step2 in SnowToday pipeline" 1>&2
     echo "  Updates WesternUS daily mosaic files for all variables" 1>&2
     echo "    and the requested time period" 1>&2
@@ -51,6 +50,7 @@ usage() {
     echo "  MONTHSTART : month to begin" 1>&2
     echo "  YEARSTOP : year to stop" 1>&2
     echo "  MONTHSTOP : month to stop" 1>&2
+    echo "  DAYSTOP : day to stop" 1>&2
     echo "Output: " 1>&2
     echo "  Output location is controlled in Matlab scripts and -L LABEL " 1>&2
     echo "Notes: " 1>&2
@@ -87,7 +87,7 @@ done
 
 shift $(($OPTIND - 1))
 
-[[ "$#" -eq 4 ]] || error_exit "Line $LINENO: Unexpected number of arguments."
+[[ "$#" -eq 5 ]] || error_exit "Line $LINENO: Unexpected number of arguments."
 
 if [ $noPipeline ]; then
     echo "${PROGNAME}: noPipeline mode: this script will not continue pipeline"
@@ -97,6 +97,7 @@ yearStart=$1
 monthStart=$2
 yearStop=$3
 monthStop=$4
+dayStop=$5
 
 options=""
 if [ $LABEL ]; then
@@ -113,7 +114,7 @@ thisHost=$(hostname)
 thisDate=$(date)
 echo "${PROGNAME}: Begin on hostname=$thisHost on $thisDate for yr=$yr and options=$options"
 echo "${PROGNAME}: Start = $yearStart, $monthStart"
-echo "${PROGNAME}: Stop  = $yearStop, $monthStop"
+echo "${PROGNAME}: Stop  = $yearStop, $monthStop, $dayStop"
 echo "${PROGNAME}: SLURM_SCRATCH=$SLURM_SCRATCH"
 echo "${PROGNAME}: SLURM_JOB_ID=$SLURM_JOB_ID"
 
@@ -130,8 +131,8 @@ cd "${thisScriptDir}/../"
 # Do the scratch shuffle on required STC inputs
 for dataType in scagdrfs_stc; do
     for tile in h08v04 h08v05 h09v04 h09v05 h10v04; do
-	${thisScriptDir}/scratchShuffle.sh TO -b ${yearStart} -e ${yearStop} \
-			intermediary/${dataType}_$LABEL ${tile} || \
+	${thisScriptDir}/scratchShuffle.sh -b ${yearStart} -e ${yearStop} \
+			TO intermediary/${dataType}_$LABEL ${tile} || \
 	    error_exit "Line $LINENO: scratchShuffle error ${dataType} ${tile}"
     done
 done
@@ -140,20 +141,35 @@ done
 ${thisScriptDir}/scratchShuffleAncillary.sh || \
     error_exit "Line $LINENO: scratchShuffleAncilllary error"
 
-regionName='westernUS'
+echo "${PROGNAME}: Done with shuffle TO scratch, doing Step2 processing..."
 
-# FIXIT: add the month window as a parameter of the bash, with 3 as default value
+REGIONNAME='westernUS'
+
+if (( "$yearStart" == "$yearStop" )); then
+    monthWindow=$(( $monthStop - $monthStart + 1 ))
+else
+    monthWindow=$(( 12 - $monthStart + 1 + $monthStop))
+fi
+if (( "$monthWindow" > 12 )); then
+    echo "Limiting monthWindow to 12"
+    monthWindow=12
+fi
+if (( "$monthWindow" < 1 )); then
+    error_exit "Invalid monthWindow, please check inputs."
+fi
+
+echo "${PROGNAME}: monthWindow=${monthWindow}"
+
 matlab -nodesktop -nodisplay -r "clear; "\
 "try; "\
 "espEnv = ESPEnv(); "\
 "mData = MODISData($options); "\
-"regions = Regions('"$regionName"', ['"$regionName"' '_mask'], espEnv, mData); "\
-"waterYearDate = WaterYearDate(datetime(), 3);"\
-"mosaic = Mosaic(regions); "\
+"region = Regions('"$REGIONNAME"', '"$REGIONNAME"_mask', espEnv, mData); "\
+"waterYearDate = WaterYearDate(datetime("${yearStop}", "${monthStop}", "${dayStop}"), "${monthWindow}"); "\
+"mosaic = Mosaic(region); "\
 "mosaic.runWriteFiles(waterYearDate); "\
-"variables = Variables(regions); "\
+"variables = Variables(region); "\
 "variables.calcAlbedos(waterYearDate); "\
-"regions.runWriteGeotiffs(waterYearDate);"\
 "catch e; "\
 "fprintf('%s: %s\n', e.identifier, e.message); "\
 "exit(-1); "\
@@ -163,10 +179,12 @@ matlab -nodesktop -nodisplay -r "clear; "\
 # Do the scratch shuffle on output daily Mosaics (back from scratch to archive)
 for dataType in scagdrfs_mat; do
     ${thisScriptDir}/scratchShuffle.sh -b ${yearStart} -e ${yearStop} \
-		    FROM variables/${dataType}_$LABEL ${regionName} || \
+		    FROM variables/${dataType}_$LABEL ${REGIONNAME} || \
 	error_exit "Line $LINENO: scratchShuffle error ${dataType} ${LABEL} ${regionName}"
 done
 
+# FORCE NO PIPELINE FOR NOW
+noPipeline=1
 
 if [ $isBatch ] && [ ! $noPipeline ]; then
     
@@ -176,20 +194,17 @@ if [ $isBatch ] && [ ! $noPipeline ]; then
     MAIL=`${thisScriptDir}/getSlurmMail.sh ${SLURM_JOB_ID}`
 
     stdoutDir=$( dirname `${thisScriptDir}/getSlurmStdout.sh ${SLURM_JOB_ID}` )
-    STDOUT_STEP3="${stdoutDir}/runSnowTodayStep3-%A_%a.out"
+    STDOUT_STEP3="${stdoutDir}/3SnTo-%A_%a.out"
 
     #schedule Step 3 to update stats
-    thisYear=$(date +'%Y')
-    thisMonth=$(date +'%-m')
-    waterYr=$thisYear
-    if (( "$thisMonth" > "9" )); then
+    waterYr=$yearStop
+    if (( "$monthStop" > "9" )); then
 	waterYr=$(( $waterYr + 1 ))
     fi
     sbatch --dependency=afterok:$SLURM_JOB_ID \
 	   --mail-user=${MAIL} \
 	   --output=${STDOUT_STEP3} \
-	   ${thisScriptDir}/runSnowTodayStep3.sh \
-	   -L $LABEL $waterYr
+	   ${thisScriptDir}/runSnowTodayStep3.sh -L $LABEL $waterYr
 
 else
     
@@ -204,8 +219,8 @@ rm -rf $TMPDIR
 
 # Stop the stopwatch and report elapsed time
 elapsedSeconds=$SECONDS
-TZ=UTC0 printf '${PROGNAME}: Duration: %(%H:%M:%S)T\n' "$elapsedSeconds"
+duration=$(TZ=UTC0 printf 'Duration: %(%H:%M:%S)T\n' "$elapsedSeconds")
 
 thisDate=$(date)
-echo "${PROGNAME}: Done on hostname=$thisHost on $thisDate"
+echo "${PROGNAME}: Done on hostname=$thisHost on $thisDate [${duration}]"
 

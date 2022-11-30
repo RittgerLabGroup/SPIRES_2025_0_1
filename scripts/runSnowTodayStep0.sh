@@ -30,12 +30,12 @@
 #SBATCH --partition amilan
 #SBATCH --job-name 0SnTo
 #SBATCH --account ucb-general
-#SBATCH --time 05:00:00
-#SBATCH --ntasks-per-node 6
+#SBATCH --time 02:00:00
+#SBATCH --ntasks-per-node 1
 #SBATCH --nodes=1
 #SBATCH -o /scratch/alpine/%u/slurm_out_SnowToday/%x-%j.out
 # Set the system up to notify upon completion
-#SBATCH --mail-type END,FAIL,INVALID_DEPEND,TIME_LIMIT,REQUEUE,STAGE_OUT
+#SBATCH --mail-type FAIL,INVALID_DEPEND,TIME_LIMIT,REQUEUE,STAGE_OUT
 #SBATCH --mail-user brodzik@colorado.edu,crumlyd@nsidc.org
 
 # Grab the full path to this script
@@ -54,8 +54,7 @@ thisScriptDir="$( cd "$( dirname "${PROGNAME}" )" && pwd )"
 
 usage() {
     echo "" 1>&2
-    echo "Usage: ${PROGNAME} [-h] [-n] [-s YYYYMMDD] " 1>&2
-    echo "       MINDAYS NORTHZTHRESH SOUTHZTHRESH" 1>&2
+    echo "Usage: ${PROGNAME} [-h] [-L LABEL] [-n] [-s YYYYMMDD] " 1>&2
     echo "  Runs Step0 in SnowToday pipeline" 1>&2
     echo "    Fetch latest JPL data for 5 WesternUS tiles" 1>&2
     echo "    Update the SnowToday pull report" 1>&2
@@ -64,14 +63,13 @@ usage() {
     echo "    schedules Step0 for tomorrow" 1>&2
     echo "Options: "  1>&2
     echo "  -h: display help message and exit" 1>&2
+    echo "  -L LABEL: string with version label for directories" 1>&2
+    echo "     e.g. for operational processing, use -L v2023.x" 1>&2
     echo "  -n: no pipeline: suppress starting next pipeline step" 1>&2
     echo "  -s YYYYMMDD: optional start day to look for new JPL data" 1>&2
     echo "      overrides default which is 5 days prior to " 1>&2
     echo "      last complete date (all 5 tiles) of data in archive" 1>&2
-    echo "Arguments: " 1>&2
-    echo "  MINDAYS : mindays threshold to pass to step 1" 1>&2
-    echo "  NORTHZTHRESH : Northern altitude threshold (m) to pass to step 1" 1>&2
-    echo "  SOUTHZTHRESH : Southern altitude threshold (m) to pass to step 1" 1>&2
+    echo "Arguments: n/a" 1>&2
     echo "Output: " 1>&2
     echo "  Output location is controlled in Matlab scripts " 1>&2
     echo "Notes: " 1>&2
@@ -90,6 +88,28 @@ error_exit() {
     exit 1
 }
 
+mail_summary() {
+
+    # $1: string to include in email subject
+    
+    # Mails the region inventory summary to selected recipients
+    # An alternative way to control recipient list would be
+    # at command line or with a bash env variable.
+    NOTIFYLIST="${USER}@colorado.edu,crumlyd@nsidc.org,karl.rittger@colorado.edu"
+
+    thisDate=$(date)
+    SUBJECT="SnowToday0 archive updated ${thisDate} ${1}"
+    FROM="${USER}@colorado.edu"
+    SUMMARYFILE="/pl/active/rittger_esp/modis/archive_status/nrt.UpdateReport.westernUS.last.txt"
+    
+    echo "${PROGNAME}: Mailing inventory summary ${SUMMARYFILE} to ${NOTIFYLIST}"
+    # Double-quotes are important on the SUBJECT when it contains spaces
+    mailx -s "${SUBJECT}" \
+	  -r ${FROM} ${NOTIFYLIST} < ${SUMMARYFILE} || \
+	error_exit "Line $LINENO: mail_message error."
+    
+}
+
 module purge
 ml matlab/R2021b
 date
@@ -100,10 +120,11 @@ SECONDS=0
 startyyyymmdd=
 noPipeline=
 
-while getopts "hns:" opt
+while getopts "hL:ns:" opt
 do
     case $opt in
 	s) startyyyymmdd="$OPTARG";;
+	L) LABEL="$OPTARG";;
 	n) noPipeline=1;;
 	h) usage
 	   exit 1;;
@@ -115,15 +136,18 @@ done
 
 shift $(($OPTIND - 1))
 
-[[ "$#" -eq 3 ]] || error_exit "Line $LINENO: Unexpected number of arguments."
+[[ "$#" -eq 0 ]] || error_exit "Line $LINENO: Unexpected number of arguments."
 
-mindays=$1
-northZthresh=$2
-southZthresh=$3
+modisdata_option=""
+s1_label=""
+if [ $LABEL ]; then
+    modisdata_option="'label', '$LABEL'"
+    s1_label="-L $LABEL"
+fi
 
-options=""
+update_option=""
 if [ $startyyyymmdd ]; then
-    options="'startyyyymmdd', '$startyyyymmdd', "
+    update_option="'startyyyymmdd', '$startyyyymmdd', "
 fi
 
 thisHost=$(hostname)
@@ -138,7 +162,7 @@ if [ $noPipeline ]; then
 
 else
 
-    # schedule Step0 for the next time clock strikes 04:30
+    # schedule Step0 for the next time clock strikes daily start time
     # do this first, so that it doesn't depend on success of today's
     # Step0 processing
     if [ $isBatch ]; then
@@ -149,13 +173,14 @@ else
        MAIL=`${thisScriptDir}/getSlurmMail.sh ${SLURM_JOB_ID}`
 
        stdoutDir=$( dirname `${thisScriptDir}/getSlurmStdout.sh ${SLURM_JOB_ID}` )
-       STDOUT_STEP0="${stdoutDir}/runSnowTodayStep0-%j.out"
+       STDOUT_STEP0="${stdoutDir}/0SnTo-%j.out"
 
+       # Assume that startyyyymmdd should be ignored and tomorrow's
+       # Step0 will default to most recent data
        sbatch --begin=04:30:00 \
 	      --mail-user=${MAIL} \
 	      --output=${STDOUT_STEP0} \
-	      ${thisScriptDir}/runSnowTodayStep0.sh \
-	      $mindays $northZthresh $southZthresh
+	      ${thisScriptDir}/runSnowTodayStep0.sh ${s1_label}
 
     fi
 
@@ -164,13 +189,18 @@ fi
 #Go to parent of this script, so that correct pathdef.m file is used
 cd "${thisScriptDir}/../"
 
+WHICHSET="nrt"
+REGIONNAME="westernUS"
+
 #fillOnly==true will only try to fill holes in inventory
 #fillOnly==false will try to re-pull data for every date
 matlab -nodesktop -nodisplay -r "clear; "\
 "try; "\
-"tiles=MODISData.tilesFor('westernUS'); "\
-"batchUpdateModisArchive('nrt', tiles, "\
-"$options "\
+"espEnv = ESPEnv(); "\
+"mData = MODISData($modisdata_option); "\
+"region = Regions('"${REGIONNAME}"', '"${REGIONNAME}"_mask', espEnv, mData); "\
+"batchUpdateModisArchive('"${WHICHSET}"', region, "\
+"$update_option "\
 "'fillOnly', false); "\
 "catch e; "\
 "fprintf('%s: %s\n', e.identifier, e.message); "\
@@ -181,12 +211,13 @@ matlab -nodesktop -nodisplay -r "clear; "\
 if [ $isBatch ] && [ ! $noPipeline ]; then
     
     # use the MAIL and stdoutDir settings from above
-    STDOUT_STEP1="${stdoutDir}/runSnowTodayStep1-%A_%a.out"
+    STDOUT_STEP1="${stdoutDir}/1SnTo-%A_%a.out"
 
     # schedule next job in Snow Today pipeline for today
     # back up the cubes to be updated to this month - 2
     yearStop=$(date +'%Y')
     monthStop=$(date +'%-m')
+    dayStop=$(date +'%d')
     monthStart=$(( $monthStop - 2 ))
     if (( "$monthStart" < "1" )); then
 	monthStart=$(( $monthStart + 12 ))
@@ -199,16 +230,18 @@ if [ $isBatch ] && [ ! $noPipeline ]; then
     sbatch --dependency=afterok:$SLURM_JOB_ID \
 	   --mail-user=${MAIL} \
 	   --output=${STDOUT_STEP1} \
-	   ${thisScriptDir}/runSnowTodayStep1.sh \
-	   $mindays $northZthresh $southZthresh \
-	   $yearStart $monthStart $yearStop $monthStop
+	   ${thisScriptDir}/runSnowTodayStep1.sh ${s1_label} \
+	   $yearStart $monthStart $yearStop $monthStop $dayStop
 
 fi
 
 # Stop the stopwatch and report elapsed time
 elapsedSeconds=$SECONDS
-TZ=UTC0 printf '${PROGNAME}: Duration: %(%H:%M:%S)T\n' "$elapsedSeconds"
+duration=$(TZ=UTC0 printf 'Duration: %(%H:%M:%S)T\n' "$elapsedSeconds")
+
+#Send inventory summary to interested observers
+mail_summary "[${duration}]"
 
 thisDate=$(date)
-echo "${PROGNAME}: Done on hostname=$thisHost on $thisDate"
+echo "${PROGNAME}: Done on hostname=$thisHost on $thisDate [${duration}]"
 
