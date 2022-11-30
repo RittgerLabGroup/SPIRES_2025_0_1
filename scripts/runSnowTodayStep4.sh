@@ -118,7 +118,8 @@ for f in $(find ${srcDir} -type f -cmin -120); do
     scp -i ~/.ssh/id_rsa_snowToday $f snow_today@nusnow.colorado.edu:${destDir}
 done
 
-# DO TRIGGER HERE
+# Write the TRIGGER file to the parent directory of both plot_csv and tif
+# NSIDC will always treat both locations as tied together with this TRIGGER
 destDir="/share/apps/snow-today/incoming/snow-surface-properties/"
 touch TRIGGER
 scp -i ~/.ssh/id_rsa_snowToday TRIGGER snow_today@nusnow.colorado.edu:${destDir}
