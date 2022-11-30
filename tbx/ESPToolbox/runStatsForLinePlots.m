@@ -51,22 +51,12 @@ function runStatsForLinePlots(region, startWaterYr, stopWaterYr, minSCP, minZ)
         error(errorStruct);
     end
     
-    for y=1:length(yrs)        
-        datetimes(y) = datetime(yrs(y), ...
-            WaterYearDate.waterYearLastMonth, WaterYearDate.waterYearLastDay);
-    end
-    if yrs(end) == year(datetime) 
-        datetimes(end) = datetime();
-    end
-    
     % Elevation dataset and elevation threshold to use
     elevationFile = region.espEnv.elevationFile(region);
     
     % Get the number of region partition areas
     dim = size(region.LongName);
     npartitions = dim(1);
-    LongName = region.LongName;
-    ShortName = region.ShortName;
     
     % Preallocate vector of snow cover area and days for each year
     maxDaysPerYear = 366;
@@ -78,10 +68,13 @@ function runStatsForLinePlots(region, startWaterYr, stopWaterYr, minSCP, minZ)
     radiative_forcing_yr = NaN(nyrs, maxDaysPerYear, npartitions);
     deltavis_yr = NaN(nyrs, maxDaysPerYear, npartitions);
 
+    % Start or connect to the local pool (parallelism)
+    region.espEnv.configParallelismPool(20);
+
     % Start or connect to the local pool
     % Assumes that caller has set this!
-    S = espEnv.configParallelismPool();
-    addAttachedFiles(S.pool, {elevationFile});
+    %S = espEnv.configParallelismPool();
+    %addAttachedFiles(S.pool, {elevationFile});
     
     %fprintf(['%s: PARFOR LOOP FOR YEARS DISABLED ' ...
     %    'FOR TESTING ONLY DOING 2 YEARS...\n'], ...
@@ -94,16 +87,14 @@ function runStatsForLinePlots(region, startWaterYr, stopWaterYr, minSCP, minZ)
             scd_sum_yr(y, :, :), ...
             albedo_yr(y, :, :), ...
             radiative_forcing_yr(y, :, :), ...
-            deltavis_yr(y, :, :), mindays, zthresh] = ...
-            statsForLinePlots(...
-            espEnv, mData, regionName, partitions, ...
+            deltavis_yr(y, :, :)] = ...
+            statsForLinePlots(region, ...
             albedoName, yr, elevationData.Z, minSCP, minZ, ...
             maxDaysPerYear);
     end
     
     % Save all (overwrites previous file)
-    summaryFile = espEnv.SummarySnowFile(mData, ...
-        region.regionName, region.maskName, yrs(1), yrs(end));
+    summaryFile = region.espEnv.SummarySnowFile(region, yrs(1), yrs(end));
     [folder, ~, ~] = fileparts(summaryFile);
     if ~exist(folder, 'dir')
         mkdir(folder);
@@ -114,7 +105,7 @@ function runStatsForLinePlots(region, startWaterYr, stopWaterYr, minSCP, minZ)
     % to not be -v7.3, since the web app will be using SciPy
     % matlab reader.  If we need to set this file format to -v7.3,
     % we should consult with web app developer.    
-    version = mData.versionOf.MODISCollection;
+    version = region.modisData.versionOf.MODISCollection;
     espEnv = region.espEnv;
     modisData = region.modisData;
     regionName = region.regionName;
@@ -124,11 +115,9 @@ function runStatsForLinePlots(region, startWaterYr, stopWaterYr, minSCP, minZ)
     STC = region.STC;
     save(summaryFile, 'sca_area_km2_yr', 'scd_sum_yr', ...
         'albedo_yr', 'radiative_forcing_yr', 'deltavis_yr', ...
-        'minSCP', 'minZ', ... 
-        'yrs', 'elevationFile', ...
+        'minSCP', 'minZ', 'yrs', 'elevationFile', ...
         'version', 'regionName', 'maskName', 'LongName', 'ShortName', ...
-        'albedoName', ...
-        'STC', 'espEnv', 'modisData');
+        'albedoName', 'STC', 'espEnv', 'modisData');
     fprintf('%s: Saved summary to %s\n', mfilename(), summaryFile);
     
     % If it was the historical run, find the median, prctiles, min/max
@@ -141,7 +130,7 @@ function runStatsForLinePlots(region, startWaterYr, stopWaterYr, minSCP, minZ)
         median_sca_area_km2 = median(sca_area_km2_yr, yrDim);
         prc25_sca_area_km2 = prctile(sca_area_km2_yr, 25, yrDim);
         prc75_sca_area_km2 = prctile(sca_area_km2_yr, 75, yrDim);
-        sca_area_km2_yr_totalsum = nansum(sca_area_km2_yr, doyDim);
+        sca_area_km2_yr_totalsum = sum(sca_area_km2_yr, doyDim, 'omitnan');
         
         % snow cover days
         median_scd_sum = median(scd_sum_yr, yrDim);
@@ -182,7 +171,7 @@ function runStatsForLinePlots(region, startWaterYr, stopWaterYr, minSCP, minZ)
             'median_scd_sum', 'prc25_scd_sum', 'prc75_scd_sum', ...
             'median_albedo', 'prc25_albedo', 'prc75_albedo', ...
             'median_radiative_forcing', ...
-	    'prc25_radiative_forcing', 'prc75_radiative_forcing', ...
+    	    'prc25_radiative_forcing', 'prc75_radiative_forcing', ...
             'median_deltavis', 'prc25_deltavis', 'prc75_deltavis', ...
             '-append');
         fprintf(['%s: Appended multi-year, multi-region summary ' ...
@@ -190,20 +179,12 @@ function runStatsForLinePlots(region, startWaterYr, stopWaterYr, minSCP, minZ)
             mfilename(), summaryFile);
         
     end
-
-    parfor dateIdx=1:length(datetimes)
-        waterYearDate = WaterYearDate(datetimes(dateIdx), 12);
-        regions.runWriteStats(waterYearDate);
-    end
-    fprintf(['%s: Stats written in csv files\n'], ...
-            mfilename());
     
 end
 
 function [datevalsYr, sca_area_km2_yr, scd_sum_yr, albedo_yr, ...
-    radiative_forcing_yr, deltavis_yr, mindays, zthresh] = ...
-    statsForLinePlots(espEnv, mData, ...
-    regionName, partitions, albedoName, waterYr, Z, ...
+    radiative_forcing_yr, deltavis_yr] = ...
+    statsForLinePlots(region, albedoName, waterYr, Z, ...
     minSCP, minZ, maxDays)
 %statsForLinePlots summarizes total snow cover fraction, 
 %median snow covered days, median albedo, radiative_forcing and
@@ -211,9 +192,7 @@ function [datevalsYr, sca_area_km2_yr, scd_sum_yr, albedo_yr, ...
 %area, for use in line graphs
 %
 % Input
-%    espEnv : ESPEnv object with mosaic filename information
-%    mData : MODISData object with MODIS information
-%    partitions : structure with Regions object with partitions information, 
+%    region : Regions object with ESPEnv, modisData, and partition info
 %    albedoName : name of albedo field to read from mosaicFile
 %    waterYr : water year to process (begins Oct of prior year)
 %    Z : array of elevations to match mosaic array
@@ -237,17 +216,15 @@ function [datevalsYr, sca_area_km2_yr, scd_sum_yr, albedo_yr, ...
 %    albedo_yr : median scene albedo by day
 %    radiative_forcing_yr : median scene radiative forcing by day
 %    deltavis_yr : median scene deltavis by day
-%    mindays, zthresh : stored values read from MosaicFile
 %
 
 % Copyright 2020 The Regents of the University of Colorado
 
-regions = Regions(regionName, [regionName '_mask'], espEnv, mData);
 datevalsYr = datenum([waterYr-1 10 1 12 0 0]):...
     datenum([waterYr 9 30 12 0 0]);
 
 % Pre-allocate data matrices for area and scd sum by partition region
-dim = size(partitions.LongName);
+dim = size(region.LongName);
 npartitions = dim(1);
 sca_area_km2_yr = NaN(1, maxDays, npartitions);
 scd_sum_yr = NaN(1, maxDays, npartitions);
@@ -262,18 +239,15 @@ for fidx=1:length(fNames)
 end
 
 % Loop for each day
-% Can't be done in parallel because of the way scd_sum is used.
 tic;
 for d=1:length(datevalsYr)
-%fprintf('%s: DEBUG Only doing 16 days for TESTING...\n', mfilename());
-%for d=1:16
     
     % Fetch the full daily mosaic for this date
     thisYr = year(datevalsYr(d));
     thisMonth = month(datevalsYr(d));
     thisDay = day(datevalsYr(d));
     thisDatetime = datetime(thisYr, thisMonth, thisDay);
-    mosaicFile = espEnv.MosaicFile(regions, thisDatetime);
+    mosaicFile = region.espEnv.MosaicFile(region, thisDatetime);
     
     % Warning if a date is missing
     if ~isfile(mosaicFile)
@@ -285,31 +259,24 @@ for d=1:length(datevalsYr)
     fprintf('%s: Reading mosaic variables from %s...\n', ...
 	    mfilename, mosaicFile);
 
-    % Some static metadata
-    % (Added to mosaics beginning Sept 2022)
-    S = load(mosaicFile, 'mindays', 'zthresh');
-    mindays = S.mindays;
-    zthresh = S.zthresh;
-
     % Read layers and attributes from mosaic
     snow = readVarFromMosaic(mosaicFile, 'snow_fraction', ...
-			     'percent', 1);
+        'percent', 1);
+    snow_cover_days = readVarFromMosaic(mosaicFile, 'snow_cover_days', ...
+        'days', 1);
     albedo = readVarFromMosaic(mosaicFile, albedoName, ...
-			      'percent', 100);
+        'percent', 100);
     RF = readVarFromMosaic(mosaicFile, 'radiative_forcing', ...
-			  'W/m^2', 1);
+        'W/m^2', 1);
     DV = readVarFromMosaic(mosaicFile, 'deltavis', ...
-			  'percent', 1);
+        'percent', 1);
     percent2fraction = 100.;
 
     %% Loop for each partition
-    %fprintf('%s: DEBUG only doing last 3 regions...\n', ...
-    %    mfilename());
     for regIdx=1:npartitions
-        %for regIdx=(npartitions-2):npartitions
         
         % this is a mask for pixels in this region
-        outsideRegMask = partitions.indxMosaic ~= regIdx;
+        outsideRegMask = region.indxMosaic ~= regIdx;
         
         %%%%%%%% SCA %%%%%%%%%
         % make a copy to manipulate
@@ -324,36 +291,25 @@ for d=1:length(datevalsYr)
         thisSnow(snowIsMissing) = 0;
         
         % Calculate area as an image and then sum for this day
-        ascag = (thisSnow) * (mData.pixSize_500m^2 / 1000^2);
+        ascag = (thisSnow) * (region.modisData.pixSize_500m^2 / 1000^2);
         
         % should scale snow_fraction, but this is fast cause
         % 1 number instead of grid
         sca_area_km2 = sum(sum(ascag)) ./ percent2fraction;
         sca_area_km2_yr(1, d, regIdx) = sca_area_km2;
         
-        %%%%%%%% SCD %%%%%%%%%
-        % Logical image for snow cover days and set to NaN
-        % at low elevation to reduce noise
-        % (could mask out some low elevation snow)
-        bd = logical(thisSnow); %make 0 and 1
-        bd = single(bd); %So I can add nans
-        bd(ZbelowMin.SCD) = NaN;
-        
-        % Mean of snow cover days
-        if d == 1
-            scd_sum(regIdx) = mean(...
-                reshape(bd, [numel(bd) 1]), 'omitnan');
-        else
-            scd_sum(regIdx) = scd_sum(regIdx) + ...
-                mean(reshape(bd, [numel(bd) 1]), 'omitnan');
-        end
-        scd_sum_yr(1, d, regIdx) = scd_sum(regIdx);
-        
         % Start with new copy of snow
         % since snow threshold may be different for remaining
         % variables
         thisSnow = single(snow.data);
         thisSnow(outsideRegMask) = NaN;
+
+        %%%%%%%% SCD %%%%%%%
+        thisSCD = single(snow_cover_days.data) ./ snow_cover_days.divisor;
+        thisSCD(snow_cover_days.data == snow_cover_days.missingValue) = 0;
+        thisSCD(outsideRegMask) = NaN;
+        thisSCD(ZbelowMin.SCD) = NaN;
+        scd_sum_yr(1, d, regIdx) = mean(thisSCD(:), 'omitnan');
         
         %%%%%%%% albedo %%%%%%%%%
         % mask albedo for only the area of this partition
@@ -368,7 +324,7 @@ for d=1:length(datevalsYr)
         thisAlbedo(albedo.data == albedo.missingValue) = NaN;
         
         % calculate median for this region and day
-        albedo_yr(1, d, regIdx) = nanmedian(thisAlbedo(:));
+        albedo_yr(1, d, regIdx) = median(thisAlbedo,'all', 'omitnan');
 
         %%%%%%%% RF %%%%%%%%%
         % mask RF for only the area of this partition
@@ -384,8 +340,8 @@ for d=1:length(datevalsYr)
         
         % calculate median for this region and day
         % FIXME: figure out why the 500 values aren't set to RF.missingValue?
-        radiative_forcing_yr(1, d, regIdx) = nanmedian(...
-            thisRF(0 < thisRF & thisRF < 500));
+        radiative_forcing_yr(1, d, regIdx) = median(...
+            thisRF(0 < thisRF & thisRF < 500), 'all', 'omitnan');
 
         %%%%%%%% DV %%%%%%%%%
         % mask DV for only the area of this partition
@@ -400,7 +356,8 @@ for d=1:length(datevalsYr)
         thisDV(DV.data == DV.missingValue) = NaN;
         
         % calculate median albedo for this region and day
-        deltavis_yr(1, d, regIdx) = nanmedian(thisDV(thisDV > 0));
+        deltavis_yr(1, d, regIdx) = median(...
+            thisDV(thisDV > 0), 'all', 'omitnan');
         
     end
     

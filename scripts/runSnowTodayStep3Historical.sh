@@ -15,7 +15,7 @@
 #SBATCH --partition amilan
 #SBATCH --job-name 3HistST
 #SBATCH --account=ucb-general
-#SBATCH --time=04:00:00
+#SBATCH --time=12:00:00
 # Assumes 3.74 GB/per node for total of 89.76 GB RAM
 #SBATCH --ntasks-per-node=24
 #SBATCH --nodes=1
@@ -98,6 +98,9 @@ fi
 module purge
 ml matlab/R2021b
 
+# Start the stopwatch
+SECONDS=0
+
 startWaterYr=2001
 stopWaterYr=$(( $waterYr - 1 ))
 
@@ -119,24 +122,25 @@ export TMP=$tmpDir
 cd "${thisScriptDir}/../"
 
 # Do the scratch shuffle on complete set of input daily Mosaics (to scratch for speed)
-regionName='westernUS'
+REGIONNAME='westernUS'
 yearStart=$(( $startWaterYr - 1 ))
-yearStop=$waterYr
-for dataType in scagdrfs; do
-    ${thisScriptDir}/scratchShuffle.sh TO ${dataType}_$LABEL ${regionName} \
-		    ${yearStart} ${yearStop} || \
-	error_exit "Line $LINENO: scratchShuffle error ${dataType} ${LABEL} ${regionName}"
+for dataType in scagdrfs_mat; do
+    ${thisScriptDir}/scratchShuffle.sh -b ${yearStart} -e ${stopWaterYr} \
+		    TO variables/${dataType}_$LABEL ${REGIONNAME} || \
+	error_exit "Line $LINENO: scratchShuffle error ${dataType} ${LABEL} ${REGIONNAME}"
 done
 
 # Do scratch shuffle for required ancillary data
 ${thisScriptDir}/scratchShuffleAncillary.sh || \
     error_exit "Line $LINENO: scratchShuffleAncillary error"
+
+echo "${PROGNAME}: Done with shuffle TO scratch..."
     
 matlab -nodesktop -nodisplay -r "clear; "\
 "try; "\
 "espEnv = ESPEnv(); "\
 "mData = MODISData($options); "\
-"partitionName = Regions.getPartitionNameFor("${SLURM_ARRAY_TASK_ID"); "\
+"partitionName = Regions.getPartitionNameFor("${SLURM_ARRAY_TASK_ID}"); "\
 "region = Regions('"${REGIONNAME}"', partitionName, espEnv, mData); "\
 "minSCP = minSCPForLinePlots(); "\
 "minZ = minZForLinePlots(); "\
@@ -147,10 +151,22 @@ matlab -nodesktop -nodisplay -r "clear; "\
 "end; "\
 "exit(0);"  || error_exit "Line $LINENO: matlab error."
 
+# Do the scratch shuffle on output regional_stats back from scratch
+echo "${PROGNAME}: Doing with shuffle FROM scratch..."
+for dataType in scagdrfs_mat; do
+    ${thisScriptDir}/scratchShuffle.sh \
+		    FROM regional_stats/${dataType}_$LABEL ${REGIONNAME} || \
+	error_exit "Line $LINENO: scratchShuffle FROM error ${dataType} ${LABEL} ${REGIONNAME}"
+done
+echo "${PROGNAME}: Done with shuffle FROM scratch..."
+						
 #Clean up temporary directory for matlab job storage
 echo "${PROGNAME}: Removing TMPDIR=$TMPDIR..."
 rm -rf $TMPDIR
 
-thisDate=$(date)
-echo "${PROGNAME}: Done on hostname=$thisHost on $thisDate"
+# Stop the stopwatch and report elapsed time
+elapsedSeconds=$SECONDS
+duration=$(TZ=UTC0 printf 'Duration: %(%H:%M:%S)T\n' "$elapsedSeconds")
 
+thisDate=$(date)
+echo "${PROGNAME}: Done on hostname=$thisHost on $thisDate [${duration}]"

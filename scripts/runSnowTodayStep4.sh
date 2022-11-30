@@ -1,23 +1,21 @@
 #!/bin/bash
 #
 # script to run SnowToday Step4:
-#   Make today's SnowToday line and map plots
-#   kick off Step5 for today
+#   push today's SnowToday created plots to NSIDC
 #
 
 #SBATCH --qos normal
-#SBATCH --partition amilan
 #SBATCH --job-name 4SnTo
+#SBATCH --partition amilan
 #SBATCH --account ucb-general
-#SBATCH --time 02:00:00
-# Assumes 3.74 GB/per node for total of xx GB RAM
-#SBATCH --ntasks-per-node 22
+#SBATCH --time 00:15:00
+#SBATCH --ntasks-per-node 1
 #SBATCH --nodes 1
-#SBATCH -o /scratch/alpine/%u/slurm_out_SnowToday/%x-%A_%a.out
+#SBATCH -o /scratch/alpine/%u/slurm_out_SnowToday/%x-%j.out
 # Set the system up to notify upon completion
+# Do not set --mail-user, let it default to the caller
+# It can also be over-written at the command line
 #SBATCH --mail-type END,FAIL,INVALID_DEPEND,TIME_LIMIT,REQUEUE,STAGE_OUT
-#SBATCH --mail-user brodzik@colorado.edu
-#SBATCH --array=10-12
 
 # Grab the full path to this script
 # depends on whether it's running as sbatch job
@@ -35,18 +33,16 @@ thisScriptDir="$( cd "$( dirname "${PROGNAME}" )" && pwd )"
 
 usage() {
     echo "" 1>&2
-    echo "Usage: ${PROGNAME} [-h] [-n] [-L LABEL] [-d YYYYMMDD] " 1>&2
-    echo "  Calculates ST statistics files to date for this WATERYR" 1>&2
-    echo "  Job array for each region group (10=westUS, 11=States, 12=HUC2)" 1>&2
+    echo "Usage: ${PROGNAME} [-h] [-L LABEL] WATERYR" 1>&2
+    echo "  Pushes all of today's csvs-to-date and recent geotiffs to NSIDC" 1>&2
     echo "Options: "  1>&2
     echo "  -h: display help message and exit" 1>&2
-    echo "  -n: no pipeline: suppress starting next pipeline step" 1>&2
     echo "  -L LABEL: string with version label for directories" 1>&2
     echo "     e.g. for operational processing, use -L v2023.x" 1>&2
-    echo "  -d YYYYMMDD: analysis date, defaults to today" 1>&2
-    echo "Arguments: n/a " 1>&2
+    echo "Arguments: " 1>&2
+    echo "  WATERYR: water year to process" 1>&2
     echo "Output: " 1>&2
-    echo "  Output location is controlled in Matlab scripts " 1>&2
+    echo "  Output location is NSIDC" 1>&2
     echo "Notes: " 1>&2
     echo "  Scripts stdout/stderr are written to user's scratch " 1>&2
     echo "  where directory /scratch/alpine/$USER/slurm_out_SnowToday/ " 1>&2
@@ -63,17 +59,32 @@ error_exit() {
     exit 1
 }
 
-yyyymmdd=
-noPipeline=
+mail_success() {
+
+    # $1: string to include in email subject
+    
+    # Mails success message to selected recipients
+    NOTIFYLIST="${USER}@colorado.edu,crumlyd@nsidc.org,karl.rittger@colorado.edu"
+
+    thisDate=$(date)
+    SUBJECT="SnowToday4 has completed successfully on ${thisDate} ${1}"
+    FROM="${USER}@colorado.edu"
+    
+    echo "${PROGNAME}: Mailing success notice to ${NOTIFYLIST}"
+    # Double-quotes are important on the SUBJECT when it contains spaces
+    echo "${PROGNAME}: Success" | \
+	mailx -s "${SUBJECT}" -r ${FROM} ${NOTIFYLIST} || \
+	error_exit "Line $LINENO: mail_message error."
+
+}
+
 LABEL=
 
-while getopts "d:hnL:" opt
+while getopts "hL:" opt
 do
     case $opt in
-	d) yyyymmdd="$OPTARG";;
 	h) usage
 	   exit 1;;
-	n) noPipeline=1;;
 	L) LABEL="$OPTARG";;
 	?) printf "Unknown option %s\n" $opt
 	   usage
@@ -83,122 +94,43 @@ done
 
 shift $(($OPTIND - 1))
 
-[[ "$#" -eq 0 ]] || error_exit "Line $LINENO: Unexpected number of arguments."
+[[ "$#" -eq 1 ]] || error_exit "Line $LINENO: Unexpected number of arguments."
 
-if [ $noPipeline ]; then
-    echo "${PROGNAME}: noPipeline mode: this script will not continue pipeline"
-fi
-
-if [ ! $yyyymmdd ]; then
-    yyyymmdd=$(date +'%Y%m%d')
-fi
-echo "${PROGNAME}: Analysis date will be: $yyyymmdd"
-
-options=""
-if [ $LABEL ]; then
-    options="'label', '$LABEL'"
-fi
-
-module purge
-ml matlab/R2021b
+WATERYR=$1
 
 # Start the stopwatch
 SECONDS=0
 
 thisHost=$(hostname)
-thisDate=$(date)
-echo "${PROGNAME}: Begin on hostname=$thisHost on $thisDate for "
-echo "${PROGNAME}:    analysis date=$yyyymmdd "
-echo "${PROGNAME}:    partitionNum=$SLURM_ARRAY_TASK_ID and "
-echo "${PROGNAME}:    options=$options"
-echo "${PROGNAME}: SLURM_SCRATCH=$SLURM_SCRATCH"
-echo "${PROGNAME}: SLURM_JOB_ID=$SLURM_JOB_ID"
-echo "${PROGNAME}: SLURM_ARRAY_JOB_ID=$SLURM_ARRAY_JOB_ID"
+thisDate=$(date +'%Y%m%d')
+echo "${PROGNAME}: Begin on hostname=$thisHost on $thisDate for LABEL=$LABEL"
 
-#Make a unique temporary directory for matlab job storage
-#Set TMPDIR/TMP to this location so job array uses it for tmp location
-tmpDir=/scratch/alpine/${USER}/matlabTmp/alpine-$SLURM_ARRAY_JOB_ID
-mkdir -p $tmpDir
-export TMPDIR=$tmpDir
-export TMP=$tmpDir
+echo "${PROGNAME}: Copying csv files to NSIDC staging directory..."
+srcDir="/pl/active/rittger_esp/modis/regional_stats/scagdrfs_csv_${LABEL}/v006/westernUS/WY${WATERYR}/"
+destDir="/share/apps/snow-today/incoming/snow-surface-properties/plot_csv/"
+cd ${srcDir}
+scp -i ~/.ssh/id_rsa_snowToday *.csv snow_today@nusnow.colorado.edu:${destDir}
 
-#SCD minimum days to include in the plots
-minSCD=14
-
-#Other values for plots--will need to be updated for RF and DV plots
-minSCF=10
-minZ=800
-
-#Go to parent of this script, so that correct pathdef.m file is used
-cd "${thisScriptDir}/../"
-
-# Do the scratch shuffle on input daily Mosaics (to scratch for speed)
-regionName='westernUS'
-for dataType in scagdrfs; do
-    ${thisScriptDir}/scratchShuffle.sh TO ${dataType}_$LABEL ${regionName} \
-		    ${yearStart} ${yearStop} || \
-	error_exit "Line $LINENO: scratchShuffle error ${dataType} ${LABEL} ${regionName}"
+echo "${PROGNAME}: Copying geotiffs to NSIDC staging directory..."
+srcDir="/pl/active/rittger_esp/modis/variables/scagdrfs_geotiff_${LABEL}/v006/westernUS/EPSG_3857/LZW/"
+destDir="/share/apps/snow-today/incoming/snow-surface-properties/tif/"
+for f in $(find ${srcDir} -type f -cmin -120); do
+    scp -i ~/.ssh/id_rsa_snowToday $f snow_today@nusnow.colorado.edu:${destDir}
 done
 
-#showSCF_SCD will only work on the SCD parts, now
-#use showMostRecentVarMap for all but SCD
-#use showMostRecentVarInContext for all varNames
-matlab -nodesktop -nodisplay -r "clear; "\
-"try; "\
-"espEnv = ESPEnv(); "\
-"mData = MODISData($options); "\
-"myDt = datetime('"$yyyymmdd"', 'InputFormat', 'yyyyMMdd'); "\
-"showSCF_SCD(espEnv, mData, 'westernUS', "$SLURM_ARRAY_TASK_ID", myDt, "\
-"${minSCF}, ${minSCD}, ${minZ}); "\
-"vNs = {'SCD', 'snow_fraction', 'albedo_observed_muZ', 'radiative_forcing'}; "\
-"for v=1:length(vNs); "\
-"showMostRecentVarMap(espEnv, mData, 'westernUS', "$SLURM_ARRAY_TASK_ID", "\
-"vNs{v}, myDt, ${minSCF}); "\
-# Set up the WY to be only current month because geotiffs are memory pigs
-"region.runWriteGeotiffs(waterYearDate);"\
-
-"end; "\
-"catch e; "\
-"fprintf('%s: %s\n', e.identifier, e.message); "\
-"exit(-1); "\
-"end; "\
-"exit(0);" || error_exit "Line $LINENO: matlab error."
-
-# Do the scratch shuffle to copy the geotiffs and csvs back from scratch to archive
-#TBD
-
-#schedule next job in pipeline to run after entire job array completes
-if [ $isBatch ] && [ ! $noPipeline ]; then
-    
-    # get current slurm info for mail-user and stdout
-    # Don't assume they are the same as at the top of this file,
-    # because they can be overridden at the command line
-    MAIL=`${thisScriptDir}/getSlurmMail.sh ${SLURM_JOB_ID}`
-    stdoutDir=$( dirname `${thisScriptDir}/getSlurmStdout.sh ${SLURM_JOB_ID}` )
-
-    if [ "$SLURM_ARRAY_TASK_ID" -eq "10" ]; then
-
-	STDOUT_STEP5="${stdoutDir}/runSnowTodayStep5-%j.out"
-
-	#schedule Step 5 to push all plots to NSIDC
-	creationDate=$(date +'%Y%m%d')
-	sbatch --dependency=afterok:$SLURM_ARRAY_JOB_ID \
-	       --mail-user=${MAIL} \
-	       --output=${STDOUT_STEP5} \
-	       ${thisScriptDir}/runSnowTodayStep5.sh \
-	       -L LABEL $creationDate
-
-    fi
-fi
-
-#Clean up temporary directory for matlab job storage
-echo "${PROGNAME}: Removing TMPDIR=$TMPDIR..."
-rm -rf $TMPDIR
+# Write the TRIGGER file to the parent directory of both plot_csv and tif
+# NSIDC will always treat both locations as tied together with this TRIGGER
+destDir="/share/apps/snow-today/incoming/snow-surface-properties/"
+touch TRIGGER
+scp -i ~/.ssh/id_rsa_snowToday TRIGGER snow_today@nusnow.colorado.edu:${destDir}
 
 # Stop the stopwatch and report elapsed time
 elapsedSeconds=$SECONDS
-TZ=UTC0 printf '${PROGNAME}: Duration: %(%H:%M:%S)T\n' "$elapsedSeconds"
+duration=$(TZ=UTC0 printf 'Duration: %(%H:%M:%S)T\n' "$elapsedSeconds")
+
+#Send success email to interested observers
+mail_success "[${duration}]"
 
 thisDate=$(date)
-echo "${PROGNAME}: Done on hostname=$thisHost on $thisDate"
+echo "${PROGNAME}: Done on hostname=$thisHost on $thisDate [${duration}]"
 

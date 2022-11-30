@@ -30,13 +30,14 @@
 #SBATCH --partition amilan
 #SBATCH --job-name 0SnTo
 #SBATCH --account ucb-general
-#SBATCH --time 02:00:00
+#SBATCH --time 08:00:00
 #SBATCH --ntasks-per-node 1
 #SBATCH --nodes=1
 #SBATCH -o /scratch/alpine/%u/slurm_out_SnowToday/%x-%j.out
 # Set the system up to notify upon completion
+# Do not set --mail-user, let it default to the caller
+# It can also be over-written at the command line
 #SBATCH --mail-type FAIL,INVALID_DEPEND,TIME_LIMIT,REQUEUE,STAGE_OUT
-#SBATCH --mail-user brodzik@colorado.edu,crumlyd@nsidc.org
 
 # Grab the full path to this script
 # depends on whether it's running as sbatch job

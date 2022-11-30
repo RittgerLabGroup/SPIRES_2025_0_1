@@ -12,10 +12,11 @@
 #SBATCH --time=02:00:00
 #SBATCH --ntasks-per-node=20
 #SBATCH --nodes=1
-#SBATCH -o /scratch/alpine/%u/slurm_out_SnowToday/%x-%j.out
+#SBATCH -o /scratch/alpine/%u/slurm_out_SnowToday/%x-%A_%a.out
 # Set the system up to notify upon completion
+# Do not set --mail-user, let it default to the caller
+# It can also be over-written at the command line
 #SBATCH --mail-type FAIL,INVALID_DEPEND,TIME_LIMIT,REQUEUE,STAGE_OUT
-#SBATCH --mail-user brodzik@colorado.edu,crumlyd@nsidc.org
 
 # Grab the full path to this script
 # depends on whether it's running as sbatch job
@@ -112,7 +113,7 @@ SECONDS=0
 
 thisHost=$(hostname)
 thisDate=$(date)
-echo "${PROGNAME}: Begin on hostname=$thisHost on $thisDate for yr=$yr and options=$options"
+echo "${PROGNAME}: Begin on hostname=$thisHost on $thisDate for options=$options"
 echo "${PROGNAME}: Start = $yearStart, $monthStart"
 echo "${PROGNAME}: Stop  = $yearStop, $monthStop, $dayStop"
 echo "${PROGNAME}: SLURM_SCRATCH=$SLURM_SCRATCH"
@@ -120,7 +121,7 @@ echo "${PROGNAME}: SLURM_JOB_ID=$SLURM_JOB_ID"
 
 #Make a unique temporary directory for matlab job storage
 #Set TMPDIR/TMP to this location so job array uses it for tmp location
-tmpDir=/scratch/alpine/${USER}/matlabTmp/alpine-$SLURM_JOB_ID
+tmpDir=/scratch/alpine/${USER}/.matlabTmp/alpine-$SLURM_JOB_ID
 mkdir -p $tmpDir
 export TMPDIR=$tmpDir
 export TMP=$tmpDir
@@ -182,9 +183,6 @@ for dataType in scagdrfs_mat; do
 		    FROM variables/${dataType}_$LABEL ${REGIONNAME} || \
 	error_exit "Line $LINENO: scratchShuffle error ${dataType} ${LABEL} ${regionName}"
 done
-
-# FORCE NO PIPELINE FOR NOW
-noPipeline=1
 
 if [ $isBatch ] && [ ! $noPipeline ]; then
     
