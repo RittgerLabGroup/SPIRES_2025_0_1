@@ -13,8 +13,9 @@
 #SBATCH --nodes 1
 #SBATCH -o /scratch/alpine/%u/slurm_out_SnowToday/%x-%j.out
 # Set the system up to notify upon completion
+# Do not set --mail-user, let it default to the caller
+# It can also be over-written at the command line
 #SBATCH --mail-type END,FAIL,INVALID_DEPEND,TIME_LIMIT,REQUEUE,STAGE_OUT
-#SBATCH --mail-user brodzik@colorado.edu,crumlyd@nsidc.org,karl.rittger@colorado.edu
 
 # Grab the full path to this script
 # depends on whether it's running as sbatch job
@@ -56,6 +57,25 @@ error_exit() {
 
     echo "${PROGNAME}: ERROR: ${1:-"Unknown Error"}" 1>&2
     exit 1
+}
+
+mail_success() {
+
+    # $1: string to include in email subject
+    
+    # Mails success message to selected recipients
+    NOTIFYLIST="${USER}@colorado.edu,crumlyd@nsidc.org,karl.rittger@colorado.edu"
+
+    thisDate=$(date)
+    SUBJECT="SnowToday4 has completed successfully on ${thisDate} ${1}"
+    FROM="${USER}@colorado.edu"
+    
+    echo "${PROGNAME}: Mailing success notice to ${NOTIFYLIST}"
+    # Double-quotes are important on the SUBJECT when it contains spaces
+    echo "${PROGNAME}: Success" | \
+	mailx -s "${SUBJECT}" -r ${FROM} ${NOTIFYLIST} || \
+	error_exit "Line $LINENO: mail_message error."
+
 }
 
 LABEL=
@@ -106,6 +126,9 @@ scp -i ~/.ssh/id_rsa_snowToday TRIGGER snow_today@nusnow.colorado.edu:${destDir}
 # Stop the stopwatch and report elapsed time
 elapsedSeconds=$SECONDS
 duration=$(TZ=UTC0 printf 'Duration: %(%H:%M:%S)T\n' "$elapsedSeconds")
+
+#Send success email to interested observers
+mail_success "[${duration}]"
 
 thisDate=$(date)
 echo "${PROGNAME}: Done on hostname=$thisHost on $thisDate [${duration}]"
