@@ -15,7 +15,7 @@
 # Set the system up to notify upon completion
 # Do not set --mail-user, let it default to the caller
 # It can also be over-written at the command line
-#SBATCH --mail-type END,FAIL,INVALID_DEPEND,TIME_LIMIT,REQUEUE,STAGE_OUT
+#SBATCH --mail-type FAIL,INVALID_DEPEND,TIME_LIMIT,REQUEUE,STAGE_OUT
 
 # Grab the full path to this script
 # depends on whether it's running as sbatch job
@@ -64,7 +64,7 @@ mail_success() {
     # $1: string to include in email subject
     
     # Mails success message to selected recipients
-    NOTIFYLIST="${USER}@colorado.edu,crumlyd@nsidc.org,karl.rittger@colorado.edu"
+    NOTIFYLIST="${USER}@colorado.edu,crumlyd@nsidc.org,karl.rittger@colorado.edu,brodzik@colorado.edu"
 
     thisDate=$(date)
     SUBJECT="SnowToday4 has completed successfully on ${thisDate} ${1}"

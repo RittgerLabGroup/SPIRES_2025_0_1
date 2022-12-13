@@ -102,7 +102,7 @@ mail_summary() {
 	# Mails the region inventory summary to selected recipients
 	# An alternative way to control recipient list would be
 	# at command line or with a bash env variable.
-	NOTIFYLIST="${USER}@colorado.edu,crumlyd@nsidc.org,karl.rittger@colorado.edu"
+	NOTIFYLIST="${USER}@colorado.edu,crumlyd@nsidc.org,karl.rittger@colorado.edu,brodzik@colorado.edu"
 	SUBJECT="SnowToday0 archive updated ${thisDate} ${1}"
 
     else
