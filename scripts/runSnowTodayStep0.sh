@@ -55,7 +55,7 @@ thisScriptDir="$( cd "$( dirname "${PROGNAME}" )" && pwd )"
 
 usage() {
     echo "" 1>&2
-    echo "Usage: ${PROGNAME} [-h] [-L LABEL] [-n] [-s YYYYMMDD] " 1>&2
+    echo "Usage: ${PROGNAME} [-h] [-L LABEL] [-n] [-s YYYYMMDD] [-t]" 1>&2
     echo "  Runs Step0 in SnowToday pipeline" 1>&2
     echo "    Fetch latest JPL data for 5 WesternUS tiles" 1>&2
     echo "    Update the SnowToday pull report" 1>&2
@@ -70,6 +70,10 @@ usage() {
     echo "  -s YYYYMMDD: optional start day to look for new JPL data" 1>&2
     echo "      overrides default which is 5 days prior to " 1>&2
     echo "      last complete date (all 5 tiles) of data in archive" 1>&2
+    echo "  -t: testing pipeline" 1>&2
+    echo "      do not initiate Step0 for tomorrow" 1>&2
+    echo "      only send success email to caller (ignore NOTIFYLIST)" 1>&2
+    echo "      results will not be pushed to NSIDC" 1>&2
     echo "Arguments: n/a" 1>&2
     echo "Output: " 1>&2
     echo "  Output location is controlled in Matlab scripts " 1>&2
@@ -93,13 +97,22 @@ mail_summary() {
 
     # $1: string to include in email subject
     
-    # Mails the region inventory summary to selected recipients
-    # An alternative way to control recipient list would be
-    # at command line or with a bash env variable.
-    NOTIFYLIST="${USER}@colorado.edu,crumlyd@nsidc.org,karl.rittger@colorado.edu"
+    if [ ! $testing ]; then
 
+	# Mails the region inventory summary to selected recipients
+	# An alternative way to control recipient list would be
+	# at command line or with a bash env variable.
+	NOTIFYLIST="${USER}@colorado.edu,crumlyd@nsidc.org,karl.rittger@colorado.edu"
+	SUBJECT="SnowToday0 archive updated ${thisDate} ${1}"
+
+    else
+	
+	NOTIFYLIST="${USER}@colorado.edu"
+	SUBJECT="TESTING SnowToday0 archive updated ${thisDate} ${1}"
+
+    fi
+	
     thisDate=$(date)
-    SUBJECT="SnowToday0 archive updated ${thisDate} ${1}"
     FROM="${USER}@colorado.edu"
     SUMMARYFILE="/pl/active/rittger_esp/modis/archive_status/nrt.UpdateReport.westernUS.last.txt"
     
@@ -120,15 +133,17 @@ SECONDS=0
 
 startyyyymmdd=
 noPipeline=
+testing=
 
-while getopts "hL:ns:" opt
+while getopts "hL:ns:t" opt
 do
     case $opt in
-	s) startyyyymmdd="$OPTARG";;
-	L) LABEL="$OPTARG";;
-	n) noPipeline=1;;
 	h) usage
 	   exit 1;;
+	L) LABEL="$OPTARG";;
+	n) noPipeline=1;;
+	s) startyyyymmdd="$OPTARG";;
+	t) testing=1;;
 	?) printf "Unknown option %s\n" $opt
 	   usage
            exit 1;;
@@ -146,6 +161,11 @@ if [ $LABEL ]; then
     s1_label="-L $LABEL"
 fi
 
+testing_option=""
+if [ $testing ]; then
+    testing_option="-t"
+fi
+
 update_option=""
 if [ $startyyyymmdd ]; then
     update_option="'startyyyymmdd', '$startyyyymmdd', "
@@ -154,6 +174,11 @@ fi
 thisHost=$(hostname)
 thisDate=$(date)
 echo "${PROGNAME}: Begin on hostname=$thisHost on $thisDate"
+if [ $testing ]; then
+    echo "${PROGNAME}: TEST mode"
+else
+    echo "${PROGNAME}: OPS mode"
+fi
 echo "${PROGNAME}: SLURM_SCRATCH=$SLURM_SCRATCH"
 echo "${PROGNAME}: SLURM_JOB_ID=$SLURM_JOB_ID"
 
@@ -163,17 +188,17 @@ if [ $noPipeline ]; then
 
 else
 
+    MAIL=`${thisScriptDir}/getSlurmMail.sh ${SLURM_JOB_ID}`
+    stdoutDir=$( dirname `${thisScriptDir}/getSlurmStdout.sh ${SLURM_JOB_ID}` )
+
     # schedule Step0 for the next time clock strikes daily start time
     # do this first, so that it doesn't depend on success of today's
     # Step0 processing
-    if [ $isBatch ]; then
-    
+    if [ $isBatch ] && [ ! $testing ]; then
+
        # get current slurm info for mail-user and stdout
        # Don't assume they are the same as at the top of this file,
        # because they can be overridden at the command line
-       MAIL=`${thisScriptDir}/getSlurmMail.sh ${SLURM_JOB_ID}`
-
-       stdoutDir=$( dirname `${thisScriptDir}/getSlurmStdout.sh ${SLURM_JOB_ID}` )
        STDOUT_STEP0="${stdoutDir}/0SnTo-%j.out"
 
        # Assume that startyyyymmdd should be ignored and tomorrow's
@@ -227,11 +252,14 @@ if [ $isBatch ] && [ ! $noPipeline ]; then
 	yearStart=$yearStop
     fi
 
+    echo "--mail-user=${MAIL}"
+    echo "--output=${STDOUT_STEP1}"
+    
     echo "${PROGNAME}: Continuing pipeline with Step1..."
     sbatch --dependency=afterok:$SLURM_JOB_ID \
 	   --mail-user=${MAIL} \
 	   --output=${STDOUT_STEP1} \
-	   ${thisScriptDir}/runSnowTodayStep1.sh ${s1_label} \
+	   ${thisScriptDir}/runSnowTodayStep1.sh ${s1_label} ${testing_option} \
 	   $yearStart $monthStart $yearStop $monthStop $dayStop
 
 fi

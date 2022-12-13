@@ -38,7 +38,7 @@ thisScriptDir="$( cd "$( dirname "${PROGNAME}" )" && pwd )"
 
 usage() {
     echo "" 1>&2
-    echo "Usage: ${PROGNAME} [-h] [-n] [-L LABEL] WATERYR" 1>&2
+    echo "Usage: ${PROGNAME} [-h] [-n] [-L LABEL] [-t] WATERYR" 1>&2
     echo "  Calculates ST statistics files to date for this WATERYR" 1>&2
     echo "  Job array for each region group (10=westUS, 11=States, 12=HUC2)" 1>&2
     echo "Options: "  1>&2
@@ -46,6 +46,8 @@ usage() {
     echo "  -n: no pipeline: suppress starting next pipeline step" 1>&2
     echo "  -L LABEL: string with version label for directories" 1>&2
     echo "     e.g. for operational processing, use -L v2023.x" 1>&2
+    echo "  -t: testing pipeline" 1>&2
+    echo "      results will not be pushed to NSIDC (same as -n)" 1>&2
     echo "Arguments: " 1>&2
     echo "  WATERYR : stats will be calculated for this WATERYR (begins Oct 1 of WATERYR-1)" 1>&2
     echo "Output: " 1>&2
@@ -68,14 +70,16 @@ error_exit() {
 
 noPipeline=
 LABEL=
+testing=
 
-while getopts "hnL:" opt
+while getopts "hnL:t" opt
 do
     case $opt in
 	h) usage
 	   exit 1;;
-	n) noPipeline=1;;
 	L) LABEL="$OPTARG";;
+	n) noPipeline=1;;
+	t) testing=1;;
 	?) printf "Unknown option %s\n" $opt
 	   usage
            exit 1;;
@@ -93,8 +97,10 @@ fi
 WATERYR=$1
 
 options=""
+s4_label=""
 if [ $LABEL ]; then
     options="'label', '$LABEL'"
+    s4_label="-L $LABEL"
 fi
 
 module purge
@@ -106,6 +112,11 @@ SECONDS=0
 thisHost=$(hostname)
 thisDate=$(date)
 echo "${PROGNAME}: Begin on hostname=$thisHost on $thisDate for WATERYR=$WATERYR and options=$options"
+if [ $testing ]; then
+    echo "${PROGNAME}: TEST mode"
+else
+    echo "${PROGNAME}: OPS mode"
+fi
 echo "${PROGNAME}: SLURM_SCRATCH=$SLURM_SCRATCH"
 echo "${PROGNAME}: SLURM_JOB_ID=$SLURM_JOB_ID"
 echo "${PROGNAME}: SLURM_ARRAY_JOB_ID=$SLURM_ARRAY_JOB_ID"
@@ -170,7 +181,7 @@ done
 echo "${PROGNAME}: Done with shuffle FROM scratch..."
 
 #schedule next job in pipeline to run after entire job array completes
-if [ $isBatch ] && [ ! $noPipeline ]; then
+if [ $isBatch ] && [ ! $noPipeline ] && [ ! $testing ]; then
     
     # get current slurm info for mail-user and stdout
     # Don't assume they are the same as at the top of this file,
@@ -186,7 +197,7 @@ if [ $isBatch ] && [ ! $noPipeline ]; then
 	sbatch --dependency=afterok:$SLURM_ARRAY_JOB_ID \
 	       --mail-user=${MAIL} \
 	       --output=${STDOUT_STEP4} \
-	       ${thisScriptDir}/runSnowTodayStep4.sh -L $LABEL $WATERYR
+	       ${thisScriptDir}/runSnowTodayStep4.sh ${s4_label} $WATERYR
 
     fi
     
