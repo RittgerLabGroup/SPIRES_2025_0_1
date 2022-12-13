@@ -42,7 +42,7 @@ thisScriptDir="$( cd "$( dirname "${PROGNAME}" )" && pwd )"
 
 usage() {
     echo "" 1>&2
-    echo "Usage: ${PROGNAME} [-h] [-n] [-L LABEL] " 1>&2
+    echo "Usage: ${PROGNAME} [-h] [-n] [-L LABEL] [-t]" 1>&2
     echo "       YEARSTART MONTHSTART YEARSTOP MONTHSTOP DAYSTOP" 1>&2
     echo "  Runs Step1 in SnowToday pipeline" 1>&2
     echo "  Job array of each of 5 WesternUS tiles for this time period: " 1>&2
@@ -55,6 +55,8 @@ usage() {
     echo "  -n: no pipeline: suppress starting next pipeline step" 1>&2
     echo "  -L LABEL: string with version label for directories" 1>&2
     echo "     e.g. for operational processing, use -L v2023.x" 1>&2
+    echo "  -t: testing pipeline" 1>&2
+    echo "      results will not be pushed to NSIDC" 1>&2
     echo "Arguments: " 1>&2
     echo "  YEARSTART : year to begin" 1>&2
     echo "  MONTHSTART : month to begin" 1>&2
@@ -81,14 +83,16 @@ error_exit() {
 
 noPipeline=
 LABEL=
+testing=
 
-while getopts "hnL:" opt
+while getopts "hnL:t" opt
 do
     case $opt in
 	h) usage
 	   exit 1;;
-	n) noPipeline=1;;
 	L) LABEL="$OPTARG";;
+	n) noPipeline=1;;
+	t) testing=1;;
 	?) printf "Unknown option %s\n" $opt
 	   usage
            exit 1;;
@@ -109,9 +113,16 @@ yearStop=$3
 monthStop=$4
 dayStop=$5
 
+testing_option=""
+if [ $testing ]; then
+    testing_option="-t"
+fi
+
 options=""
+s2_label=""
 if [ $LABEL ]; then
     options="'label', '$LABEL'"
+    s2_label="-L $LABEL"
 fi
 
 module purge
@@ -123,6 +134,11 @@ SECONDS=0
 thisHost=$(hostname)
 thisDate=$(date)
 echo "${PROGNAME}: Begin on hostname=$thisHost on $thisDate"
+if [ $testing ]; then
+    echo "${PROGNAME}: TEST mode"
+else
+    echo "${PROGNAME}: OPS mode"
+fi
 echo "${PROGNAME}: Start = $yearStart, $monthStart"
 echo "${PROGNAME}: Stop  = $yearStop, $monthStop, $dayStop"
 echo "${PROGNAME}: SLURM_SCRATCH=$SLURM_SCRATCH"
@@ -206,7 +222,7 @@ if [ $isBatch ] && [ ! $noPipeline ]; then
 	sbatch --dependency=afterok:$SLURM_ARRAY_JOB_ID \
 	       --mail-user=${MAIL} \
 	       --output=${STDOUT_STEP2} \
-	       ${thisScriptDir}/runSnowTodayStep2.sh -L $LABEL \
+	       ${thisScriptDir}/runSnowTodayStep2.sh ${s2_label} ${testing_option} \
 	       $yearStart $monthStart $yearStop $monthStop $dayStop
 
     fi
