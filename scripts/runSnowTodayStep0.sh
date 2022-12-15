@@ -30,7 +30,7 @@
 #SBATCH --partition amilan
 #SBATCH --job-name 0SnTo
 #SBATCH --account ucb-general
-#SBATCH --time 08:00:00
+#SBATCH --time 01:00:00
 #SBATCH --ntasks-per-node 1
 #SBATCH --nodes=1
 #SBATCH -o /scratch/alpine/%u/slurm_out_SnowToday/%x-%j.out
