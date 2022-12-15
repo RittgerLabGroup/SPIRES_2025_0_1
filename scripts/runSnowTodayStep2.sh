@@ -12,7 +12,7 @@
 #SBATCH --time=02:00:00
 #SBATCH --ntasks-per-node=20
 #SBATCH --nodes=1
-#SBATCH -o /scratch/alpine/%u/slurm_out_SnowToday/%x-%A_%a.out
+#SBATCH -o /scratch/alpine/%u/slurm_out_SnowToday/%x-%j.out
 # Set the system up to notify upon completion
 # Do not set --mail-user, let it default to the caller
 # It can also be over-written at the command line
