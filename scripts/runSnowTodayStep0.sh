@@ -215,6 +215,12 @@ fi
 #Go to parent of this script, so that correct pathdef.m file is used
 cd "${thisScriptDir}/../"
 
+# Do scratch shuffle for required ancillary data
+${thisScriptDir}/scratchShuffleAncillary.sh || \
+    error_exit "Line $LINENO: scratchShuffleAncillary error"
+
+echo "${PROGNAME}: Done with shuffle TO scratch, doing Step0 processing..."
+
 WHICHSET="nrt"
 REGIONNAME="westernUS"
 
