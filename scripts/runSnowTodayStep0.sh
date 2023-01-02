@@ -30,7 +30,7 @@
 #SBATCH --partition amilan
 #SBATCH --job-name 0SnTo
 #SBATCH --account ucb-general
-#SBATCH --time 08:00:00
+#SBATCH --time 01:00:00
 #SBATCH --ntasks-per-node 1
 #SBATCH --nodes=1
 #SBATCH -o /scratch/alpine/%u/slurm_out_SnowToday/%x-%j.out
@@ -102,7 +102,7 @@ mail_summary() {
 	# Mails the region inventory summary to selected recipients
 	# An alternative way to control recipient list would be
 	# at command line or with a bash env variable.
-	NOTIFYLIST="${USER}@colorado.edu,crumlyd@nsidc.org,karl.rittger@colorado.edu"
+	NOTIFYLIST="${USER}@colorado.edu,crumlyd@nsidc.org,karl.rittger@colorado.edu,brodzik@colorado.edu"
 	SUBJECT="SnowToday0 archive updated ${thisDate} ${1}"
 
     else
@@ -214,6 +214,12 @@ fi
 
 #Go to parent of this script, so that correct pathdef.m file is used
 cd "${thisScriptDir}/../"
+
+# Do scratch shuffle for required ancillary data
+${thisScriptDir}/scratchShuffleAncillary.sh || \
+    error_exit "Line $LINENO: scratchShuffleAncillary error"
+
+echo "${PROGNAME}: Done with shuffle TO scratch, doing Step0 processing..."
 
 WHICHSET="nrt"
 REGIONNAME="westernUS"
