@@ -64,7 +64,11 @@ mail_success() {
     # $1: string to include in email subject
     
     # Mails success message to selected recipients
-    NOTIFYLIST="${USER}@colorado.edu,crumlyd@nsidc.org,karl.rittger@colorado.edu,brodzik@colorado.edu"
+    NOTIFYLIST="${USER}@colorado.edu,\
+                ops@nsidc.org,\
+		karl.rittger@colorado.edu,\
+		brodzik@colorado.edu,\
+		sebastien.lenard@colorado.edu"
 
     thisDate=$(date)
     SUBJECT="SnowToday4 has completed successfully on ${thisDate} ${1}"
