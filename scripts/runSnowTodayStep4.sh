@@ -64,8 +64,7 @@ mail_success() {
     # $1: string to include in email subject
     
     # Mails success message to selected recipients
-    NOTIFYLIST="${USER}@colorado.edu,\
-                ops@nsidc.org,\
+    NOTIFYLIST="ops@nsidc.org,\
 		karl.rittger@colorado.edu,\
 		brodzik@colorado.edu,\
 		sebastien.lenard@colorado.edu"
