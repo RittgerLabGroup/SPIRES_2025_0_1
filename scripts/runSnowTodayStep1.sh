@@ -182,8 +182,10 @@ matlab -nodesktop -nodisplay -r "clear; "\
 "try; "\
 "espEnv = ESPEnv(); "\
 "mData = MODISData($options); "\
-"region = Regions('"${REGIONNAME}"', '"${REGIONNAME}"_mask', espEnv, mData); "\
-"updateRegionMonthCubes(region, "$SLURM_ARRAY_TASK_ID", "\
+"bigRegion = Regions('"${REGIONNAME}"', '"${REGIONNAME}"_mask', espEnv, mData); "\
+"tileRegions = bigRegion.getTileRegions(); "\
+"region = tileRegions("$SLURM_ARRAY_TASK_ID"); "\
+"updateRegionMonthCubes(region, "\
 "${yearStart}, ${monthStart}, ${yearStop}, ${monthStop}); "\
 "catch e; "\
 "fprintf('%s: %s\n', e.identifier, e.message); "\
