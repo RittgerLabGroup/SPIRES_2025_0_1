@@ -42,7 +42,7 @@ thisScriptDir="$( cd "$( dirname "${PROGNAME}" )" && pwd )"
 
 usage() {
     echo "" 1>&2
-    echo "Usage: ${PROGNAME} [-h] [-n] [-L LABEL] [-t] [-D maxDV] [-R maxRF] [-G sthreshForGS ] [-F sthreshForRF]" 1>&2
+    echo "Usage: ${PROGNAME} [-h] [-n] [-L LABEL] [-t]" 1>&2
     echo "       YEARSTART MONTHSTART YEARSTOP MONTHSTOP DAYSTOP" 1>&2
     echo "  Runs Step1 in SnowToday pipeline" 1>&2
     echo "  Job array of each of 5 WesternUS tiles for this time period: " 1>&2
@@ -84,21 +84,13 @@ error_exit() {
 noPipeline=
 LABEL=
 testing=
-maxDV=
-maxRF=
-sthreshForGS=
-sthreshForRF=
 
-while getopts "hnL:tD:R:G:F:" opt
+while getopts "hnL:t" opt
 do
     case $opt in
 	h) usage
 	   exit 1;;
 	L) LABEL="$OPTARG";;
-	D) maxDV="$OPTARG";;
-	R) maxRF="$OPTARG";;
-	G) sthreshForGS="$OPTARG";;
-	F) sthreshForRF="$OPTARG";;
 	n) noPipeline=1;;
 	t) testing=1;;
 	?) printf "Unknown option %s\n" $opt
@@ -126,8 +118,6 @@ if [ $testing ]; then
     testing_option="-t"
 fi
 
-RAWLABEL="${LABEL}DV${maxDV}RF${maxRF}sForGS0.3sForRF0.3"
-LABEL="${LABEL}DV${maxDV}RF${maxRF}sForGS${sthreshForGS}sForRF${sthreshForRF}"
 options=""
 s2_label=""
 if [ $LABEL ]; then
@@ -193,15 +183,8 @@ matlab -nodesktop -nodisplay -r "clear; "\
 "espEnv = ESPEnv(); "\
 "mData = MODISData($options); "\
 "region = Regions('"${REGIONNAME}"', '"${REGIONNAME}"_mask', espEnv, mData); "\
-"region.STC.set_rawRovDV([0 "${maxDV}"]); "\
-"region.STC.set_rawRovRF([0 "${maxRF}"]); "\
-"region.STC.set_temporalRovDV([0 70]); "\
-"region.STC.set_temporalRovRF([0 500]); "\
-"region.STC.set_sthresh("${sthreshForGS}", "${sthreshForRF}"); "\
-"region.modisData.versionOf.MOD09Raw='"${RAWLABEL}"'; "\
-"region.modisData.versionOf.SCAGDRFSRaw='"${RAWLABEL}"'; "\
 "updateRegionMonthCubes(region, "$SLURM_ARRAY_TASK_ID", "\
-"${yearStart}, ${monthStart}, ${yearStop}, ${monthStop}, 'doRaw', false); "\
+"${yearStart}, ${monthStart}, ${yearStop}, ${monthStop}); "\
 "catch e; "\
 "fprintf('%s: %s\n', e.identifier, e.message); "\
 "exit(-1); "\
