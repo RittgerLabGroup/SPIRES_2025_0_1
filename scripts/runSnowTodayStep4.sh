@@ -108,24 +108,38 @@ thisHost=$(hostname)
 thisDate=$(date +'%Y%m%d')
 echo "${PROGNAME}: Begin on hostname=$thisHost on $thisDate for LABEL=$LABEL"
 
-echo "${PROGNAME}: Copying csv files to NSIDC staging directory..."
 srcDir="/pl/active/rittger_esp/modis/regional_stats/scagdrfs_csv_${LABEL}/v006/westernUS/WY${WATERYR}/"
 destDir="/share/apps/snow-today/incoming/snow-surface-properties/plot_csv/"
 cd ${srcDir}
-scp -i ~/.ssh/id_rsa_snowToday *.csv snow_today@nusnow.colorado.edu:${destDir}
 
-echo "${PROGNAME}: Copying geotiffs to NSIDC staging directory..."
+echo "${PROGNAME}: Before csv copy, ${destDir} contains:"
+ssh -q -i ~/.ssh/id_rsa_snowToday snow_today@nusnow.colorado.edu "ls -las ${destDir}"
+echo "${PROGNAME}: Copying csv files to ${destDir}..."
+scp -q -i ~/.ssh/id_rsa_snowToday *.csv snow_today@nusnow.colorado.edu:${destDir} \
+    || error_exit "Line $LINENO: Error on scp for csv files to ${destDir}: status = $?"
+echo "${PROGNAME}: After csv copy, ${destDir} contains:"
+ssh -q -i ~/.ssh/id_rsa_snowToday snow_today@nusnow.colorado.edu "ls -las ${destDir}"
+
 srcDir="/pl/active/rittger_esp/modis/variables/scagdrfs_geotiff_${LABEL}/v006/westernUS/EPSG_3857/LZW/"
 destDir="/share/apps/snow-today/incoming/snow-surface-properties/tif/"
+
+echo "${PROGNAME}: Before geotiff copy, ${destDir} contains:"
+ssh -q -i ~/.ssh/id_rsa_snowToday snow_today@nusnow.colorado.edu "ls -las ${destDir}"
+echo "${PROGNAME}: Copying geotiffs to ${destDir}..."
 for f in $(find ${srcDir} -type f -cmin -120); do
-    scp -i ~/.ssh/id_rsa_snowToday $f snow_today@nusnow.colorado.edu:${destDir}
+    echo "${PROGNAME}: Next geotiff=$f..."
+    scp -q -i ~/.ssh/id_rsa_snowToday $f snow_today@nusnow.colorado.edu:${destDir} \
+	|| error_exit "Line $LINENO: Error on scp for $f to ${destDir}: status = $?"	
 done
+echo "${PROGNAME}: After geotiff copy, ${destDir} contains:"
+ssh -q -i ~/.ssh/id_rsa_snowToday snow_today@nusnow.colorado.edu "ls -las ${destDir}"
 
 # Write the TRIGGER file to the parent directory of both plot_csv and tif
 # NSIDC will always treat both locations as tied together with this TRIGGER
 destDir="/share/apps/snow-today/incoming/snow-surface-properties/"
 touch TRIGGER
-scp -i ~/.ssh/id_rsa_snowToday TRIGGER snow_today@nusnow.colorado.edu:${destDir}
+scp -q -i ~/.ssh/id_rsa_snowToday TRIGGER snow_today@nusnow.colorado.edu:${destDir} \
+    || error_exit "Line $LINENO: Error on scp for TRIGGER to ${destDir}: status = $?"	
 
 # Stop the stopwatch and report elapsed time
 elapsedSeconds=$SECONDS

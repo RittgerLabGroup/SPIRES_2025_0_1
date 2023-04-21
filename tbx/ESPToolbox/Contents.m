@@ -145,3 +145,4 @@
 %   workESPEnv                      -                                                                       | snowToday | runUpdateMosaic.sh , runUpdateSTCMonthCubes.sh |
 %   workMODISData                   -                                                                       | snowToday | runUpdateMosaic.sh , runUpdateSTCMonthCubes.sh |
 %   write_L8_bip_txt                -                                                                       | obsolete |  |
+%   readDataForAlbedoFrom           -                                                                       | obsolete |  |
