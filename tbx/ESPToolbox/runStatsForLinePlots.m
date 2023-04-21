@@ -112,12 +112,12 @@ function runStatsForLinePlots(region, startWaterYr, stopWaterYr, minSCP, minZ)
     maskName = region.maskName;
     ShortName = region.ShortName;
     LongName = region.LongName;
-    STC = region.STC;
+    stcStruct = struct(region.STC); % SIER_289
     save(summaryFile, 'sca_area_km2_yr', 'scd_sum_yr', ...
         'albedo_yr', 'radiative_forcing_yr', 'deltavis_yr', ...
         'minSCP', 'minZ', 'yrs', 'elevationFile', ...
         'version', 'regionName', 'maskName', 'LongName', 'ShortName', ...
-        'albedoName', 'STC', 'espEnv', 'modisData');
+        'albedoName', 'stcStruct', 'espEnv', 'modisData');
     fprintf('%s: Saved summary to %s\n', mfilename(), summaryFile);
     
     % If it was the historical run, find the median, prctiles, min/max
