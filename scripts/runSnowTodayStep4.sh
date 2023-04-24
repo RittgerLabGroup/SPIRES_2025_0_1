@@ -126,7 +126,7 @@ destDir="/share/apps/snow-today/incoming/snow-surface-properties/tif/"
 echo "${PROGNAME}: Before geotiff copy, ${destDir} contains:"
 ssh -q -i ~/.ssh/id_rsa_snowToday snow_today@nusnow.colorado.edu "ls -las ${destDir}"
 echo "${PROGNAME}: Copying geotiffs to ${destDir}..."
-for f in $(find ${srcDir} -type f -cmin -120); do
+for f in $(find ${srcDir} -type f -cmin -360); do
     echo "${PROGNAME}: Next geotiff=$f..."
     scp -q -i ~/.ssh/id_rsa_snowToday $f snow_today@nusnow.colorado.edu:${destDir} \
 	|| error_exit "Line $LINENO: Error on scp for $f to ${destDir}: status = $?"	
