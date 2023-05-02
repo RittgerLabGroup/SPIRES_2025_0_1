@@ -187,6 +187,7 @@ matlab -nodesktop -nodisplay -r "clear; "\
 "mosaic.runWriteFiles(waterYearDate); "\
 "variables = Variables(region); "\
 "variables.calcAlbedos(waterYearDate); "\
+"variables.calcDaysWithoutObservation(waterYearDate); "\
 "catch e; "\
 "fprintf('%s: %s\n', e.identifier, e.message); "\
 "exit(-1); "\

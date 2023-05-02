@@ -106,18 +106,18 @@ function runStatsForLinePlots(region, startWaterYr, stopWaterYr, minSCP, minZ)
     % matlab reader.  If we need to set this file format to -v7.3,
     % we should consult with web app developer.    
     version = region.modisData.versionOf.MODISCollection;
-    espEnv = region.espEnv;
-    modisData = region.modisData;
+    espEnvStruct = struct(region.espEnv);
+    modisDataStruct = struct(region.modisData);
+    stcStruct = struct(region.STC); % SIER_289
     regionName = region.regionName;
     maskName = region.maskName;
     ShortName = region.ShortName;
     LongName = region.LongName;
-    STC = region.STC;
     save(summaryFile, 'sca_area_km2_yr', 'scd_sum_yr', ...
         'albedo_yr', 'radiative_forcing_yr', 'deltavis_yr', ...
         'minSCP', 'minZ', 'yrs', 'elevationFile', ...
         'version', 'regionName', 'maskName', 'LongName', 'ShortName', ...
-        'albedoName', 'STC', 'espEnv', 'modisData');
+        'albedoName', 'stcStruct', 'espEnvStruct', 'modisDataStruct');
     fprintf('%s: Saved summary to %s\n', mfilename(), summaryFile);
     
     % If it was the historical run, find the median, prctiles, min/max
