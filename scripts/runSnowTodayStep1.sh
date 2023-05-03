@@ -162,7 +162,7 @@ cd "${thisScriptDir}/../"
 # the item order in the region_masks files
 TILES=(h08v04 h08v05 h09v04 h09v05 h10v04)
 idx=$((SLURM_ARRAY_TASK_ID - 1));
-for dataType in mod09ga modscag moddrfs; do
+for dataType in mod09ga modscag moddrfs scagdrfs_gap scagdrfs_stc; do
     ${thisScriptDir}/scratchShuffle.sh -b ${yearStart} -e ${yearStop} \
 		    TO ${dataType}/NRT ${TILES[$idx]} || \
 	error_exit "Line $LINENO: scratchShuffle error ${dataType} ${tile}"

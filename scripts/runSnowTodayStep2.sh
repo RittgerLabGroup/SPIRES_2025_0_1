@@ -146,7 +146,7 @@ export TMP=$tmpDir
 cd "${thisScriptDir}/../"
 
 # Do the scratch shuffle on required STC inputs
-for dataType in scagdrfs_stc; do
+for dataType in scagdrfs_stc scagdrfs_mat; do
     for tile in h08v04 h08v05 h09v04 h09v05 h10v04; do
 	${thisScriptDir}/scratchShuffle.sh -b ${yearStart} -e ${yearStop} \
 			TO intermediary/${dataType}_$LABEL ${tile} || \
