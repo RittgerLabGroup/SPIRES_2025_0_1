@@ -228,7 +228,6 @@ dim = size(region.LongName);
 npartitions = dim(1);
 sca_area_km2_yr = NaN(1, maxDays, npartitions);
 scd_sum_yr = NaN(1, maxDays, npartitions);
-scd_sum = NaN(1, npartitions);
 albedo_yr = NaN(1, maxDays, npartitions);
 radiative_forcing_yr = NaN(1, maxDays, npartitions);
 deltavis_yr = NaN(1, maxDays, npartitions);
@@ -327,7 +326,18 @@ for d=1:length(datevalsYr)
         thisAlbedo(albedo.data == albedo.missingValue) = NaN;
         
         % calculate median for this region and day
-        albedo_yr(1, d, regIdx) = median(thisAlbedo,'all', 'omitnan');
+        % SIER_326. Albedo stat smoothing. Strictly speaking, the matlab 
+        % median function does its job by yielding a int value from the 
+        % list of int values of albedos. But this masks the variability at 
+        % the decimal level and creates artificial bumps in the stats.
+        % Here, we consider that the count of pixels having an albedo value X
+        % has a equal distribution from X - 0.5 to X + 0.5, and we correct
+        % the median albedo by the proportion of this interval necessary to
+        % reach the half of the count of pixels.
+        varName = thisAlbedo;
+        tmpMedian = median(varName,'all', 'omitnan');
+        albedo_yr(1, d, regIdx) = (length(find(~isnan(varName)))/2 - length(find(varName < tmpMedian))) ...
+            / (length(find(varName == tmpMedian)) + 0.1) + tmpMedian - 0.5;
 
         %%%%%%%% RF %%%%%%%%%
         % mask RF for only the area of this partition
@@ -343,8 +353,13 @@ for d=1:length(datevalsYr)
         
         % calculate median for this region and day
         % FIXME: figure out why the 500 values aren't set to RF.missingValue?
-        radiative_forcing_yr(1, d, regIdx) = median(...
-            thisRF(0 < thisRF & thisRF < 500), 'all', 'omitnan');
+        % > the thresholds here overlap the thresholds in raw cubes. Code
+        % removed in SIER_326. Additionally, I added the smoothing similar
+        % to albedo smoothing.
+        varName = thisRF;
+        tmpMedian = median(varName,'all', 'omitnan');
+        radiative_forcing_yr(1, d, regIdx) = (length(find(~isnan(varName)))/2 - length(find(varName < tmpMedian))) ...
+            / (length(find(varName == tmpMedian)) + 0.1) + tmpMedian - 0.5;
 
         %%%%%%%% DV %%%%%%%%%
         % mask DV for only the area of this partition
@@ -359,9 +374,11 @@ for d=1:length(datevalsYr)
         thisDV(DV.data == DV.missingValue) = NaN;
         
         % calculate median albedo for this region and day
-        deltavis_yr(1, d, regIdx) = median(...
-            thisDV(thisDV > 0), 'all', 'omitnan');
-        
+        % SIER_326 too here.
+        varName = thisDV;
+        tmpMedian = median(varName,'all', 'omitnan');
+        deltavis_yr(1, d, regIdx) = (length(find(~isnan(varName)))/2 - length(find(varName < tmpMedian))) ...
+            / (length(find(varName == tmpMedian)) + 0.1) + tmpMedian - 0.5;        
     end
     
 end
