@@ -273,6 +273,12 @@ if [ $isBatch ] && [ ! $noPipeline ]; then
 
 fi
 
+# SIER_335. Putting aside anomalous mod09ga files.
+anomalousMod09gaFiles=$(find /pl/active/rittger_esp/modis/mod09ga/NRT/ -type f -size -1000c | grep .hdf | grep -v "ano.MOD")
+for f in $anomalousMod09gaFiles; do mv $f $(echo $f | sed 's/\/MOD/\/ano.MOD/g'); echo "renamed anomalous ${f}"; done
+anomalousMod09gaFiles=$(find /scratch/alpine/${USER}/modis/mod09ga/NRT/ -type f -size -1000c | grep .hdf | grep -v "ano.MOD")
+for f in $anomalousMod09gaFiles; do mv $f $(echo $f | sed 's/\/MOD/\/ano.MOD/g'); echo "renamed anomalous ${f}"; done
+
 # Stop the stopwatch and report elapsed time
 elapsedSeconds=$SECONDS
 duration=$(TZ=UTC0 printf 'Duration: %(%H:%M:%S)T\n' "$elapsedSeconds")
