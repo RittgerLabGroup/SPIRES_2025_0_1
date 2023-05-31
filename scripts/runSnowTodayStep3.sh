@@ -164,7 +164,7 @@ matlab -nodesktop -nodisplay -r "clear; "\
 "if "${SLURM_ARRAY_TASK_ID}" == 10; "\
 "mosaic = Mosaic(region); "\
 "waterYearDate = WaterYearDate(mosaic.getMostRecentMosaicDt(waterYearDate), 0); "\
-"region.runWriteGeotiffs(NaN, waterYearDate, region.webGeotiffEPSG); "\
+"region.writeGeotiffs(NaN, waterYearDate, region.webGeotiffEPSG); "\
 "end; "\
 "catch e; "\
 "fprintf('%s: %s\n', e.identifier, e.message); "\
