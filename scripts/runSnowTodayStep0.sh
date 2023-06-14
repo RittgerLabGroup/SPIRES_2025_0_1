@@ -38,14 +38,17 @@
 # Do not set --mail-user, let it default to the caller
 # It can also be over-written at the command line
 #SBATCH --mail-type FAIL,INVALID_DEPEND,TIME_LIMIT,REQUEUE,STAGE_OUT
-#SBATCH --array=1
-#   Unused but keep to 1. Script updated for Alaska SIER_341.
+#SBATCH --array=1-2
+#   1 for westernUS tile group, 2 for USAlaska tile group. 
+#   Also called REGIONNAME. id of the region which tiles to import.
+#   Script updated for Alaska SIER_322.
 
 # Functions.
 #---------------------------------------------------------------------------------------
 mail_summary() {
-    # $1: string to include in email subject
-
+    # $1: bigRegionName: char. Group of tiles or Region name, or tile name if testing
+    #   Usually westernUS or USAlaska.
+    $duration="[$(TZ=UTC0 printf 'Duration: %(%H:%M:%S)T\n' "${SECONDS}")]"
     if [ ! $testing ]; then
         # Mails the region inventory summary to selected recipients
         # An alternative way to control recipient list would be
@@ -54,15 +57,15 @@ mail_summary() {
                 karl.rittger@colorado.edu,\
                 brodzik@colorado.edu,\
                 sebastien.lenard@colorado.edu"
-        SUBJECT="SnowToday0 archive updated ${thisDate} ${1}"
+        SUBJECT="SnowToday0 archive updated ${thisDate} ${duration}"
     else
         NOTIFYLIST="${USER}@colorado.edu"
-        SUBJECT="TESTING SnowToday0 archive updated ${thisDate} ${1}"
+        SUBJECT="TESTING SnowToday0 archive updated ${thisDate} ${duration}"
     fi
 	
     thisDate=$(date)
     FROM="${USER}@colorado.edu"
-    SUMMARYFILE="/pl/active/rittger_esp/modis/archive_status/nrt.UpdateReport.westernUS.last.txt"
+    SUMMARYFILE="/pl/active/rittger_esp/modis/archive_status/nrt.UpdateReport.${1}.last.txt"
 
     echo "${PROGNAME}: Mailing inventory summary ${SUMMARYFILE} to ${NOTIFYLIST}"
     # Double-quotes are important on the SUBJECT when it contains spaces
@@ -72,8 +75,8 @@ mail_summary() {
 }
 usage() {
     echo "" 1>&2
-    echo "Usage: ${PROGNAME} [-h] [-L LABEL] [-A LABEL_ANCILLARY] [-n] " 1>&2
-    echo "      [-s YYYYMMDD] [-t] WHICHSET REGIONNAME" 1>&2
+    echo "Usage: ${PROGNAME} [-A LABEL_ANCILLARY] [-h] [-L LABEL] [-n]" 1>&2
+    echo "      [-s YYYYMMDD] [-t] WHICHSET" 1>&2
     echo "  Runs Step0 in SnowToday pipeline" 1>&2
     echo "    Fetch latest JPL data for the tiles composing the region" 1>&2
     echo "    Update the SnowToday pull report" 1>&2
@@ -97,8 +100,6 @@ usage() {
     echo "      results will not be pushed to NSIDC" 1>&2
     echo "Arguments:" 1>&2
     echo "  WHICHSET: nrt: for near real time, or historic" 1>&2
-    echo "  REGIONNAME: id of the region which tiles to import, classically " 1>&2
-    echo "      westernUS or USAlaska but can be h08v04 too, for testing." 1>&2
     echo "Output: " 1>&2
     echo "  Output location is controlled in Matlab scripts " 1>&2
     echo "Notes: " 1>&2
@@ -114,7 +115,7 @@ usage() {
 # depends on whether it's running as sbatch job.
 scriptId=snoStep0
 defaultSlurmArrayTaskId=1
-expectedCountOfArguments=2
+expectedCountOfArguments=1
 # Output file. This variable is not transferred from sbatch to bash, so we define it.
 # NB: to split a string, don't put indent otherwise there will be two variables.
 SBATCH_OUTPUT="/scratch/alpine/${USER}/slurm_out_SnowToday/${SLURM_JOB_NAME}-${SLURM_ARRAY_JOB_ID}_"\
@@ -135,11 +136,14 @@ thisScriptDir=$(pwd)
 printf "Script directory: ${thisScriptDir}\n"
 #Go to parent of this script, so that correct pathdef.m file is used
 cd ..
+source scripts/toolsRegions.sh
 source scripts/toolsStart.sh
+
 
 # Argument setting
 whichSet=$1
-regionName=$2
+regionName=${tileGroupNames[${SLURM_ARRAY_TASK_ID} - 1]}
+bigRegionName=${regionName}
 
 inputForESPEnv="modisData = modisData"
 inputForRegion="'"${regionName}"', '"${regionName}"_mask', espEnv, modisData"
@@ -171,30 +175,37 @@ anomalousMod09gaFiles=$(find /scratch/alpine/${USER}/modis/mod09ga/NRT/ -type f 
 for f in $anomalousMod09gaFiles; do mv $f $(echo $f | sed 's/\/MOD/\/ano.MOD/g'); echo "renamed anomalous ${f}"; done
 
 # Stop the stopwatch and report elapsed time
-elapsedSeconds=$SECONDS
-duration=$(TZ=UTC0 printf 'Duration: %(%H:%M:%S)T\n' "$elapsedSeconds")
+duration=
 #Send inventory summary to interested observers
-mail_summary "[${duration}]"
+mail_summary $bigRegionName
 
 # Launch of next Step of the SnowToday daily process. Not applied for USAlaska now.
 #---------------------------------------------------------------------------------------
 if [ $isBatch ] && [ ! $noPipeline ] && [ $regionName == "westernUS" ]; then
-    # use the MAIL and stdoutDir settings from above
+    # use the stdoutDir settings from above.
     STDOUT_STEP1="${stdoutDir}/1SnTo-%A_%a.out"
+    varname=$(echo "tileArrayStringForTileGroup${SLURM_ARRAY_TASK_ID}")
 
+    # send to --array the tile ids corresponding to the tile group SLURM_ARRAY_TASK_ID.
+    arrayStringVarName=$(echo "tileArrayStringForTileGroup${SLURM_ARRAY_TASK_ID}")
+    arrayStringValue=${!arrayStringVarName}
     # schedule next job in Snow Today pipeline for today
     # back up the cubes to be updated to this month - 2
+    # NB: dependency afterok:$SLURM_JOB_ID implies that the 2 runSnowToday chains run
+    # independently and if the import of USAlaska tile fails it doesn't impact 
+    # westernUS. Will probably need to be changed when dealing with Canada tiles.
 
     echo "--output=${STDOUT_STEP1}"
+    echo "--araay=${arrayStringValue}"
 
     echo "${PROGNAME}: Continuing pipeline with Step1..."
     echo ${nextStepOptions} $(get_start_stop_date_string)
     sbatch --dependency=afterok:$SLURM_JOB_ID \
 	   --mail-user=${MAIL} \
 	   --output=${STDOUT_STEP1} \
-       --array=${SLURM_ARRAY_TASK_ID} \
+       --array=${arrayStringValue} \
 	   ${thisScriptDir}/runSnowTodayStep1.sh ${nextStepOptions} \
-	   $(get_start_stop_date_string)
+	   $(get_start_stop_date_string) ${bigRegionName}
 fi
 
 # Programming of the next launch of this script tomorrow.
@@ -214,11 +225,12 @@ else
 
        # Assume that startyyyymmdd should be ignored and tomorrow's
        # Step0 will default to most recent data
+       # Array is same to the SLURM_ARRAY_TASK_ID of this subjob.
        sbatch --begin=04:30:00 \
 	      --output=${STDOUT_STEP0} \
           --array=${SLURM_ARRAY_TASK_ID} \
 	      ${thisScriptDir}/runSnowTodayStep0.sh ${nextStepOptions} \
-          $whichSet $regionName
+          $whichSet
     fi
 fi
 

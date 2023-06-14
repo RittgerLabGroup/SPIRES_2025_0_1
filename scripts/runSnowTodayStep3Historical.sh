@@ -24,33 +24,27 @@
 #SBATCH --mail-type END,FAIL,INVALID_DEPEND,TIME_LIMIT,REQUEUE,STAGE_OUT
 #SBATCH --array=10-12
 
-# Grab the full path to this script
-# depends on whether it's running as sbatch job
-isBatch=
-if [[ ${BASH_SOURCE} == *"slurm_script"* ]]; then
-    # Running as slurm
-    echo "Running as sbatch job..."
-    PROGNAME=(`scontrol show job ${SLURM_JOB_ID} | grep Command | tr -s ' ' | cut -d = -f 2`)
-    isBatch=1
-else
-    echo "Not running as sbatch..."
-    PROGNAME=${BASH_SOURCE[0]}
-fi
-thisScriptDir="$( cd "$( dirname "${PROGNAME}" )" && pwd )"
-
+# Functions.
+#---------------------------------------------------------------------------------------
 usage() {
     echo "" 1>&2
-    echo "Usage: ${PROGNAME} [-h] [-L LABEL] WATERYR" 1>&2
+    echo "Usage: ${PROGNAME} [-A LABEL_ANCILLARY] [-h] [-i] [-L LABEL] [-o]" 1>&2
+    echo "       WATERYR" 1>&2
     echo "  Calculates annual updates to ST statistics files prior to WATERYR" 1>&2
     echo "  So for this script to run in Oct 2021, set WATERYR to 2022" 1>&2
     echo "  Job array for each region group (10=westUS, 11=States, 12=HUC2)" 1>&2
     echo "  Run this script once annually, on or after Oct 1" 1>&2
     echo "Options: "  1>&2
+    echo "  -A LABEL_ANCILLARY: string with version of ancillary data" 1>&2
+    echo "     e.g. for operational processing, use -A v3.1 for westernUS " 1>&2
+    echo "     or -A v3.2 for USAlaska" 1>&2
     echo "  -h: display help message and exit" 1>&2
+    echo "  -i: update input data from archive to scratch" 1>&2    
     echo "  -L LABEL: string with version label for directories" 1>&2
     echo "     e.g. for operational processing, use -L v2023.x" 1>&2
+    echo "  -o: update output data from scratch to archive" 1>&2 
     echo "Arguments: " 1>&2
-    echo "  THISYR : stats will be calculated for 2001 to (THISYR - 1)" 1>&2
+    echo "  WATERYR : stats will be calculated for 2001 to (WATERYR - 1)" 1>&2
     echo "Output: " 1>&2
     echo "  Output location is controlled in Matlab scripts " 1>&2
     echo "Notes: " 1>&2
@@ -59,88 +53,67 @@ usage() {
     echo "  is assumed to exist" 1>&2
 }
 
-error_exit() {
-    # Use for fatal program error
-    # Argument:
-    #   optional string containing descriptive error message
-    #   if no error message, prints "Unknown Error"
+# Core script.
+#---------------------------------------------------------------------------------------
+# Initialize variables, option setting.
+scriptId=snoStep3
+defaultSlurmArrayTaskId=10
+expectedCountOfArguments=1
+# Output file. This variable is not transferred from sbatch to bash, so we define it.
+# NB: to split a string, don't put indent otherwise there will be two variables.
+SBATCH_OUTPUT="/scratch/alpine/${USER}/slurm_out_SnowToday/${SLURM_JOB_NAME}-${SLURM_ARRAY_JOB_ID}_"\
+"${SLURM_ARRAY_TASK_ID}.out"
 
-    echo "${PROGNAME}: ERROR: ${1:-"Unknown Error"}" 1>&2
-    exit 1
-}
-
-LABEL=
-
-while getopts "hL:" opt
-do
-    case $opt in
-	h) usage
-	   exit 1;;
-	L) LABEL="$OPTARG";;
-	?) printf "Unknown option %s\n" $opt
-	   usage
-           exit 1;;
-	esac
-done
-
-shift $(($OPTIND - 1))
-
-[[ "$#" -eq 1 ]] || error_exit "Line $LINENO: Unexpected number of arguments."
-
-waterYr=$1
-
-options=""
-if [ $LABEL ]; then
-    options="'label', '$LABEL'"
+isBatch=
+if [[ ${BASH_SOURCE} == *"slurm_script"* ]]; then
+    # Running as slurm
+    printf "Running as sbatch job...\n"
+    PROGNAME=(`scontrol show job ${SLURM_JOB_ID} | grep Command | tr -s ' ' | cut -d = -f 2`)
+    isBatch=1
+else
+    printf "Not running as sbatch...\n"
+    PROGNAME=${BASH_SOURCE[0]}
 fi
+cd "$(dirname "${PROGNAME}")"
+thisScriptDir=$(pwd)
+printf "Script directory: ${thisScriptDir}\n"
+#Go to parent of this script, so that correct pathdef.m file is used
+cd ..
+source scripts/toolsStart.sh
 
-module purge
-ml matlab/R2021b
-
-# Start the stopwatch
-SECONDS=0
-
+# Argument setting
+waterYr=$1
 startWaterYr=2001
 stopWaterYr=$(( $waterYr - 1 ))
-
-thisHost=$(hostname)
-thisDate=$(date)
-echo "${PROGNAME}: Begin on hostname=$thisHost on $thisDate for array job=$SLURM_ARRAY_TASK_ID and WY=$startWaterYr to $stopWaterYr and options=$options"
-echo "${PROGNAME}: SLURM_SCRATCH=$SLURM_SCRATCH"
-echo "${PROGNAME}: SLURM_JOB_ID=$SLURM_JOB_ID"
-echo "${PROGNAME}: SLURM_ARRAY_JOB_ID=$SLURM_ARRAY_JOB_ID"
-
-#Make a unique temporary directory for matlab job storage
-#Set TMPDIR/TMP to this location so job array uses it for tmp location
-tmpDir=/scratch/alpine/${USER}/matlabTmp/alpine-$SLURM_ARRAY_JOB_ID
-mkdir -p $tmpDir
-export TMPDIR=$tmpDir
-export TMP=$tmpDir
-
-#Go to parent of this script, so that correct pathdef.m file is used
-cd "${thisScriptDir}/../"
-
-# Do the scratch shuffle on complete set of input daily Mosaics (to scratch for speed)
-REGIONNAME='westernUS'
 yearStart=$(( $startWaterYr - 1 ))
-for dataType in scagdrfs_mat; do
-    ${thisScriptDir}/scratchShuffle.sh -b ${yearStart} -e ${stopWaterYr} \
-		    TO variables/${dataType}_$LABEL ${REGIONNAME} || \
-	error_exit "Line $LINENO: scratchShuffle error ${dataType} ${LABEL} ${REGIONNAME}"
-done
+regionName='westernUS'
 
-# Do scratch shuffle for required ancillary data
-${thisScriptDir}/scratchShuffleAncillary.sh || \
-    error_exit "Line $LINENO: scratchShuffleAncillary error"
+inputForESPEnv="modisData = modisData"
+inputForRegion="'"${regionName}"', partitionName, espEnv, modisData"
 
-echo "${PROGNAME}: Done with shuffle TO scratch..."
-    
+source scripts/toolsMatlab.sh
+
+
+# Scratch shuffle.
+#---------------------------------------------------------------------------------------
+# Do the scratch shuffle on complete set of input daily Mosaics (to scratch for speed)
+if [ $inputFromArchive ]; then
+    for dataType in scagdrfs_mat; do
+        ${thisScriptDir}/scratchShuffle.sh -b ${yearStart} -e ${stopWaterYr} \
+                TO variables/${dataType}_$LABEL ${regionName} || \
+        error_exit "Line $LINENO: scratchShuffle error ${dataType} ${LABEL} ${regionName}"
+    done
+    echo "${PROGNAME}: Done with shuffle TO scratch..."
+fi
+
+# Matlab.
+#---------------------------------------------------------------------------------------   
 matlab -nodesktop -nodisplay -r "clear; "\
 "try; "\
-"espEnv = ESPEnv(); "\
-"mData = MODISData($options); "\
+"modisData = MODISData(${inputForModisData}); "\
+"espEnv = ESPEnv(${inputForESPEnv}); "\
 "partitionName = Regions.getPartitionNameFor("${SLURM_ARRAY_TASK_ID}"); "\
-"region = Regions('"${REGIONNAME}"', partitionName, espEnv, mData); "\
+"region = Regions(${inputForRegion}); "\
 "minSCP = minSCPForLinePlots(); "\
 "minZ = minZForLinePlots(); "\
 "runStatsForLinePlots(region, ${startWaterYr}, ${stopWaterYr}, minSCP, minZ); "\
@@ -151,21 +124,13 @@ matlab -nodesktop -nodisplay -r "clear; "\
 "exit(0);"  || error_exit "Line $LINENO: matlab error."
 
 # Do the scratch shuffle on output regional_stats back from scratch
-echo "${PROGNAME}: Doing with shuffle FROM scratch..."
-for dataType in scagdrfs_mat; do
-    ${thisScriptDir}/scratchShuffle.sh \
-		    FROM regional_stats/${dataType}_$LABEL ${REGIONNAME} || \
-	error_exit "Line $LINENO: scratchShuffle FROM error ${dataType} ${LABEL} ${REGIONNAME}"
-done
-echo "${PROGNAME}: Done with shuffle FROM scratch..."
-						
-#Clean up temporary directory for matlab job storage
-echo "${PROGNAME}: Removing TMPDIR=$TMPDIR..."
-rm -rf $TMPDIR
+if [ $outputToArchive ]; then
+    for dataType in scagdrfs_mat; do
+        ${thisScriptDir}/scratchShuffle.sh \
+                FROM regional_stats/${dataType}_$LABEL ${regionName} || \
+        error_exit "Line $LINENO: scratchShuffle FROM error ${dataType} ${LABEL} ${regionName}"
+    done
+    echo "${PROGNAME}: Done with shuffle FROM scratch..."
+fi
 
-# Stop the stopwatch and report elapsed time
-elapsedSeconds=$SECONDS
-duration=$(TZ=UTC0 printf 'Duration: %(%H:%M:%S)T\n' "$elapsedSeconds")
-
-thisDate=$(date)
-echo "${PROGNAME}: Done on hostname=$thisHost on $thisDate [${duration}]"
+source scripts/toolsStop.sh
