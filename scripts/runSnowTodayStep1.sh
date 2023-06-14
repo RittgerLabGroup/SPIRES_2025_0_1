@@ -24,37 +24,32 @@
 # Do not set --mail-user, let it default to the caller
 # It can also be over-written at the command line
 #SBATCH --mail-type FAIL,INVALID_DEPEND,TIME_LIMIT,REQUEUE,STAGE_OUT
-#SBATCH --array 1-5
+#SBATCH --array 292,293,328,329,364
+#   By default tile ids of the westernUS region. See toolsRegions.sh for their
+#   construction. E.g. 292: h08v04. Script updated for Alaska SIER_322.
 
-# Grab the full path to this script
-# depends on whether it's running as sbatch job
-isBatch=
-if [[ ${BASH_SOURCE} == *"slurm_script"* ]]; then
-    # Running as slurm
-    echo "Running as sbatch job..."
-    PROGNAME=(`scontrol show job ${SLURM_JOB_ID} | grep Command | tr -s ' ' | cut -d = -f 2`)
-    isBatch=1
-else
-    echo "Not running as sbatch..."
-    PROGNAME=${BASH_SOURCE[0]}
-fi
-thisScriptDir="$( cd "$( dirname "${PROGNAME}" )" && pwd )"
-
+# Functions.
+#---------------------------------------------------------------------------------------
 usage() {
     echo "" 1>&2
-    echo "Usage: ${PROGNAME} [-h] [-n] [-L LABEL] [-t]" 1>&2
-    echo "       YEARSTART MONTHSTART YEARSTOP MONTHSTOP DAYSTOP" 1>&2
+    echo "Usage: ${PROGNAME} [-A LABEL_ANCILLARY] [-h] [-i] [-L LABEL] [-n] [-o] [-t]" 1>&2
+    echo "       YEARSTART MONTHSTART YEARSTOP MONTHSTOP DAYSTOP BIGREGIONNAME" 1>&2
     echo "  Runs Step1 in SnowToday pipeline" 1>&2
-    echo "  Job array of each of 5 WesternUS tiles for this time period: " 1>&2
+    echo "  Job array of each tile of a big region for this time period: " 1>&2
     echo "    Update raw data cubes" 1>&2
     echo "    Update STC (Gap/Interp) data cubes" 1>&2
     echo "  If called by slurm:" 1>&2
     echo "    starts SnowTodayStep2 for today, after job array completes" 1>&2
     echo "Options: "  1>&2
+    echo "  -A LABEL_ANCILLARY: string with version of ancillary data" 1>&2
+    echo "     e.g. for operational processing, use -A v3.1 for westernUS " 1>&2
+    echo "     or -A v3.2 for USAlaska" 1>&2
     echo "  -h: display help message and exit" 1>&2
-    echo "  -n: no pipeline: suppress starting next pipeline step" 1>&2
+    echo "  -i: update input data from archive to scratch" 1>&2    
     echo "  -L LABEL: string with version label for directories" 1>&2
     echo "     e.g. for operational processing, use -L v2023.x" 1>&2
+    echo "  -n: no pipeline: suppress starting next pipeline step" 1>&2
+    echo "  -o: update output data from scratch to archive" 1>&2 
     echo "  -t: testing pipeline" 1>&2
     echo "      results will not be pushed to NSIDC" 1>&2
     echo "Arguments: " 1>&2
@@ -63,6 +58,8 @@ usage() {
     echo "  YEARSTOP : year to stop" 1>&2
     echo "  MONTHSTOP : month to stop" 1>&2
     echo "  DAYSTOP : day to stop" 1>&2
+    echo "  BIGREGIONNAME: id of the region which will be transmitted to Step 2, " 1>&2
+    echo "      classically westernUS or USAlaska but might be h08v04 too, for testing." 1>&2
     echo "Output: " 1>&2
     echo "  Output location is controlled in Matlab scripts and -L LABEL " 1>&2
     echo "Notes: " 1>&2
@@ -71,119 +68,78 @@ usage() {
     echo "  is assumed to exist" 1>&2
 }
 
-error_exit() {
-    # Use for fatal program error
-    # Argument:
-    #   optional string containing descriptive error message
-    #   if no error message, prints "Unknown Error"
+# Core script.
+#---------------------------------------------------------------------------------------
+# Initialize variables, option setting.
+# Grab the full path to this script
+# depends on whether it's running as sbatch job
+scriptId=snoStep1
+defaultSlurmArrayTaskId=292
+expectedCountOfArguments=6
+# Output file. This variable is not transferred from sbatch to bash, so we define it.
+# NB: to split a string, don't put indent otherwise there will be two variables.
+SBATCH_OUTPUT="/scratch/alpine/${USER}/slurm_out_SnowToday/${SLURM_JOB_NAME}-${SLURM_ARRAY_JOB_ID}_"\
+"${SLURM_ARRAY_TASK_ID}.out"
 
-    echo "${PROGNAME}: ERROR: ${1:-"Unknown Error"}" 1>&2
-    exit 1
-}
-
-noPipeline=
-LABEL=
-testing=
-
-while getopts "hnL:t" opt
-do
-    case $opt in
-	h) usage
-	   exit 1;;
-	L) LABEL="$OPTARG";;
-	n) noPipeline=1;;
-	t) testing=1;;
-	?) printf "Unknown option %s\n" $opt
-	   usage
-           exit 1;;
-	esac
-done
-
-shift $(($OPTIND - 1))
-
-[[ "$#" -eq 5 ]] || error_exit "Line $LINENO: Unexpected number of arguments."
-
-if [ $noPipeline ]; then
-    echo "${PROGNAME}: noPipeline mode: this script will not continue pipeline"
+isBatch=
+if [[ ${BASH_SOURCE} == *"slurm_script"* ]]; then
+    # Running as slurm
+    printf "Running as sbatch job...\n"
+    PROGNAME=(`scontrol show job ${SLURM_JOB_ID} | grep Command | tr -s ' ' | cut -d = -f 2`)
+    isBatch=1
+else
+    printf "Not running as sbatch...\n"
+    PROGNAME=${BASH_SOURCE[0]}
 fi
+cd "$(dirname "${PROGNAME}")"
+thisScriptDir=$(pwd)
+printf "Script directory: ${thisScriptDir}\n"
+#Go to parent of this script, so that correct pathdef.m file is used
+cd ..
+source scripts/toolsRegions.sh
+source scripts/toolsStart.sh
 
+# Argument setting
 yearStart=$1
 monthStart=$2
 yearStop=$3
 monthStop=$4
 dayStop=$5
-
-testing_option=""
-if [ $testing ]; then
-    testing_option="-t"
-fi
-
-options=""
-s2_label=""
-if [ $LABEL ]; then
-    options="'label', '$LABEL'"
-    s2_label="-L $LABEL"
-fi
-
-module purge
-ml matlab/R2021b
-
-# Start the stopwatch
-SECONDS=0
-
-thisHost=$(hostname)
-thisDate=$(date)
-echo "${PROGNAME}: Begin on hostname=$thisHost on $thisDate"
-if [ $testing ]; then
-    echo "${PROGNAME}: TEST mode"
-else
-    echo "${PROGNAME}: OPS mode"
-fi
+bigRegionName=$6
 echo "${PROGNAME}: Start = $yearStart, $monthStart"
 echo "${PROGNAME}: Stop  = $yearStop, $monthStop, $dayStop"
-echo "${PROGNAME}: SLURM_SCRATCH=$SLURM_SCRATCH"
-echo "${PROGNAME}: SLURM_JOB_ID=$SLURM_JOB_ID"
-echo "${PROGNAME}: SLURM_ARRAY_JOB_ID=$SLURM_ARRAY_JOB_ID"
 
-#Make a unique temporary directory for matlab job storage
-#Set TMPDIR/TMP to this location so job array uses it for tmp location
-tmpDir=/scratch/alpine/${USER}/.matlabTmp/alpine-$SLURM_JOB_ID
-mkdir -p $tmpDir
-export TMPDIR=$tmpDir
-export TMP=$tmpDir
+regionName=$(get_tile_name_from_tile_id ${SLURM_ARRAY_TASK_ID})
 
-# Go to parent of this script, so that correct pathdef.m file is used
-cd "${thisScriptDir}/../"
+inputForESPEnv="modisData = modisData"
+inputForRegion="'"${regionName}"', '"${regionName}"_mask', espEnv, modisData"
 
+source scripts/toolsMatlab.sh
+
+# Scratch shuffle.
+#---------------------------------------------------------------------------------------
 # Do the scratch shuffle on NRT MOD09/SCAG/DRFS inputs
 # Note that Matlab array indexing is 1-based, but
 # bash array indexing is 0-based
 # N.B. It is assumed that the item order of this array matches
 # the item order in the region_masks files
-TILES=(h08v04 h08v05 h09v04 h09v05 h10v04)
-idx=$((SLURM_ARRAY_TASK_ID - 1));
-for dataType in mod09ga modscag moddrfs scagdrfs_gap scagdrfs_stc; do
-    ${thisScriptDir}/scratchShuffle.sh -b ${yearStart} -e ${yearStop} \
-		    TO ${dataType}/NRT ${TILES[$idx]} || \
-	error_exit "Line $LINENO: scratchShuffle error ${dataType} ${tile}"
-done
+if [ $inputFromArchive ]; then
+    for dataType in mod09ga modscag moddrfs scagdrfs_gap scagdrfs_stc; do
+        ${thisScriptDir}/scratchShuffle.sh -b ${yearStart} -e ${yearStop} \
+                TO ${dataType}/NRT ${regionName} || \
+        error_exit "Line $LINENO: scratchShuffle error ${dataType} ${regionName}"
+    done
+    echo "${PROGNAME}: Done with shuffle TO scratch."
+fi
 
-# Do scratch shuffle for required ancillary data
-${thisScriptDir}/scratchShuffleAncillary.sh || \
-    error_exit "Line $LINENO: scratchShuffleAncillary error"
-
-echo "${PROGNAME}: Done with shuffle TO scratch, doing Step1 processing..."
-
-# Eventually this string should be an input to this script
-REGIONNAME='westernUS'
-
-# The default 
+# Matlab.
+#---------------------------------------------------------------------------------------
 matlab -nodesktop -nodisplay -r "clear; "\
 "try; "\
-"espEnv = ESPEnv(); "\
-"mData = MODISData($options); "\
-"region = Regions('"${REGIONNAME}"', '"${REGIONNAME}"_mask', espEnv, mData); "\
-"updateRegionMonthCubes(region, "$SLURM_ARRAY_TASK_ID", "\
+"modisData = MODISData(${inputForModisData}); "\
+"espEnv = ESPEnv(${inputForESPEnv}); "\
+"region = Regions(${inputForRegion}); "\
+"updateRegionMonthCubes(region, 1, "\
 "${yearStart}, ${monthStart}, ${yearStop}, ${monthStop}); "\
 "catch e; "\
 "fprintf('%s: %s\n', e.identifier, e.message); "\
@@ -193,52 +149,39 @@ matlab -nodesktop -nodisplay -r "clear; "\
 
 echo "${PROGNAME}: Done with Step1, doing shuffle FROM scratch..."
 
+# Scratch shuffle.
+#---------------------------------------------------------------------------------------
 # Do the scratch shuffle on Raw/Gap/STC outputs (back from scratch to archive)
-for dataType in mod09_raw scagdrfs_raw scagdrfs_gap scagdrfs_stc; do
-    ${thisScriptDir}/scratchShuffle.sh -b ${yearStart} -e ${yearStop} \
-		    FROM intermediary/${dataType}_$LABEL ${TILES[$idx]} || \
-	error_exit "Line $LINENO: scratchShuffle error ${dataType} ${tile}"
-done
+if [ $outputToArchive ]; then
+    for dataType in mod09_raw scagdrfs_raw scagdrfs_gap scagdrfs_stc; do
+        ${thisScriptDir}/scratchShuffle.sh -b ${yearStart} -e ${yearStop} \
+                FROM intermediary/${dataType}_$LABEL ${regionName} || \
+        error_exit "Line $LINENO: scratchShuffle error ${dataType} ${tile}"
+    done
+    echo "${PROGNAME}: Done with shuffle FROM scratch..."
+fi
 
-echo "${PROGNAME}: Done with shuffle FROM scratch..."
-
-#schedule next job in pipeline to run after entire job array completes
-if [ $isBatch ] && [ ! $noPipeline ]; then
+# Launch of next Step of the SnowToday daily process. Not applied for USAlaska now.
+#---------------------------------------------------------------------------------------
+if [ $isBatch ] && [ ! $noPipeline ] && [ $regionName == "westernUS" ]; then
     
-    # get current slurm info for mail-user and stdout
-    # Don't assume they are the same as at the top of this file,
-    # because they can be overridden at the command line
-    MAIL=`${thisScriptDir}/getSlurmMail.sh ${SLURM_JOB_ID}`
-    stdoutDir=$( dirname `${thisScriptDir}/getSlurmStdout.sh ${SLURM_JOB_ID}` )
-
     if [ "$SLURM_ARRAY_TASK_ID" -eq "1" ]; then
+        STDOUT_STEP2="${stdoutDir}/2SnTo-%A_%a.out"
 
-	STDOUT_STEP2="${stdoutDir}/2SnTo-%j.out"
-
-	# We might be able to speed this processing up by limiting
-	# the mosaics to [monthStop - 1, monthStop]
-	
-	# schedule next job in pipeline for today
-	sbatch --dependency=afterok:$SLURM_ARRAY_JOB_ID \
-	       --mail-user=${MAIL} \
-	       --output=${STDOUT_STEP2} \
-	       ${thisScriptDir}/runSnowTodayStep2.sh ${s2_label} ${testing_option} \
-	       $yearStart $monthStart $yearStop $monthStop $dayStop
-
+        # We might be able to speed this processing up by limiting
+        # the mosaics to [monthStop - 1, monthStop]
+        
+        # schedule next job in pipeline for today
+        # Dependency afterok:$SLURM_ARRAY_JOB_ID (and not SLURM_JOB_ID)
+        # implies that the next step won't
+        # start before all the tile jobs for the big region are done.
+        sbatch --dependency=afterok:$SLURM_ARRAY_JOB_ID \
+               --output=${STDOUT_STEP2} \
+               ${thisScriptDir}/runSnowTodayStep2.sh ${nextStepOptions} \
+               $yearStart $monthStart $yearStop $monthStop $dayStop ${bigRegionName}
     fi
-
 else
     echo "${PROGNAME}: Not continuing pipeline."
 fi
 
-#Clean up temporary directory for matlab job storage
-echo "${PROGNAME}: Removing TMPDIR=$TMPDIR..."
-rm -rf $TMPDIR
-
-# Stop the stopwatch and report elapsed time
-elapsedSeconds=$SECONDS
-duration=$(TZ=UTC0 printf 'Duration: %(%H:%M:%S)T\n' "$elapsedSeconds")
-
-thisDate=$(date)
-echo "${PROGNAME}: Done on hostname=$thisHost on $thisDate [${duration}]"
-
+source scripts/toolsStop.sh
