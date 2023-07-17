@@ -76,7 +76,7 @@ mail_summary() {
 usage() {
     echo "" 1>&2
     echo "Usage: ${PROGNAME} [-A LABEL_ANCILLARY] [-h] [-L LABEL] [-n]" 1>&2
-    echo "      [-s YYYYMMDD] [-t] WHICHSET" 1>&2
+    echo "      [-s YYYYMMDD] [-t] WHICHSET FILLONLY" 1>&2
     echo "  Runs Step0 in SnowToday pipeline" 1>&2
     echo "    Fetch latest JPL data for the tiles composing the region" 1>&2
     echo "    Update the SnowToday pull report" 1>&2
@@ -100,6 +100,8 @@ usage() {
     echo "      results will not be pushed to NSIDC" 1>&2
     echo "Arguments:" 1>&2
     echo "  WHICHSET: nrt: for near real time, or historic" 1>&2
+    echo "  FILLONLY: full: systematic import (longer), " 1>&2
+    echo "       fillOnly: only import gaps (shorter)" 1>&2    
     echo "Output: " 1>&2
     echo "  Output location is controlled in Matlab scripts " 1>&2
     echo "Notes: " 1>&2
@@ -115,7 +117,7 @@ usage() {
 # depends on whether it's running as sbatch job.
 scriptId=snoStep0
 defaultSlurmArrayTaskId=1
-expectedCountOfArguments=1
+expectedCountOfArguments=2
 # Output file. This variable is not transferred from sbatch to bash, so we define it.
 # NB: to split a string, don't put indent otherwise there will be two variables.
 SBATCH_OUTPUT="/scratch/alpine/${USER}/slurm_out_SnowToday/${SLURM_JOB_NAME}-${SLURM_ARRAY_JOB_ID}_"\
@@ -142,12 +144,17 @@ source scripts/toolsStart.sh
 
 # Argument setting
 whichSet=$1
+fillOnly="true"
+if [ $2 == "full" ]; then 
+    fillOnly="false"
+fi
 regionName=${tileGroupNames[${SLURM_ARRAY_TASK_ID} - 1]}
 bigRegionName=${regionName}
 
 inputForESPEnv="modisData = modisData"
 inputForRegion="'"${regionName}"', '"${regionName}"_mask', espEnv, modisData"
-inputForMain="'"${whichSet}"', region, fillOnly = false"
+inputForMain="'"${whichSet}"', region, fillOnly = "${fillOnly}
+echo "inputForMain: "$inputForMain
 #fillOnly==true will only try to fill holes in inventory
 #fillOnly==false will try to re-pull data for every date
 if [ ! -z ${startyyyymmdd} ]; then
@@ -159,6 +166,8 @@ source scripts/toolsMatlab.sh
 matlab -nodesktop -nodisplay -r "clear; "\
 "try; "\
 "modisData = MODISData(${inputForModisData}); "\
+"if ismember('"${regionName}"', {'AMAndes'}); "\
+" modisData.endDateOfHistoricJPLFiles = datetime(2017, 1, 1); end; "\
 "espEnv = ESPEnv(${inputForESPEnv}); "\
 "region = Regions(${inputForRegion}); "\
 "batchUpdateModisArchive(${inputForMain}); "\
@@ -168,6 +177,7 @@ matlab -nodesktop -nodisplay -r "clear; "\
 "end; "\
 "exit(0);" || error_exit "Line $LINENO: matlab error."
 
+# SIER_390. Quick/dirty patch for modisData.endDateOfHistoricJPLFiles
 # SIER_335. Putting aside anomalous mod09ga files.
 anomalousMod09gaFiles=$(find /pl/active/rittger_esp/modis/mod09ga/NRT/ -type f -size -1000c | grep .hdf | grep -v "ano.MOD")
 for f in $anomalousMod09gaFiles; do mv $f $(echo $f | sed 's/\/MOD/\/ano.MOD/g'); echo "renamed anomalous ${f}"; done
