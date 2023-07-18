@@ -38,8 +38,9 @@
 # Do not set --mail-user, let it default to the caller
 # It can also be over-written at the command line
 #SBATCH --mail-type FAIL,INVALID_DEPEND,TIME_LIMIT,REQUEUE,STAGE_OUT
-#SBATCH --array=1-2
-#   1 for westernUS tile group, 2 for USAlaska tile group. 
+#SBATCH --array=0
+#   0 for westernUS tile group, 1 for USAlaska tile group. The list of ids are 
+#   in toolsRegions.sh 
 #   Also called REGIONNAME. id of the region which tiles to import.
 #   Script updated for Alaska SIER_322.
 
@@ -206,7 +207,7 @@ if [ $isBatch ] && [ ! $noPipeline ] && [ $regionName == "westernUS" ]; then
     # westernUS. Will probably need to be changed when dealing with Canada tiles.
 
     echo "--output=${STDOUT_STEP1}"
-    echo "--araay=${arrayStringValue}"
+    echo "--array=${arrayStringValue}"
 
     echo "${PROGNAME}: Continuing pipeline with Step1..."
     echo ${nextStepOptions} $(get_start_stop_date_string)
@@ -215,7 +216,7 @@ if [ $isBatch ] && [ ! $noPipeline ] && [ $regionName == "westernUS" ]; then
 	   --output=${STDOUT_STEP1} \
        --array=${arrayStringValue} \
 	   ${thisScriptDir}/runSnowTodayStep1.sh ${nextStepOptions} \
-	   $(get_start_stop_date_string) ${bigRegionName}
+	   ${bigRegionName} $(get_water_year_date_string) 
 fi
 
 # Programming of the next launch of this script tomorrow.
