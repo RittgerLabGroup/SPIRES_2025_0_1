@@ -122,9 +122,14 @@ source scripts/toolsMatlab.sh
 # N.B. It is assumed that the item order of this array matches
 # the item order in the region_masks files
 if [ $inputFromArchive ]; then
-    for dataType in mod09ga modscag moddrfs scagdrfs_gap scagdrfs_stc; do
+    for dataType in mod09ga modscag moddrfs; do
         ${thisScriptDir}/scratchShuffle.sh -b $((year - 1)) -e $year \
                 TO ${dataType}/NRT ${regionName} || \
+        error_exit "Line $LINENO: scratchShuffle error ${dataType} ${regionName}"
+    done
+    for dataType in mod09_raw scagdrfs_raw scagdrfs_gap scagdrfs_stc; do
+        ${thisScriptDir}/scratchShuffle.sh -b $((year - 1)) -e $year \
+                TO intermediary/${dataType}_$LABEL ${regionName} || \
         error_exit "Line $LINENO: scratchShuffle error ${dataType} ${regionName}"
     done
     echo "${PROGNAME}: Done with shuffle TO scratch."
