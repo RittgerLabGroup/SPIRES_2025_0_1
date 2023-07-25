@@ -149,7 +149,7 @@ fillOnly="true"
 if [ $2 == "full" ]; then 
     fillOnly="false"
 fi
-regionName=${tileGroupNames[${SLURM_ARRAY_TASK_ID} - 1]}
+regionName=${tileGroupNames[${SLURM_ARRAY_TASK_ID}]}
 bigRegionName=${regionName}
 
 inputForESPEnv="modisData = modisData"
