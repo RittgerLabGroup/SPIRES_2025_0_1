@@ -33,7 +33,7 @@
 usage() {
     echo "" 1>&2
     echo "Usage: ${PROGNAME} [-A LABEL_ANCILLARY] [-h] [-i] [-L LABEL] [-n] [-o] [-t]" 1>&2
-    echo "       YEARSTART MONTHSTART YEARSTOP MONTHSTOP DAYSTOP BIGREGIONNAME" 1>&2
+    echo "       BIGREGIONNAME YEAR MONTH MONTHWINDOW" 1>&2
     echo "  Runs Step1 in SnowToday pipeline" 1>&2
     echo "  Job array of each tile of a big region for this time period: " 1>&2
     echo "    Update raw data cubes" 1>&2
@@ -45,21 +45,20 @@ usage() {
     echo "     e.g. for operational processing, use -A v3.1 for westernUS " 1>&2
     echo "     or -A v3.2 for USAlaska" 1>&2
     echo "  -h: display help message and exit" 1>&2
-    echo "  -i: update input data from archive to scratch" 1>&2    
+    echo "  -i: update input data from archive to scratch" 1>&2
     echo "  -L LABEL: string with version label for directories" 1>&2
     echo "     e.g. for operational processing, use -L v2023.x" 1>&2
     echo "  -n: no pipeline: suppress starting next pipeline step" 1>&2
-    echo "  -o: update output data from scratch to archive" 1>&2 
+    echo "  -o: update output data from scratch to archive" 1>&2
     echo "  -t: testing pipeline" 1>&2
     echo "      results will not be pushed to NSIDC" 1>&2
     echo "Arguments: " 1>&2
-    echo "  YEARSTART : year to begin" 1>&2
-    echo "  MONTHSTART : month to begin" 1>&2
-    echo "  YEARSTOP : year to stop" 1>&2
-    echo "  MONTHSTOP : month to stop" 1>&2
-    echo "  DAYSTOP : day to stop" 1>&2
     echo "  BIGREGIONNAME: id of the region which will be transmitted to Step 2, " 1>&2
     echo "      classically westernUS or USAlaska but might be h08v04 too, for testing." 1>&2
+    echo "  YEAR : month to stop" 1>&2
+    echo "  MONTH : month to stop" 1>&2
+    echo "  MONTHWINDOW : number of months to handle before (1 for only current month," 1>&2
+    echo "    12 for full waterYear)" 1>&2
     echo "Output: " 1>&2
     echo "  Output location is controlled in Matlab scripts and -L LABEL " 1>&2
     echo "Notes: " 1>&2
@@ -75,7 +74,7 @@ usage() {
 # depends on whether it's running as sbatch job
 scriptId=snoStep1
 defaultSlurmArrayTaskId=292
-expectedCountOfArguments=6
+expectedCountOfArguments=4
 # Output file. This variable is not transferred from sbatch to bash, so we define it.
 # NB: to split a string, don't put indent otherwise there will be two variables.
 SBATCH_OUTPUT="/scratch/alpine/${USER}/slurm_out_SnowToday/${SLURM_JOB_NAME}-${SLURM_ARRAY_JOB_ID}_"\
@@ -100,19 +99,18 @@ source scripts/toolsRegions.sh
 source scripts/toolsStart.sh
 
 # Argument setting
-yearStart=$1
-monthStart=$2
-yearStop=$3
-monthStop=$4
-dayStop=$5
-bigRegionName=$6
-echo "${PROGNAME}: Start = $yearStart, $monthStart"
-echo "${PROGNAME}: Stop  = $yearStop, $monthStop, $dayStop"
+bigRegionName=$1
+year=$2
+month=$3
+monthWindow=$4
 
 regionName=$(get_tile_name_from_tile_id ${SLURM_ARRAY_TASK_ID})
 
 inputForESPEnv="modisData = modisData"
 inputForRegion="'"${regionName}"', '"${regionName}"_mask', espEnv, modisData"
+inputForWaterYearDate="datetime(${year}, ${month}, eomday(${year}, ${month})), ${monthWindow}"
+inputForCube="region, waterYearDate"
+echo "${PROGNAME}: inputForWaterYearDate: ${inputForWaterYearDate}"
 
 source scripts/toolsMatlab.sh
 
@@ -124,9 +122,14 @@ source scripts/toolsMatlab.sh
 # N.B. It is assumed that the item order of this array matches
 # the item order in the region_masks files
 if [ $inputFromArchive ]; then
-    for dataType in mod09ga modscag moddrfs scagdrfs_gap scagdrfs_stc; do
-        ${thisScriptDir}/scratchShuffle.sh -b ${yearStart} -e ${yearStop} \
+    for dataType in mod09ga modscag moddrfs; do
+        ${thisScriptDir}/scratchShuffle.sh -b $((year - 1)) -e $year \
                 TO ${dataType}/NRT ${regionName} || \
+        error_exit "Line $LINENO: scratchShuffle error ${dataType} ${regionName}"
+    done
+    for dataType in mod09_raw scagdrfs_raw scagdrfs_gap scagdrfs_stc; do
+        ${thisScriptDir}/scratchShuffle.sh -b $((year - 1)) -e $year \
+                TO intermediary/${dataType}_$LABEL ${regionName} || \
         error_exit "Line $LINENO: scratchShuffle error ${dataType} ${regionName}"
     done
     echo "${PROGNAME}: Done with shuffle TO scratch."
@@ -139,8 +142,13 @@ matlab -nodesktop -nodisplay -r "clear; "\
 "modisData = MODISData(${inputForModisData}); "\
 "espEnv = ESPEnv(${inputForESPEnv}); "\
 "region = Regions(${inputForRegion}); "\
-"updateRegionMonthCubes(region, 1, "\
-"${yearStart}, ${monthStart}, ${yearStop}, ${monthStop}); "\
+"waterYearDate = WaterYearDate(${inputForWaterYearDate}); "\
+"rawCube = RawCube(${inputForCube}); "\
+"rawCube.build(); "\
+"stcCube = StcCube(${inputForCube}); "\
+"stcCube.build(); "\
+"variables = Variables(region); "\
+"variables.calcSnowCoverDays(waterYearDate); "\
 "catch e; "\
 "fprintf('%s: %s\n', e.identifier, e.message); "\
 "exit(-1); "\
@@ -154,7 +162,7 @@ echo "${PROGNAME}: Done with Step1, doing shuffle FROM scratch..."
 # Do the scratch shuffle on Raw/Gap/STC outputs (back from scratch to archive)
 if [ $outputToArchive ]; then
     for dataType in mod09_raw scagdrfs_raw scagdrfs_gap scagdrfs_stc; do
-        ${thisScriptDir}/scratchShuffle.sh -b ${yearStart} -e ${yearStop} \
+        ${thisScriptDir}/scratchShuffle.sh -b $((year - 1)) -e $year \
                 FROM intermediary/${dataType}_$LABEL ${regionName} || \
         error_exit "Line $LINENO: scratchShuffle error ${dataType} ${tile}"
     done
@@ -163,23 +171,21 @@ fi
 
 # Launch of next Step of the SnowToday daily process. Not applied for USAlaska now.
 #---------------------------------------------------------------------------------------
-if [ $isBatch ] && [ ! $noPipeline ] && [ $regionName == "westernUS" ]; then
-    
-    if [ "$SLURM_ARRAY_TASK_ID" -eq "1" ]; then
-        STDOUT_STEP2="${stdoutDir}/2SnTo-%A_%a.out"
+if [ $isBatch ] && [ ! $noPipeline ] && [ $regionName == "westernUS" ] \
+&& [ $SLURM_ARRAY_TASK_ID -eq 292 ]; then
+    STDOUT_STEP2="${stdoutDir}/2SnTo-%A_%a.out"
 
-        # We might be able to speed this processing up by limiting
-        # the mosaics to [monthStop - 1, monthStop]
-        
-        # schedule next job in pipeline for today
-        # Dependency afterok:$SLURM_ARRAY_JOB_ID (and not SLURM_JOB_ID)
-        # implies that the next step won't
-        # start before all the tile jobs for the big region are done.
-        sbatch --dependency=afterok:$SLURM_ARRAY_JOB_ID \
-               --output=${STDOUT_STEP2} \
-               ${thisScriptDir}/runSnowTodayStep2.sh ${nextStepOptions} \
-               $yearStart $monthStart $yearStop $monthStop $dayStop ${bigRegionName}
-    fi
+    # We might be able to speed this processing up by limiting
+    # the mosaics to [monthStop - 1, monthStop]
+
+    # schedule next job in pipeline for today
+    # Dependency afterok:$SLURM_ARRAY_JOB_ID (and not SLURM_JOB_ID)
+    # implies that the next step won't
+    # start before all the tile jobs for the big region are done.
+    sbatch --dependency=afterok:$SLURM_ARRAY_JOB_ID \
+           --output=${STDOUT_STEP2} \
+           ${thisScriptDir}/runSnowTodayStep2.sh ${nextStepOptions} \
+           $bigRegionName $year $month $monthWindow
 else
     echo "${PROGNAME}: Not continuing pipeline."
 fi
