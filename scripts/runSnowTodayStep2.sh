@@ -132,6 +132,9 @@ matlab -nodesktop -nodisplay -r "clear; "\
 "    variables.calcAlbedos(waterYearDate); "\
 "    variables.calcDaysWithoutObservation(waterYearDate); "\
 "end; "\
+"if strcmp(region.regionName, 'USAlaska'); "\
+"   region.tileIds(find(strcmp(region.tileIds, 'h07v03'))) = []; "\
+"end; "\
 "mosaic = Mosaic(region); "\
 "mosaic.buildTileSet(waterYearDate); "\
 "catch e; "\
@@ -139,6 +142,9 @@ matlab -nodesktop -nodisplay -r "clear; "\
 "exit(-1); "\
 "end; "\
 "exit(0);" || error_exit "Line $LINENO: matlab error."
+
+# SIER_201 remove the tile h07v03 for USAlaska tileset because lack JPL data from 
+# 2005 to 2018.
 
 # Scratch shuffle.
 #---------------------------------------------------------------------------------------
