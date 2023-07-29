@@ -108,7 +108,8 @@ regionName=$(get_tile_name_from_tile_id ${SLURM_ARRAY_TASK_ID})
 
 inputForESPEnv="modisData = modisData"
 inputForRegion="'"${regionName}"', '"${regionName}"_mask', espEnv, modisData"
-inputForWaterYearDate="datetime(${year}, ${month}, eomday(${year}, ${month})), ${monthWindow}"
+inputForWaterYearDate="datetime(${year}, ${month}, eomday(${year}, ${month})), "\
+"modisData.getFirstMonthOfWaterYear('"${regionName}"'), ${monthWindow}"
 inputForCube="region, waterYearDate"
 echo "${PROGNAME}: inputForWaterYearDate: ${inputForWaterYearDate}"
 

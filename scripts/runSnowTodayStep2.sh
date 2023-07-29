@@ -96,7 +96,8 @@ tiles=${tileArrayForTileGroup${SLURM_ARRAY_TASK_ID}}
 
 inputForESPEnv="modisData = modisData"
 inputForBigRegion="'"${bigRegionName}"', '"${bigRegionName}"_mask', espEnv, modisData"
-inputForWaterYearDate="datetime(${year}, ${month}, eomday(${year}, ${month})), ${monthWindow}"
+inputForWaterYearDate="datetime(${year}, ${month}, eomday(${year}, ${month})), "\
+"region.getFirstMonthOfWaterYear(), ${monthWindow}"
 echo "${PROGNAME}: inputForWaterYearDate: ${inputForWaterYearDate}"
 
 source scripts/toolsMatlab.sh

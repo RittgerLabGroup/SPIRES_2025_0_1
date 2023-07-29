@@ -85,6 +85,7 @@ regionName='westernUS'
 
 inputForESPEnv="modisData = modisData"
 inputForRegion="'"${regionName}"', partitionName, espEnv, modisData"
+inputForWaterYearDate="datetime('today'), region.getFirstMonthOfWaterYear(), 12"
 
 source scripts/toolsMatlab.sh
 
@@ -116,11 +117,12 @@ matlab -nodesktop -nodisplay -r "clear; "\
 "minSCP = minSCPForLinePlots(); "\
 "minZ = minZForLinePlots(); "\
 "runStatsForLinePlots(region, ${waterYear}, ${waterYear}, minSCP, minZ); "\
-"waterYearDate = WaterYearDate(); "\
+"waterYearDate = WaterYearDate(${inputForWaterYearDate}); "\
 "region.runWriteStats(waterYearDate); "\
 "if "${SLURM_ARRAY_TASK_ID}" == 10; "\
 "mosaic = Mosaic(region); "\
-"waterYearDate = WaterYearDate(mosaic.getMostRecentMosaicDt(waterYearDate), 0); "\
+"waterYearDate = WaterYearDate(mosaic.getMostRecentMosaicDt(waterYearDate), "\
+"region.getFirstMonthOfWaterYear(), 0); "\
 "region.writeGeotiffs(NaN, waterYearDate, region.webGeotiffEPSG); "\
 "end; "\
 "catch e; "\
