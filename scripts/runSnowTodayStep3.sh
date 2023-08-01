@@ -85,7 +85,8 @@ regionName='westernUS'
 
 inputForESPEnv="modisData = modisData"
 inputForRegion="'"${regionName}"', partitionName, espEnv, modisData"
-inputForWaterYearDate="datetime('today'), region.getFirstMonthOfWaterYear(), 12"
+inputForWaterYearDate="datetime('today'), region.getFirstMonthOfWaterYear(), "\
+"WaterYearDate.yearMonthWindow"
 
 source scripts/toolsMatlab.sh
 
