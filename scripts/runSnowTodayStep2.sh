@@ -84,19 +84,26 @@ thisScriptDir=$(pwd)
 printf "Script directory: ${thisScriptDir}\n"
 #Go to parent of this script, so that correct pathdef.m file is used
 cd ..
+source scripts/toolsRegions.sh
 source scripts/toolsStart.sh
 
 # Argument setting
 bigRegionName=$1
+# set regionName for logs
+regionName=$1
 year=$2
 month=$3
 monthWindow=$4
 bigRegionId=$(get_tile_group_id_from_group_name $bigRegionName)
-tiles=${tileArrayForTileGroup${SLURM_ARRAY_TASK_ID}}
+# Dynamic variable name handling for tileArrayForTileGroupX (X being 0, 1, etc ...)
+tileArrayVarName=tileArrayForTileGroup${bigRegionId}[@]
+tiles=${!tileArrayVarName}
+echo "Big region id: ${bigRegionId}. Tiles: ${tiles}."
 
 inputForESPEnv="modisData = modisData"
 inputForBigRegion="'"${bigRegionName}"', '"${bigRegionName}"_mask', espEnv, modisData"
-inputForWaterYearDate="datetime(${year}, ${month}, eomday(${year}, ${month})), ${monthWindow}"
+inputForWaterYearDate="datetime(${year}, ${month}, eomday(${year}, ${month})), "\
+"region.getFirstMonthOfWaterYear(), ${monthWindow}"
 echo "${PROGNAME}: inputForWaterYearDate: ${inputForWaterYearDate}"
 
 source scripts/toolsMatlab.sh
