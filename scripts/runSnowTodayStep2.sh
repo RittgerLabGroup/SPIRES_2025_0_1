@@ -11,7 +11,7 @@
 #SBATCH --time=02:00:00
 #SBATCH --ntasks-per-node=20
 #SBATCH --nodes=1
-#SBATCH -o /scratch/alpine/%u/slurm_out_SnowToday/%x-%A-%a.out
+#SBATCH -o /scratch/alpine/%u/slurm_out_SnowToday/%x-%A_%a.out
 # Set the system up to notify upon completion
 # Do not set --mail-user, let it default to the caller
 # It can also be over-written at the command line
@@ -113,10 +113,17 @@ source scripts/toolsMatlab.sh
 #---------------------------------------------------------------------------------------
 # Do the scratch shuffle on required STC inputs
 if [ $inputFromArchive ]; then
-    for dataType in scagdrfs_stc scagdrfs_mat; do
+    for dataType in scagdrfs_stc; do
         for tile in $tiles; do
         ${thisScriptDir}/scratchShuffle.sh -b $((year - 1)) -e $year \
                 TO intermediary/${dataType}_$LABEL ${tile} || \
+            error_exit "Line $LINENO: scratchShuffle error ${dataType} ${tile}"
+        done
+    done
+    for dataType in scagdrfs_mat; do
+        for tile in $tiles; do
+        ${thisScriptDir}/scratchShuffle.sh -b $((year - 1)) -e $year \
+                TO variables/${dataType}_$LABEL ${tile} || \
             error_exit "Line $LINENO: scratchShuffle error ${dataType} ${tile}"
         done
     done
@@ -160,7 +167,7 @@ if [ $outputToArchive ]; then
     for dataType in scagdrfs_mat; do
         for tile in $tiles; do
             ${thisScriptDir}/scratchShuffle.sh -b $((year - 1)) -e $year \
-                    FROM intermediary/${dataType}_$LABEL ${tile} || \
+                    FROM variables/${dataType}_$LABEL ${tile} || \
                 error_exit "Line $LINENO: scratchShuffle error ${dataType} ${tile}"
         done
         ${thisScriptDir}/scratchShuffle.sh -b $((year - 1)) -e $year \

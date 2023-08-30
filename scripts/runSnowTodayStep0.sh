@@ -49,7 +49,7 @@
 mail_summary() {
     # $1: bigRegionName: char. Group of tiles or Region name, or tile name if testing
     #   Usually westernUS or USAlaska.
-    $duration="[$(TZ=UTC0 printf 'Duration: %(%H:%M:%S)T\n' "${SECONDS}")]"
+    TZ=UTC0 printf -v duration '[Duration: %(%H:%M:%S)T]\n' "${SECONDS}"
     if [ ! $testing ]; then
         # Mails the region inventory summary to selected recipients
         # An alternative way to control recipient list would be
