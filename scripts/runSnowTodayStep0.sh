@@ -39,8 +39,8 @@
 # It can also be over-written at the command line
 #SBATCH --mail-type FAIL,INVALID_DEPEND,TIME_LIMIT,REQUEUE,STAGE_OUT
 #SBATCH --array=0
-#   0 for westernUS tile group, 1 for USAlaska tile group. The list of ids are 
-#   in toolsRegions.sh 
+#   0 for westernUS tile group, 1 for USAlaska tile group, 2 for ASHimalaya, 
+#   4 for AMAndes. The list of ids are in toolsRegions.sh 
 #   Also called REGIONNAME. id of the region which tiles to import.
 #   Script updated for Alaska SIER_322.
 
