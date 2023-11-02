@@ -1,119 +1,129 @@
-version,dataLabel,fileExtension,fileLabel,topSubDirectory,fileSubDirectory1,fileSubDirectory2,fileSubDirectory3,fileSubDirectory4,fileSubDirectory5,fileSubDirectory6,objectDependent,dateDependent,dateFieldName,dateFieldType,dateInFileName,webDirectory,webFileLabel,comment
-,0,,"Label part of the filename. {objectName} is replace by the name of the object, region, or by the id of th subdivision. {platform} is replaced by Terra. {thisDate} is replaced by the formatted date for the records within the file, being day, or month; NB: gap files contain 3 months, but the filename only contain the middle month; the stat files aggregate all the stats per subdivision and the filename doesnt have a date. {version} is replaced by v006, although the version of the modis data is v6.1.",,,o,"For data directories, this may be used to indicate the version of collection: {versionOfDataCollection}","For some labels, there are a lot of objects (e.g. regional stats for subdivisions). The fileSubDirectory3 allow to spread them in subfolders. When used, {objectName_1000} is replaced by the id of the subdivision / 1000, floored.",,,"1: the file depends on an object, region, tile, or subdivision.","1: the file depends on a date, this is typical of data files, except for subdivision regional stats",,,,Directory in the nusnow ingest platform to put the files for ingestion by snow-today website.,For the ingest by snow-today website. Web file name is obtained by concatening this label to the file extension.,
-v3.2,aspect,.tif,{objectName}_aspect_gmted_med075,modis_ancillary,{versionOfAncillary},aspect,,,,,1,0,,,,,,
-v3.2,canopyheight,.tif,{objectName}_canopyheight_simard_pinto_2011,modis_ancillary,{versionOfAncillary},canopyheight,,,,,1,0,,,,,,
-v3.2,cloudformodis,.mat,modis_convolutional_cloud_timbo_2021,modis_ancillary,{versionOfAncillary},cloud,,,,,0,0,,,,,,
-v3.2,elevation,.tif,{objectName}_elevation_gmted_med075,modis_ancillary,{versionOfAncillary},elevation,,,,,1,0,,,,,,
-v3.2,falsepositive,.tif,{objectName}_stc_false_positive_manual_20230920,modis_ancillary,{versionOfAncillary},falsepositive,,,,,1,0,,,,,,
-v3.2,land,.tif,{objectName}_land_mod44_50,modis_ancillary,{versionOfAncillary},land,,,,,1,0,,,,,,
-v3.2,landsubdivisionidpertileandtype,.csv,landsubdivisionid_per_tile_and_type_2023,modis_ancillary,{versionOfAncillary},landsubdivision,,,,,0,0,,,,,,
-v3.2,landsubdivisionadm0,.tif,{objectName}_geoboundaries_202309_adm0,modis_ancillary,{versionOfAncillary},landsubdivision,adm0,,,,1,0,,,,,,
-v3.2,landsubdivisionadm1,.tif,{objectName}_geoboundaries_202309_adm1,modis_ancillary,{versionOfAncillary},landsubdivision,adm1,,,,1,0,,,,,,
-v3.2,landsubdivisionadm0part,.tif,{objectName}_geoboundaries_202309_adm0part,modis_ancillary,{versionOfAncillary},landsubdivision,adm0part,,,,1,0,,,,,,
-v3.2,landsubdivisionadm1part,.tif,{objectName}_geoboundaries_202309_adm1part,modis_ancillary,{versionOfAncillary},landsubdivision,adm1part,,,,1,0,,,,,,
-v3.2,landsubdivisiongroup0,.tif,{objectName}_geoboundaries_202309_group0,modis_ancillary,{versionOfAncillary},landsubdivision,group0,,,,1,0,,,,,,
-v3.2,landsubdivisiongroupadm0,.tif,{objectName}_geoboundaries_202309_groupadm0,modis_ancillary,{versionOfAncillary},landsubdivision,groupadm0,,,,1,0,,,,,,
-v3.2,landsubdivisionhuc2,.tif,{objectName}_usgs_wbd_202309_huc2,modis_ancillary,{versionOfAncillary},landsubdivision,huc2,,,,1,0,,,,,,
-v3.2,landsubdivisionhuc4,.tif,{objectName}_usgs_wbd_202309_huc4,modis_ancillary,{versionOfAncillary},landsubdivision,huc4,,,,1,0,,,,,,
-v3.2,landsubdivisionhuc6,.tif,{objectName}_usgs_wbd_202309_huc6,modis_ancillary,{versionOfAncillary},landsubdivision,huc6,,,,1,0,,,,,,
-v3.2,landsubdivisionhydrolevel3,.tif,{objectName}_hydrosheds_v1_202309_level3,modis_ancillary,{versionOfAncillary},landsubdivision,hydrolevel3,,,,1,0,,,,,,
-v3.2,landsubdivisionhydrolevel4,.tif,{objectName}_hydrosheds_v1_202309_level4,modis_ancillary,{versionOfAncillary},landsubdivision,hydrolevel4,,,,1,0,,,,,,
-v3.2,landsubdivisionhydrolevel5,.tif,{objectName}_hydrosheds_v1_202309_level5,modis_ancillary,{versionOfAncillary},landsubdivision,hydrolevel5,,,,1,0,,,,,,
-v3.2,landsubdivisionshapeingeojson,.geojson,{objectName}_subdivision_shape_202309,modis_ancillary,{versionOfAncillary},landsubdivision,shape,{objectName_1000},,,1,0,,,,/shapes/,{objectName},1 file per subdivision. ObjectName is the subdivisionId
-v3.2,landsubdivisioninjson,.json,{objectName}_subdivisions_202309,modis_ancillary,{versionOfAncillary},landsubdivision,metadata,,,,1,0,,,,/regions/,{objectName},"1 file per root subdivision, which flatly list all the descendant subdivisions . ObjectName is the id of the root subdivision."
-v3.2,landsubdivisionlinkinjson,.json,{objectName}_subdivision_links_202309,modis_ancillary,{versionOfAncillary},landsubdivision,metadata,,,,0,0,,,,/regions/,{objectName}_hierarchy,"1 file per root subdivision, which presents the hierarchy of the descendant subdivisions . ObjectName is the id of the root subdivision."
-v3.2,landsubdivisionlinkvisualization,.json,subdivision_links_visualization_202309,modis_ancillary,conf,landsubdivision,,,,,0,0,,,,,,"Just for visualization of the hierarchy, no use in the app."
-v3.2,landsubdivisiontypeinjson,.json,subdivision_types_202309,modis_ancillary,conf,landsubdivision,,,,,0,0,,,,/regions/,categories,1 file only. No difference between versions
-v3.2,landsubdivisionrootinjson,.json,subdivision_roots_202309,modis_ancillary,conf,landsubdivision,,,,,0,0,,,,/regions/,root,"1 file only. No difference between versions because the file should contain ALL root subdivisions (westernUS, Alaska, AMAndes &)"
-v3.2,region,.mat,,modis_ancillary,{versionOfAncillary},region,,,,,1,0,,,,,,
-v3.2,slope,.tif,{objectName}_slope_gmted_med075,modis_ancillary,{versionOfAncillary},slope,,,,,1,0,,,,,,
-v3.2,spiresmodelformodis,.mat,lut_modis_b1to7_3um_dust_2023,modis_ancillary,{versionOfAncillary},spiresmodel,,,,,0,0,,,,,,
-v3.2,water,.tif,{objectName}_water_mod44_50,modis_ancillary,{versionOfAncillary},water,,,,,1,0,,,,,,
-v3.1,aspect,.mat,{objectName}_Aspect,modis_ancillary,{versionOfAncillary},aspect,,,,,1,0,,,,,,
-v3.1,canopyheight,.mat,{objectName}_CanopyHeight,modis_ancillary,{versionOfAncillary},canopyheight,,,,,1,0,,,,,,
-v3.1,cloudformodis,.mat,modis_convolutional_cloud_timbo_2021,modis_ancillary,{versionOfAncillary},cloud,,,,,0,0,,,,,,
-v3.1,elevation,.mat,{objectName}_dem,modis_ancillary,{versionOfAncillary},elevation,,,,,1,0,,,,,,
-v3.1,falsepositive,.tif,{objectName}_stc_false_positive_manual_20230920,modis_ancillary,{versionOfAncillary},falsepositive,,,,,1,0,,,,,,
-v3.1,land,.mat,{objectName}_MOD44_50_landmask_463m_sinusoidal,modis_ancillary,{versionOfAncillary},land,,,,,1,0,,,,,,
-v3.1,landsubdivisionidpertileandtype,.csv,landsubdivisionid_per_tile_and_type_2023,modis_ancillary,{versionOfAncillary},landsubdivision,,,,,0,0,,,,,,
-v3.1,landsubdivisionadm0,.tif,{objectName}_geoboundaries_202309_adm0,modis_ancillary,{versionOfAncillary},landsubdivision,adm0,,,,1,0,,,,,,
-v3.1,landsubdivisionadm1,.tif,{objectName}_geoboundaries_202309_adm1,modis_ancillary,{versionOfAncillary},landsubdivision,adm1,,,,1,0,,,,,,
-v3.1,landsubdivisionadm0part,.tif,{objectName}_geoboundaries_202309_adm0part,modis_ancillary,{versionOfAncillary},landsubdivision,adm0part,,,,1,0,,,,,,
-v3.1,landsubdivisionadm1part,.tif,{objectName}_geoboundaries_202309_adm1part,modis_ancillary,{versionOfAncillary},landsubdivision,adm1part,,,,1,0,,,,,,
-v3.1,landsubdivisiongroup0,.tif,{objectName}_geoboundaries_202309_group0,modis_ancillary,{versionOfAncillary},landsubdivision,group0,,,,1,0,,,,,,
-v3.1,landsubdivisiongroupadm0,.tif,{objectName}_geoboundaries_202309_groupadm0,modis_ancillary,{versionOfAncillary},landsubdivision,groupadm0,,,,1,0,,,,,,
-v3.1,landsubdivisionhuc2,.tif,{objectName}_usgs_wbd_202309_huc2,modis_ancillary,{versionOfAncillary},landsubdivision,huc2,,,,1,0,,,,,,
-v3.1,landsubdivisionhuc4,.tif,{objectName}_usgs_wbd_202309_huc4,modis_ancillary,{versionOfAncillary},landsubdivision,huc4,,,,1,0,,,,,,
-v3.1,landsubdivisionhuc6,.tif,{objectName}_usgs_wbd_202309_huc6,modis_ancillary,{versionOfAncillary},landsubdivision,huc6,,,,1,0,,,,,,
-v3.1,landsubdivisionhydrolevel3,.tif,{objectName}_hydrosheds_v1_202309_level3,modis_ancillary,{versionOfAncillary},landsubdivision,hydrolevel3,,,,1,0,,,,,,
-v3.1,landsubdivisionhydrolevel4,.tif,{objectName}_hydrosheds_v1_202309_level4,modis_ancillary,{versionOfAncillary},landsubdivision,hydrolevel4,,,,1,0,,,,,,
-v3.1,landsubdivisionhydrolevel5,.tif,{objectName}_hydrosheds_v1_202309_level5,modis_ancillary,{versionOfAncillary},landsubdivision,hydrolevel5,,,,1,0,,,,,,
-v3.1,landsubdivisionshapeingeojson,.geojson,{objectName}_subdivision_shape_202309,modis_ancillary,{versionOfAncillary},landsubdivision,shape,{objectName_1000},,,1,0,,,,/shapes/,{objectName},1 file per subdivision. ObjectName is the subdivisionId
-v3.1,landsubdivisioninjson,.json,{objectName}_subdivisions_202309,modis_ancillary,{versionOfAncillary},landsubdivision,metadata,,,,1,0,,,,/regions/,{objectName},"1 file per root subdivision, which flatly list all the descendant subdivisions . ObjectName is the id of the root subdivision."
-v3.1,landsubdivisionlinkinjson,.json,{objectName}_subdivision_links_202309,modis_ancillary,{versionOfAncillary},landsubdivision,metadata,,,,1,0,,,,/regions/,{objectName}_hierarchy,"1 file per root subdivision, which presents the hierarchy of the descendant subdivisions . ObjectName is the id of the root subdivision."
-v3.1,landsubdivisionlinkvisualization,.json,subdivision_links_visualization_202309,modis_ancillary,conf,landsubdivision,,,,,0,0,,,,,,"Just for visualization of the hierarchy, no use in the app."
-v3.1,landsubdivisiontypeinjson,.json,subdivision_types_202309,modis_ancillary,conf,landsubdivision,,,,,0,0,,,,/regions/,categories,1 file only. No difference between versions
-v3.1,landsubdivisionrootinjson,.json,subdivision_roots_202309,modis_ancillary,conf,landsubdivision,,,,,0,0,,,,/regions/,root,"1 file only. No difference between versions because the file should contain ALL root subdivisions (westernUS, Alaska, AMAndes &)"
-v3.1,region,.mat,,modis_ancillary,{versionOfAncillary},region,,,,,1,0,,,,,,
-v3.1,slope,.mat,{objectName}_Slope,modis_ancillary,{versionOfAncillary},slope,,,,,1,0,,,,,,
-v3.1,spiresmodelformodis,.mat,lut_modis_b1to7_3um_dust_2023,modis_ancillary,{versionOfAncillary},spiresmodel,,,,,0,0,,,,,,
-v3.1,water,.mat,{objectName}_MOD44_50_watermask_463m_sinusoidal,modis_ancillary,{versionOfAncillary},water,,,,,1,0,,,,,,
-test,aspect,.mat,{objectName}_aspect_gmted_med075,modis_ancillary,{versionOfAncillary},aspect,,,,,1,0,,,,,,
-test,canopyheight,.mat,{objectName}_canopyheight_simard_pinto_2011,modis_ancillary,{versionOfAncillary},canopyheight,,,,,1,0,,,,,,
-test,cloud,.mat,modis_convolutional_cloud_timbo_2021,modis_ancillary,{versionOfAncillary},cloud,,,,,0,0,,,,,,
-test,elevation,.mat,{objectName}_elevation_gmted_med075,modis_ancillary,{versionOfAncillary},elevation,,,,,1,0,,,,,,
-test,falsepositive,.tif,{objectName}_stc_false_positive_manual_20230920,modis_ancillary,{versionOfAncillary},falsepositive,,,,,1,0,,,,,,
-test,land,.mat,{objectName}_land_mod44_50,modis_ancillary,{versionOfAncillary},land,,,,,1,0,,,,,,
-test,landsubdivisionidpertileandtype,.csv,landsubdivisionid_per_tile_and_type_2023,modis_ancillary,{versionOfAncillary},landsubdivision,,,,,0,0,,,,,,
-test,landsubdivisionadm0,.tif,{objectName}_geoboundaries_202309_adm0,modis_ancillary,{versionOfAncillary},landsubdivision,adm0,,,,1,0,,,,,,
-test,landsubdivisionadm1,.tif,{objectName}_geoboundaries_202309_adm1,modis_ancillary,{versionOfAncillary},landsubdivision,adm1,,,,1,0,,,,,,
-test,landsubdivisionadm0part,.tif,{objectName}_geoboundaries_202309_adm0part,modis_ancillary,{versionOfAncillary},landsubdivision,adm0part,,,,1,0,,,,,,
-test,landsubdivisionadm1part,.tif,{objectName}_geoboundaries_202309_adm1part,modis_ancillary,{versionOfAncillary},landsubdivision,adm1part,,,,1,0,,,,,,
-test,landsubdivisiongroup0,.tif,{objectName}_geoboundaries_202309_group0,modis_ancillary,{versionOfAncillary},landsubdivision,group0,,,,1,0,,,,,,
-test,landsubdivisiongroupadm0,.tif,{objectName}_geoboundaries_202309_groupadm0,modis_ancillary,{versionOfAncillary},landsubdivision,groupadm0,,,,1,0,,,,,,
-test,landsubdivisionhuc2,.tif,{objectName}_usgs_wbd_202309_huc2,modis_ancillary,{versionOfAncillary},landsubdivision,huc2,,,,1,0,,,,,,
-test,landsubdivisionhuc4,.tif,{objectName}_usgs_wbd_202309_huc4,modis_ancillary,{versionOfAncillary},landsubdivision,huc4,,,,1,0,,,,,,
-test,landsubdivisionhuc6,.tif,{objectName}_usgs_wbd_202309_huc6,modis_ancillary,{versionOfAncillary},landsubdivision,huc6,,,,1,0,,,,,,
-test,landsubdivisionhydrolevel3,.tif,{objectName}_hydrosheds_v1_202309_level3,modis_ancillary,{versionOfAncillary},landsubdivision,hydrolevel3,,,,1,0,,,,,,
-test,landsubdivisionhydrolevel4,.tif,{objectName}_hydrosheds_v1_202309_level4,modis_ancillary,{versionOfAncillary},landsubdivision,hydrolevel4,,,,1,0,,,,,,
-test,landsubdivisionhydrolevel5,.tif,{objectName}_hydrosheds_v1_202309_level5,modis_ancillary,{versionOfAncillary},landsubdivision,hydrolevel5,,,,1,0,,,,,,
-test,landsubdivisionshapeingeojson,.geojson,{objectName}_subdivision_shape_202309,modis_ancillary,{versionOfAncillary},landsubdivision,shape,{objectName_1000},,,1,0,,,,/shapes/,{objectName},1 file per subdivision. ObjectName is the subdivisionId
-test,landsubdivisioninjson,.json,{objectName}_subdivisions_202309,modis_ancillary,{versionOfAncillary},landsubdivision,metadata,,,,1,0,,,,/regions/,{objectName},"1 file per root subdivision, which flatly list all the descendant subdivisions . ObjectName is the id of the root subdivision."
-test,landsubdivisionlinkinjson,.json,{objectName}_subdivision_links_202309,modis_ancillary,{versionOfAncillary},landsubdivision,metadata,,,,1,0,,,,/regions/,{objectName}_hierarchy,"1 file per root subdivision, which presents the hierarchy of the descendant subdivisions . ObjectName is the id of the root subdivision."
-test,landsubdivisionlinkvisualization,.json,subdivision_links_visualization_202309,modis_ancillary,conf,landsubdivision,,,,,0,0,,,,,,"Just for visualization of the hierarchy, no use in the app."
-test,landsubdivisiontypeinjson,.json,subdivision_types_202309,modis_ancillary,conf,landsubdivision,,,,,0,0,,,,/regions/,categories,1 file only. No difference between versions
-test,landsubdivisionrootinjson,.json,subdivision_roots_202309,modis_ancillary,conf,landsubdivision,,,,,0,0,,,,/regions/,root,"1 file only. No difference between versions because the file should contain ALL root subdivisions (westernUS, Alaska, AMAndes &)"
-test,region,.mat,,modis_ancillary,{versionOfAncillary},region,,,,,1,0,,,,,,
-test,slope,.mat,{objectName}_slope_gmted_med075,modis_ancillary,{versionOfAncillary},slope,,,,,1,0,,,,,,
-test,spiresmodelformodis,.mat,lut_modis_b1to7_3um_dust_2023,modis_ancillary,{versionOfAncillary},spiresmodel,,,,,0,0,,,,,,
-test,water,.mat,{objectName}_water_mod44_50,modis_ancillary,{versionOfAncillary},water,,,,,1,0,,,,,,
-v3.1,modisspiresdaily,.mat,spires_daily_{platform}_{objectName}_{thisDate}.{version},modis,intermediary,spires_daily_{version},{versionOfDataCollection},{objectName},{thisYear},,1,1,thisDate,datetime,yyyyMMdd,,,
-v3.1,modisspirescube,.mat,spires_cube_{platform}_{objectName}_{thisDate}.{version},modis,intermediary,spires_cube_{version},{versionOfDataCollection},{objectName},{thisYear},,1,1,theseDates,datetime,yyyyMM,,,
-v3.1,MOD09Raw,.mat,RawMOD09_{platform}_{objectName}_{thisDate},modis,intermediary,mod09_raw_{version},{versionOfDataCollection},{objectName},{thisYear},,1,1,umdays,datetime,yyyyMM,,,
-v3.1,SCAGDRFSRaw,.mat,RawSCAG_{platform}_{objectName}_{thisDate}.{version},modis,intermediary,scagdrfs_raw_{version},{versionOfDataCollection},{objectName},{thisYear},,1,1,usdays,datetime,yyyyMM,,,
-v3.1,SCAGDRGSGap,.mat,GapSCAG_{platform}_{objectName}_{thisDate}.{version},modis,intermediary,scagdrfs_gap_{version},{versionOfDataCollection},{objectName},{thisYear},,1,1,datevals,datenum,yyyyMM,,,
-v3.1,SCAGDRFSSTC,.mat,InterpSCAG_{platform}_{objectName}_{thisDate}.{version},modis,intermediary,scagdrfs_stc_{version},{versionOfDataCollection},{objectName},{thisYear},,1,1,datevals,datenum,yyyyMM,,,
-v3.1,VariablesMatlab,.mat,{objectName}_{platform}_{thisDate}.{version},modis,variables,scagdrfs_mat_{version},{versionOfDataCollection},{objectName},{thisYear},,1,1,dateval,datenum,yyyyMMdd,,,
-v3.1,VariablesNetCDF,.nc,{objectName}_{platform}_{thisDate}.{version},modis,variables,scagdrfs_netcdf_{version},{versionOfDataCollection},{objectName},{thisYear},,1,1,dateval,daySinceStart,yyyyMMdd,,,
-v3.1,SubdivisionStatsCsv,.csv,{objectName}_{platform}.{version},modis,subdivisionstats,scagdrfs_csv_{version},{versionOfDataCollection},{objectName_1000},,,1,0,,,,,,
-v3.1,SubdivisionStatsWebCsv,.csv,SnowToday_{objectName}_{varName}_{thisDate}_yearToDate.csv,modis,subdivisionstats,scagdrfs_webcsv_{version},{versionOfDataCollection},{objectName_1000},{objectName},{thisYear},1,1,,,yyyy,,,"Rather than year, its waterYear which is used here"
-v3.2,modisspiresdaily,.mat,spires_daily_{platform}_{objectName}_{thisDate}.{version},modis,intermediary,spires_daily_{version},{versionOfDataCollection},{objectName},{thisYear},,1,1,thisDate,datetime,yyyyMMdd,,,
-v3.2,modisspirescube,.mat,spires_cube_{platform}_{objectName}_{thisDate}.{version},modis,intermediary,spires_cube_{version},{versionOfDataCollection},{objectName},{thisYear},,1,1,theseDates,datetime,yyyyMM,,,
-v3.2,MOD09Raw,.mat,RawMOD09_{platform}_{objectName}_{thisDate},modis,intermediary,mod09_raw_{version},{versionOfDataCollection},{objectName},{thisYear},,1,1,umdays,datetime,yyyyMM,,,
-v3.2,SCAGDRFSRaw,.mat,RawSCAG_{platform}_{objectName}_{thisDate}.{version},modis,intermediary,scagdrfs_raw_{version},{versionOfDataCollection},{objectName},{thisYear},,1,1,usdays,datetime,yyyyMM,,,
-v3.2,SCAGDRGSGap,.mat,GapSCAG_{platform}_{objectName}_{thisDate}.{version},modis,intermediary,scagdrfs_gap_{version},{versionOfDataCollection},{objectName},{thisYear},,1,1,datevals,datenum,yyyyMM,,,
-v3.2,SCAGDRFSSTC,.mat,InterpSCAG_{platform}_{objectName}_{thisDate}.{version},modis,intermediary,scagdrfs_stc_{version},{versionOfDataCollection},{objectName},{thisYear},,1,1,datevals,datenum,yyyyMM,,,
-v3.2,VariablesMatlab,.mat,{objectName}_{platform}_{thisDate}.{version},modis,variables,scagdrfs_mat_{version},{versionOfDataCollection},{objectName},{thisYear},,1,1,dateval,datenum,yyyyMMdd,,,
-v3.2,VariablesNetCDF,.nc,{objectName}_{platform}_{thisDate}.{version},modis,variables,scagdrfs_netcdf_{version},{versionOfDataCollection},{objectName},{thisYear},,1,1,dateval,daySinceStart,yyyyMMdd,,,
-v3.2,SubdivisionStatsCsv,.csv,{objectName}_{platform}.{version},modis,subdivisionstats,scagdrfs_csv_{version},{versionOfDataCollection},{objectName_1000},,,1,0,,,,,,
-v3.2,SubdivisionStatsWebCsv,.csv,SnowToday_{objectName}_{varName}_{thisDate}_yearToDate.csv,modis,subdivisionstats,scagdrfs_webcsv_{version},{versionOfDataCollection},{objectName_1000},{objectName},{thisYear},1,1,,,yyyy,,,"Rather than year, its waterYear which is used here"
-test,modisspiresdaily,.mat,spires_daily_{platform}_{objectName}_{thisDate}.{version},modis,intermediary,spires_daily_{version},{versionOfDataCollection},{objectName},{thisYear},,1,1,thisDate,datetime,yyyyMMdd,,,
-test,modisspirescube,.mat,spires_cube_{platform}_{objectName}_{thisDate}.{version},modis,intermediary,spires_cube_{version},{versionOfDataCollection},{objectName},{thisYear},,1,1,theseDates,datetime,yyyyMM,,,
-test,MOD09Raw,.mat,RawMOD09_{platform}_{objectName}_{thisDate},modis,intermediary,mod09_raw_{version},{versionOfDataCollection},{objectName},{thisYear},,1,1,umdays,datetime,yyyyMM,,,
-test,SCAGDRFSRaw,.mat,RawSCAG_{platform}_{objectName}_{thisDate}.{version},modis,intermediary,scagdrfs_raw_{version},{versionOfDataCollection},{objectName},{thisYear},,1,1,usdays,datetime,yyyyMM,,,
-test,SCAGDRGSGap,.mat,GapSCAG_{platform}_{objectName}_{thisDate}.{version},modis,intermediary,scagdrfs_gap_{version},{versionOfDataCollection},{objectName},{thisYear},,1,1,datevals,datenum,yyyyMM,,,
-test,SCAGDRFSSTC,.mat,InterpSCAG_{platform}_{objectName}_{thisDate}.{version},modis,intermediary,scagdrfs_stc_{version},{versionOfDataCollection},{objectName},{thisYear},,1,1,datevals,datenum,yyyyMM,,,
-test,VariablesMatlab,.mat,{objectName}_{platform}_{thisDate}.{version},modis,variables,scagdrfs_mat_{version},{versionOfDataCollection},{objectName},{thisYear},,1,1,dateval,datenum,yyyyMMdd,,,
-test,VariablesNetCDF,.nc,{objectName}_{platform}_{thisDate}.{version},modis,variables,scagdrfs_netcdf_{version},{versionOfDataCollection},{objectName},{thisYear},,1,1,dateval,daySinceStart,yyyyMMdd,,,
-test,SubdivisionStatsCsv,.csv,{objectName}_{platform}.{version},modis,subdivisionstats,scagdrfs_csv_{version},{versionOfDataCollection},{objectName_1000},,,1,0,,,,,,
-test,SubdivisionStatsWebCsv,.csv,SnowToday_{objectName}_{varName}_{thisDate}_yearToDate.csv,modis,subdivisionstats,scagdrfs_webcsv_{version},{versionOfDataCollection},{objectName_1000},{objectName},{thisYear},1,1,,,yyyy,,,"Rather than year, its waterYear which is used here"
+version,dataLabel,fileExtension,fileLabel,topSubDirectory,fileSubDirectory1,fileSubDirectory2,fileSubDirectory3,fileSubDirectory4,fileSubDirectory5,fileSubDirectory6,fileSubDirectory7,objectDependent,dateDependent,dateFieldName,dateFieldType,dateInFileName,webDirectory,webFileLabel,isAncillary,comment
+,0,,"Label part of the filename. {objectName} is replace by the name of the object, region, or by the id of th subdivision. {platform} is replaced by Terra. {thisDate} is replaced by the formatted date for the records within the file, being day, or month; NB: gap files contain 3 months, but the filename only contain the middle month; the stat files aggregate all the stats per subdivision and the filename doesnt have a date. {version} is replaced by v006, although the version of the modis data is v6.1.
+NB: Don't use the text '65535' (max(uint16)) or '*' in filenames or name of subfolders.",,,o,"For data directories, this may be used to indicate the version of collection: {versionOfDataCollection}","For some labels, there are a lot of objects (e.g. regional stats for subdivisions). The fileSubDirectory3 allow to spread them in subfolders. When used, {objectName_1000} is replaced by the id of the subdivision / 1000, floored.",,,,"1: the file depends on an object, region, tile, or subdivision.","1: the file depends on a date, this is typical of data files, except for subdivision regional stats",,,,Directory in the nusnow ingest platform to put the files for ingestion by snow-today website.,For the ingest by snow-today website. Web file name is obtained by concatening this label to the file extension.,"1: is ancillary data only handling of versionOfAncillary. 2. is ancillary data but no handling of versionOfAncillary. 0: is nrt/historic data, only handling of the version indicated in modisData.versionOf.(dataLabel)",
+v3.2,aspect,.tif,{objectName}_aspect_gmted_med075,modis_ancillary,{versionOfAncillary},aspect,,,,,,1,0,,,,,,1,
+v3.2,canopyheight,.tif,{objectName}_canopyheight_simard_pinto_2011,modis_ancillary,{versionOfAncillary},canopyheight,,,,,,1,0,,,,,,1,
+v3.2,cloudformodis,.mat,modis_convolutional_cloud_timbo_2021,modis_ancillary,{versionOfAncillary},cloud,,,,,,0,0,,,,,,1,
+v3.2,elevation,.tif,{objectName}_elevation_gmted_med075,modis_ancillary,{versionOfAncillary},elevation,,,,,,1,0,,,,,,1,
+v3.2,falsepositive,.tif,{objectName}_stc_false_positive_manual_20230920,modis_ancillary,{versionOfAncillary},falsepositive,,,,,,1,0,,,,,,1,
+v3.2,land,.tif,{objectName}_land_mod44_50,modis_ancillary,{versionOfAncillary},land,,,,,,1,0,,,,,,1,
+v3.2,landsubdivisionidpertileandtype,.csv,landsubdivisionid_per_tile_and_type_2023,modis_ancillary,{versionOfAncillary},landsubdivision,,,,,,0,0,,,,,,1,
+v3.2,landsubdivisionadm0,.tif,{objectName}_geoboundaries_202309_adm0,modis_ancillary,{versionOfAncillary},landsubdivision,adm0,,,,,1,0,,,,,,1,
+v3.2,landsubdivisionadm1,.tif,{objectName}_geoboundaries_202309_adm1,modis_ancillary,{versionOfAncillary},landsubdivision,adm1,,,,,1,0,,,,,,1,
+v3.2,landsubdivisionadm0part,.tif,{objectName}_geoboundaries_202309_adm0part,modis_ancillary,{versionOfAncillary},landsubdivision,adm0part,,,,,1,0,,,,,,1,
+v3.2,landsubdivisionadm1part,.tif,{objectName}_geoboundaries_202309_adm1part,modis_ancillary,{versionOfAncillary},landsubdivision,adm1part,,,,,1,0,,,,,,1,
+v3.2,landsubdivisiongroup0,.tif,{objectName}_geoboundaries_202309_group0,modis_ancillary,{versionOfAncillary},landsubdivision,group0,,,,,1,0,,,,,,1,
+v3.2,landsubdivisiongroupadm0,.tif,{objectName}_geoboundaries_202309_groupadm0,modis_ancillary,{versionOfAncillary},landsubdivision,groupadm0,,,,,1,0,,,,,,1,
+v3.2,landsubdivisionhuc2,.tif,{objectName}_usgs_wbd_202309_huc2,modis_ancillary,{versionOfAncillary},landsubdivision,huc2,,,,,1,0,,,,,,1,
+v3.2,landsubdivisionhuc4,.tif,{objectName}_usgs_wbd_202309_huc4,modis_ancillary,{versionOfAncillary},landsubdivision,huc4,,,,,1,0,,,,,,1,
+v3.2,landsubdivisionhuc6,.tif,{objectName}_usgs_wbd_202309_huc6,modis_ancillary,{versionOfAncillary},landsubdivision,huc6,,,,,1,0,,,,,,1,
+v3.2,landsubdivisionhydrolevel3,.tif,{objectName}_hydrosheds_v1_202309_level3,modis_ancillary,{versionOfAncillary},landsubdivision,hydrolevel3,,,,,1,0,,,,,,1,
+v3.2,landsubdivisionhydrolevel4,.tif,{objectName}_hydrosheds_v1_202309_level4,modis_ancillary,{versionOfAncillary},landsubdivision,hydrolevel4,,,,,1,0,,,,,,1,
+v3.2,landsubdivisionhydrolevel5,.tif,{objectName}_hydrosheds_v1_202309_level5,modis_ancillary,{versionOfAncillary},landsubdivision,hydrolevel5,,,,,1,0,,,,,,1,
+v3.2,landsubdivisionshapeingeojson,.geojson,{objectName}_subdivision_shape_202309,modis_ancillary,{versionOfAncillary},landsubdivision,shape,{objectName_1000},,,,1,0,,,,snow-surface-properties/shapes/,{objectName},1,1 file per subdivision. ObjectName is the subdivisionId
+v3.2,landsubdivisioninjson,.json,{objectName}_subdivisions_202309,modis_ancillary,{versionOfAncillary},landsubdivision,metadata,,,,,1,0,,,,snow-surface-properties/regions/,{objectName},1,"1 file per root subdivision, which flatly list all the descendant subdivisions . ObjectName is the id of the root subdivision."
+v3.2,landsubdivisionlinkinjson,.json,{objectName}_subdivision_links_202309,modis_ancillary,{versionOfAncillary},landsubdivision,metadata,,,,,0,0,,,,snow-surface-properties/regions/,{objectName}_hierarchy,1,"1 file per root subdivision, which presents the hierarchy of the descendant subdivisions . ObjectName is the id of the root subdivision."
+v3.2,landsubdivisionlinkvisualization,.json,subdivision_links_visualization_202309,modis_ancillary,conf,landsubdivision,,,,,,0,0,,,,,,2,"Just for visualization of the hierarchy, no use in the app."
+v3.2,landsubdivisiontypeinjson,.json,subdivision_types_202309,modis_ancillary,conf,landsubdivision,,,,,,0,0,,,,snow-surface-properties/regions/,categories,2,1 file only. No difference between versions
+v3.2,landsubdivisionrootinjson,.json,subdivision_roots_202309,modis_ancillary,conf,landsubdivision,,,,,,0,0,,,,snow-surface-properties/regions/,root,2,"1 file only. No difference between versions because the file should contain ALL root subdivisions (westernUS, Alaska, AMAndes &)"
+v3.2,region,.mat,,modis_ancillary,{versionOfAncillary},region,,,,,,1,0,,,,,,1,
+v3.2,slope,.tif,{objectName}_slope_gmted_med075,modis_ancillary,{versionOfAncillary},slope,,,,,,1,0,,,,,,1,
+v3.2,spiresmodelformodis,.mat,lut_modis_b1to7_3um_dust_2023,modis_ancillary,{versionOfAncillary},spiresmodel,,,,,,0,0,,,,,,1,
+v3.2,water,.tif,{objectName}_water_mod44_50,modis_ancillary,{versionOfAncillary},water,,,,,,1,0,,,,,,1,
+v3.2,webingestrigger,,TRIGGER,modis_ancillary,{versionOfAncillary},espWebExport,,,,,,0,0,,,,snow-surface-properties/,TRIGGER_TEST,1,1 file to create in web-app to launch web-app ingest. No file in our backend
+v3.2,webvariableconfinjson,.json,webvariable_conf,modis_ancillary,conf,variable,,,,,,0,0,,,,snow-surface-properties/,variables,1,Undecided if stored in github or sent everyday
+v3.1,aspect,.mat,{objectName}_Aspect,modis_ancillary,{versionOfAncillary},aspect,,,,,,1,0,,,,,,1,
+v3.1,canopyheight,.mat,{objectName}_CanopyHeight,modis_ancillary,{versionOfAncillary},canopyheight,,,,,,1,0,,,,,,1,
+v3.1,cloudformodis,.mat,modis_convolutional_cloud_timbo_2021,modis_ancillary,{versionOfAncillary},cloud,,,,,,0,0,,,,,,1,
+v3.1,elevation,.mat,{objectName}_dem,modis_ancillary,{versionOfAncillary},elevation,,,,,,1,0,,,,,,1,
+v3.1,falsepositive,.tif,{objectName}_stc_false_positive_manual_20230920,modis_ancillary,{versionOfAncillary},falsepositive,,,,,,1,0,,,,,,1,
+v3.1,land,.mat,{objectName}_MOD44_50_landmask_463m_sinusoidal,modis_ancillary,{versionOfAncillary},land,,,,,,1,0,,,,,,1,
+v3.1,landsubdivisionidpertileandtype,.csv,landsubdivisionid_per_tile_and_type_2023,modis_ancillary,{versionOfAncillary},landsubdivision,,,,,,0,0,,,,,,1,
+v3.1,landsubdivisionadm0,.tif,{objectName}_geoboundaries_202309_adm0,modis_ancillary,{versionOfAncillary},landsubdivision,adm0,,,,,1,0,,,,,,1,
+v3.1,landsubdivisionadm1,.tif,{objectName}_geoboundaries_202309_adm1,modis_ancillary,{versionOfAncillary},landsubdivision,adm1,,,,,1,0,,,,,,1,
+v3.1,landsubdivisionadm0part,.tif,{objectName}_geoboundaries_202309_adm0part,modis_ancillary,{versionOfAncillary},landsubdivision,adm0part,,,,,1,0,,,,,,1,
+v3.1,landsubdivisionadm1part,.tif,{objectName}_geoboundaries_202309_adm1part,modis_ancillary,{versionOfAncillary},landsubdivision,adm1part,,,,,1,0,,,,,,1,
+v3.1,landsubdivisiongroup0,.tif,{objectName}_geoboundaries_202309_group0,modis_ancillary,{versionOfAncillary},landsubdivision,group0,,,,,1,0,,,,,,1,
+v3.1,landsubdivisiongroupadm0,.tif,{objectName}_geoboundaries_202309_groupadm0,modis_ancillary,{versionOfAncillary},landsubdivision,groupadm0,,,,,1,0,,,,,,1,
+v3.1,landsubdivisionhuc2,.tif,{objectName}_usgs_wbd_202309_huc2,modis_ancillary,{versionOfAncillary},landsubdivision,huc2,,,,,1,0,,,,,,1,
+v3.1,landsubdivisionhuc4,.tif,{objectName}_usgs_wbd_202309_huc4,modis_ancillary,{versionOfAncillary},landsubdivision,huc4,,,,,1,0,,,,,,1,
+v3.1,landsubdivisionhuc6,.tif,{objectName}_usgs_wbd_202309_huc6,modis_ancillary,{versionOfAncillary},landsubdivision,huc6,,,,,1,0,,,,,,1,
+v3.1,landsubdivisionhydrolevel3,.tif,{objectName}_hydrosheds_v1_202309_level3,modis_ancillary,{versionOfAncillary},landsubdivision,hydrolevel3,,,,,1,0,,,,,,1,
+v3.1,landsubdivisionhydrolevel4,.tif,{objectName}_hydrosheds_v1_202309_level4,modis_ancillary,{versionOfAncillary},landsubdivision,hydrolevel4,,,,,1,0,,,,,,1,
+v3.1,landsubdivisionhydrolevel5,.tif,{objectName}_hydrosheds_v1_202309_level5,modis_ancillary,{versionOfAncillary},landsubdivision,hydrolevel5,,,,,1,0,,,,,,1,
+v3.1,landsubdivisionshapeingeojson,.geojson,{objectName}_subdivision_shape_202309,modis_ancillary,{versionOfAncillary},landsubdivision,shape,{objectName_1000},,,,1,0,,,,snow-surface-properties/shapes/,{objectName},1,1 file per subdivision. ObjectName is the subdivisionId
+v3.1,landsubdivisioninjson,.json,{objectName}_subdivisions_202309,modis_ancillary,{versionOfAncillary},landsubdivision,metadata,,,,,1,0,,,,snow-surface-properties/regions/,{objectName},1,"1 file per root subdivision, which flatly list all the descendant subdivisions . ObjectName is the id of the root subdivision."
+v3.1,landsubdivisionlinkinjson,.json,{objectName}_subdivision_links_202309,modis_ancillary,{versionOfAncillary},landsubdivision,metadata,,,,,1,0,,,,snow-surface-properties/regions/,{objectName}_hierarchy,1,"1 file per root subdivision, which presents the hierarchy of the descendant subdivisions . ObjectName is the id of the root subdivision."
+v3.1,landsubdivisionlinkvisualization,.json,subdivision_links_visualization_202309,modis_ancillary,conf,landsubdivision,,,,,,0,0,,,,,,2,"Just for visualization of the hierarchy, no use in the app."
+v3.1,landsubdivisiontypeinjson,.json,subdivision_types_202309,modis_ancillary,conf,landsubdivision,,,,,,0,0,,,,snow-surface-properties/regions/,categories,2,1 file only. No difference between versions
+v3.1,landsubdivisionrootinjson,.json,subdivision_roots_202309,modis_ancillary,conf,landsubdivision,,,,,,0,0,,,,snow-surface-properties/regions/,root,2,"1 file only. No difference between versions because the file should contain ALL root subdivisions (westernUS, Alaska, AMAndes &)"
+v3.1,region,.mat,,modis_ancillary,{versionOfAncillary},region,,,,,,1,0,,,,,,1,
+v3.1,slope,.mat,{objectName}_Slope,modis_ancillary,{versionOfAncillary},slope,,,,,,1,0,,,,,,1,
+v3.1,spiresmodelformodis,.mat,lut_modis_b1to7_3um_dust_2023,modis_ancillary,{versionOfAncillary},spiresmodel,,,,,,0,0,,,,,,1,
+v3.1,water,.mat,{objectName}_MOD44_50_watermask_463m_sinusoidal,modis_ancillary,{versionOfAncillary},water,,,,,,1,0,,,,,,1,
+v3.1,webingestrigger,,TRIGGER,modis_ancillary,{versionOfAncillary},espWebExport,,,,,,0,0,,,,snow-surface-properties/,TRIGGER_TEST,1,1 file to create in web-app to launch web-app ingest. No file in our backend
+v3.1,webvariableconfinjson,.json,webvariable_conf,modis_ancillary,conf,variable,,,,,,0,0,,,,snow-surface-properties/,variables,1,Undecided if stored in github or sent everyday
+test,aspect,.mat,{objectName}_aspect_gmted_med075,modis_ancillary,{versionOfAncillary},aspect,,,,,,1,0,,,,,,1,
+test,canopyheight,.mat,{objectName}_canopyheight_simard_pinto_2011,modis_ancillary,{versionOfAncillary},canopyheight,,,,,,1,0,,,,,,1,
+test,cloud,.mat,modis_convolutional_cloud_timbo_2021,modis_ancillary,{versionOfAncillary},cloud,,,,,,0,0,,,,,,1,
+test,elevation,.mat,{objectName}_elevation_gmted_med075,modis_ancillary,{versionOfAncillary},elevation,,,,,,1,0,,,,,,1,
+test,falsepositive,.tif,{objectName}_stc_false_positive_manual_20230920,modis_ancillary,{versionOfAncillary},falsepositive,,,,,,1,0,,,,,,1,
+test,land,.mat,{objectName}_land_mod44_50,modis_ancillary,{versionOfAncillary},land,,,,,,1,0,,,,,,1,
+test,landsubdivisionidpertileandtype,.csv,landsubdivisionid_per_tile_and_type_2023,modis_ancillary,{versionOfAncillary},landsubdivision,,,,,,0,0,,,,,,1,
+test,landsubdivisionadm0,.tif,{objectName}_geoboundaries_202309_adm0,modis_ancillary,{versionOfAncillary},landsubdivision,adm0,,,,,1,0,,,,,,1,
+test,landsubdivisionadm1,.tif,{objectName}_geoboundaries_202309_adm1,modis_ancillary,{versionOfAncillary},landsubdivision,adm1,,,,,1,0,,,,,,1,
+test,landsubdivisionadm0part,.tif,{objectName}_geoboundaries_202309_adm0part,modis_ancillary,{versionOfAncillary},landsubdivision,adm0part,,,,,1,0,,,,,,1,
+test,landsubdivisionadm1part,.tif,{objectName}_geoboundaries_202309_adm1part,modis_ancillary,{versionOfAncillary},landsubdivision,adm1part,,,,,1,0,,,,,,1,
+test,landsubdivisiongroup0,.tif,{objectName}_geoboundaries_202309_group0,modis_ancillary,{versionOfAncillary},landsubdivision,group0,,,,,1,0,,,,,,1,
+test,landsubdivisiongroupadm0,.tif,{objectName}_geoboundaries_202309_groupadm0,modis_ancillary,{versionOfAncillary},landsubdivision,groupadm0,,,,,1,0,,,,,,1,
+test,landsubdivisionhuc2,.tif,{objectName}_usgs_wbd_202309_huc2,modis_ancillary,{versionOfAncillary},landsubdivision,huc2,,,,,1,0,,,,,,1,
+test,landsubdivisionhuc4,.tif,{objectName}_usgs_wbd_202309_huc4,modis_ancillary,{versionOfAncillary},landsubdivision,huc4,,,,,1,0,,,,,,1,
+test,landsubdivisionhuc6,.tif,{objectName}_usgs_wbd_202309_huc6,modis_ancillary,{versionOfAncillary},landsubdivision,huc6,,,,,1,0,,,,,,1,
+test,landsubdivisionhydrolevel3,.tif,{objectName}_hydrosheds_v1_202309_level3,modis_ancillary,{versionOfAncillary},landsubdivision,hydrolevel3,,,,,1,0,,,,,,1,
+test,landsubdivisionhydrolevel4,.tif,{objectName}_hydrosheds_v1_202309_level4,modis_ancillary,{versionOfAncillary},landsubdivision,hydrolevel4,,,,,1,0,,,,,,1,
+test,landsubdivisionhydrolevel5,.tif,{objectName}_hydrosheds_v1_202309_level5,modis_ancillary,{versionOfAncillary},landsubdivision,hydrolevel5,,,,,1,0,,,,,,1,
+test,landsubdivisionshapeingeojson,.geojson,{objectName}_subdivision_shape_202309,modis_ancillary,{versionOfAncillary},landsubdivision,shape,{objectName_1000},,,,1,0,,,,snow-surface-properties/shapes/,{objectName},1,1 file per subdivision. ObjectName is the subdivisionId
+test,landsubdivisioninjson,.json,{objectName}_subdivisions_202309,modis_ancillary,{versionOfAncillary},landsubdivision,metadata,,,,,1,0,,,,snow-surface-properties/regions/,{objectName},1,"1 file per root subdivision, which flatly list all the descendant subdivisions . ObjectName is the id of the root subdivision."
+test,landsubdivisionlinkinjson,.json,{objectName}_subdivision_links_202309,modis_ancillary,{versionOfAncillary},landsubdivision,metadata,,,,,1,0,,,,snow-surface-properties/regions/,{objectName}_hierarchy,1,"1 file per root subdivision, which presents the hierarchy of the descendant subdivisions . ObjectName is the id of the root subdivision."
+test,landsubdivisionlinkvisualization,.json,subdivision_links_visualization_202309,modis_ancillary,conf,landsubdivision,,,,,,0,0,,,,,,2,"Just for visualization of the hierarchy, no use in the app."
+test,landsubdivisiontypeinjson,.json,subdivision_types_202309,modis_ancillary,conf,landsubdivision,,,,,,0,0,,,,snow-surface-properties/regions/,categories,2,1 file only. No difference between versions
+test,landsubdivisionrootinjson,.json,subdivision_roots_202309,modis_ancillary,conf,landsubdivision,,,,,,0,0,,,,snow-surface-properties/regions/,root,2,"1 file only. No difference between versions because the file should contain ALL root subdivisions (westernUS, Alaska, AMAndes &)"
+test,region,.mat,,modis_ancillary,{versionOfAncillary},region,,,,,,1,0,,,,,,1,
+test,slope,.mat,{objectName}_slope_gmted_med075,modis_ancillary,{versionOfAncillary},slope,,,,,,1,0,,,,,,1,
+test,spiresmodelformodis,.mat,lut_modis_b1to7_3um_dust_2023,modis_ancillary,{versionOfAncillary},spiresmodel,,,,,,0,0,,,,,,1,
+test,water,.mat,{objectName}_water_mod44_50,modis_ancillary,{versionOfAncillary},water,,,,,,1,0,,,,,,1,
+test,webingestrigger,,TRIGGER,modis_ancillary,{versionOfAncillary},espWebExport,,,,,,0,0,,,,snow-surface-properties/,TRIGGER_TEST,1,1 file to create in web-app to launch web-app ingest. No file in our backend
+test,webvariableconfinjson,.json,webvariable_conf,modis_ancillary,conf,variable,,,,,,0,0,,,,snow-surface-properties/,variables,1,Undecided if stored in github or sent everyday
+v3.1,modisspiresdaily,.mat,spires_daily_{platform}_{objectName}_{thisDate}.{version},modis,intermediary,spires_daily_{version},{versionOfDataCollection},{objectName},{thisYear},,,1,1,thisDate,datetime,yyyyMMdd,,,0,
+v3.1,modisspirescube,.mat,spires_cube_{platform}_{objectName}_{thisDate}.{version},modis,intermediary,spires_cube_{version},{versionOfDataCollection},{objectName},{thisYear},,,1,1,theseDates,datetime,yyyyMM,,,0,
+v3.1,MOD09Raw,.mat,RawMOD09_{platform}_{objectName}_{thisDate},modis,intermediary,mod09_raw_{version},{versionOfDataCollection},{objectName},{thisYear},,,1,1,umdays,datetime,yyyyMM,,,0,
+v3.1,SCAGDRFSRaw,.mat,RawSCAG_{platform}_{objectName}_{thisDate}.{version},modis,intermediary,scagdrfs_raw_{version},{versionOfDataCollection},{objectName},{thisYear},,,1,1,usdays,datetime,yyyyMM,,,0,
+v3.1,SCAGDRFSGap,.mat,GapSCAG_{platform}_{objectName}_{thisDate}.{version},modis,intermediary,scagdrfs_gap_{version},{versionOfDataCollection},{objectName},{thisYear},,,1,1,datevals,datenum,yyyyMM,,,0,
+v3.1,SCAGDRFSSTC,.mat,InterpSCAG_{platform}_{objectName}_{thisDate}.{version},modis,intermediary,scagdrfs_stc_{version},{versionOfDataCollection},{objectName},{thisYear},,,1,1,datevals,datenum,yyyyMM,,,0,
+v3.1,VariablesMatlab,.mat,{objectName}_{platform}_{thisDate}.{version},modis,variables,scagdrfs_mat_{version},{versionOfDataCollection},{objectName},{thisYear},,,1,1,dateval,datenum,yyyyMMdd,,,0,
+v3.1,VariablesNetCDF,.nc,{objectName}_{platform}_{thisDate}.{version},modis,variables,scagdrfs_netcdf_{version},{versionOfDataCollection},{objectName},{thisYear},,,1,1,dateval,daySinceStart,yyyyMMdd,,,0,
+v3.1,VariablesGeotiff,.tif,{objectName}_{platform}_{thisDate}_{varName},modis,variables,scagdrfs_geotiff_{version},{versionOfDataCollection},{objectName},{ESPGCode},{geotiffCompression},{thisYear},1,1,,,yyyyMMdd,snow-surface-properties/geotiffs/,{objectName}_{varId},0,
+v3.1,SubdivisionStatsCsv,.csv,{objectName}_{platform}.{version},modis,subdivisionstats,scagdrfs_csv_{version},{versionOfDataCollection},{objectName_1000},,,,1,0,,,,,,0,
+v3.1,SubdivisionStatsWebCsv,.csv,SnowToday_{objectName}_{varName}_{thisDate}_yearToDate.csv,modis,subdivisionstats,scagdrfs_webcsv_{version},{versionOfDataCollection},{objectName_1000},{objectName},{thisYear},,1,1,,,yyyy,,,0,"Rather than year, its waterYear which is used here"
+v3.2,modisspiresdaily,.mat,spires_daily_{platform}_{objectName}_{thisDate}.{version},modis,intermediary,spires_daily_{version},{versionOfDataCollection},{objectName},{thisYear},,,1,1,thisDate,datetime,yyyyMMdd,,,0,
+v3.2,modisspirescube,.mat,spires_cube_{platform}_{objectName}_{thisDate}.{version},modis,intermediary,spires_cube_{version},{versionOfDataCollection},{objectName},{thisYear},,,1,1,theseDates,datetime,yyyyMM,,,0,
+v3.2,MOD09Raw,.mat,RawMOD09_{platform}_{objectName}_{thisDate},modis,intermediary,mod09_raw_{version},{versionOfDataCollection},{objectName},{thisYear},,,1,1,umdays,datetime,yyyyMM,,,0,
+v3.2,SCAGDRFSRaw,.mat,RawSCAG_{platform}_{objectName}_{thisDate}.{version},modis,intermediary,scagdrfs_raw_{version},{versionOfDataCollection},{objectName},{thisYear},,,1,1,usdays,datetime,yyyyMM,,,0,
+v3.2,SCAGDRFSGap,.mat,GapSCAG_{platform}_{objectName}_{thisDate}.{version},modis,intermediary,scagdrfs_gap_{version},{versionOfDataCollection},{objectName},{thisYear},,,1,1,datevals,datenum,yyyyMM,,,0,
+v3.2,SCAGDRFSSTC,.mat,InterpSCAG_{platform}_{objectName}_{thisDate}.{version},modis,intermediary,scagdrfs_stc_{version},{versionOfDataCollection},{objectName},{thisYear},,,1,1,datevals,datenum,yyyyMM,,,0,
+v3.2,VariablesMatlab,.mat,{objectName}_{platform}_{thisDate}.{version},modis,variables,scagdrfs_mat_{version},{versionOfDataCollection},{objectName},{thisYear},,,1,1,dateval,datenum,yyyyMMdd,,,0,
+v3.2,VariablesNetCDF,.nc,{objectName}_{platform}_{thisDate}.{version},modis,variables,scagdrfs_netcdf_{version},{versionOfDataCollection},{objectName},{thisYear},,,1,1,dateval,daySinceStart,yyyyMMdd,,,0,
+v3.2,VariablesGeotiff,.tif,{objectName}_{platform}_{thisDate}_{varName},modis,variables,scagdrfs_geotiff_{version},{versionOfDataCollection},{objectName},{ESPGCode},{geotiffCompression},{thisYear},1,1,,,yyyyMMdd,snow-surface-properties/geotiffs/,{objectName}_{varId},0,
+v3.2,SubdivisionStatsCsv,.csv,{objectName}_{platform}.{version},modis,subdivisionstats,scagdrfs_csv_{version},{versionOfDataCollection},{objectName_1000},,,,1,0,,,,,,0,
+v3.2,SubdivisionStatsWebCsv,.csv,SnowToday_{objectName}_{varName}_{thisDate}_yearToDate.csv,modis,subdivisionstats,scagdrfs_webcsv_{version},{versionOfDataCollection},{objectName_1000},{objectName},{thisYear},,1,1,,,yyyy,,,0,"Rather than year, its waterYear which is used here"
+test,modisspiresdaily,.mat,spires_daily_{platform}_{objectName}_{thisDate}.{version},modis,intermediary,spires_daily_{version},{versionOfDataCollection},{objectName},{thisYear},,,1,1,thisDate,datetime,yyyyMMdd,,,0,
+test,modisspirescube,.mat,spires_cube_{platform}_{objectName}_{thisDate}.{version},modis,intermediary,spires_cube_{version},{versionOfDataCollection},{objectName},{thisYear},,,1,1,theseDates,datetime,yyyyMM,,,0,
+test,MOD09Raw,.mat,RawMOD09_{platform}_{objectName}_{thisDate},modis,intermediary,mod09_raw_{version},{versionOfDataCollection},{objectName},{thisYear},,,1,1,umdays,datetime,yyyyMM,,,0,
+test,SCAGDRFSRaw,.mat,RawSCAG_{platform}_{objectName}_{thisDate}.{version},modis,intermediary,scagdrfs_raw_{version},{versionOfDataCollection},{objectName},{thisYear},,,1,1,usdays,datetime,yyyyMM,,,0,
+test,SCAGDRFSGap,.mat,GapSCAG_{platform}_{objectName}_{thisDate}.{version},modis,intermediary,scagdrfs_gap_{version},{versionOfDataCollection},{objectName},{thisYear},,,1,1,datevals,datenum,yyyyMM,,,0,
+test,SCAGDRFSSTC,.mat,InterpSCAG_{platform}_{objectName}_{thisDate}.{version},modis,intermediary,scagdrfs_stc_{version},{versionOfDataCollection},{objectName},{thisYear},,,1,1,datevals,datenum,yyyyMM,,,0,
+test,VariablesMatlab,.mat,{objectName}_{platform}_{thisDate}.{version},modis,variables,scagdrfs_mat_{version},{versionOfDataCollection},{objectName},{thisYear},,,1,1,dateval,datenum,yyyyMMdd,,,0,
+test,VariablesNetCDF,.nc,{objectName}_{platform}_{thisDate}.{version},modis,variables,scagdrfs_netcdf_{version},{versionOfDataCollection},{objectName},{thisYear},,,1,1,dateval,daySinceStart,yyyyMMdd,,,0,
+test,VariablesGeotiff,.tif,{objectName}_{platform}_{thisDate}_{varName},modis,variables,scagdrfs_geotiff_{version},{versionOfDataCollection},{objectName},{ESPGCode},{geotiffCompression},{thisYear},1,1,,,yyyyMMdd,snow-surface-properties/geotiffs/,{objectName}_{varId},0,
+test,SubdivisionStatsCsv,.csv,{objectName}_{platform}.{version},modis,subdivisionstats,scagdrfs_csv_{version},{versionOfDataCollection},{objectName_1000},,,,1,0,,,,,,0,
+test,SubdivisionStatsWebCsv,.csv,SnowToday_{objectName}_{varName}_{thisDate}_yearToDate.csv,modis,subdivisionstats,scagdrfs_webcsv_{version},{versionOfDataCollection},{objectName_1000},{objectName},{thisYear},,1,1,,,yyyy,,,0,"Rather than year, its waterYear which is used here"
