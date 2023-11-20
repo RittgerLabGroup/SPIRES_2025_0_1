@@ -1,6 +1,6 @@
 name,id,subdivisionType,code,landSubdivisionName,idInDelineationFile,sourceRegionName,lowIllumination,percentCoverage,exportToSnowTodayWebsite,used,root,CRS,comment,countryType,sovereignCode,sovereignName,otherCodeForBigArea_adm0_A3,adm1Code,admGroupId,name2,id2,remarksForDeveloper
 "Id: Unique id uint16 used in the stat files (<65535, (max(uint16)) ). Called snowtod_id in the shapefiles. NB: let value below field id to keep type integer when import into qgis.
-NB: Beware this 65535 pseudo id is used in code and then really mustnt be used as id.",0,,"Unique code of the land subdivision in this configuration file and more generally for the full modis. For country, code adm0_A3 or iso3_code. For Provinces (States) code iso 3166-2. For hucx, huc code. For hydrosheds, pfaf_id",Part of the filename of the land subdivision group mask file,"id in the data of the land subdivision group file (mask). Should be unique in the file, but two subdivisions can have the same id if their mask is extracted from distinct files.",region from which the data are extracted for the stats.,deprecated?,deprecated?,"deprecated. SnowToday website handle this property on their side, we export everything.",1: used in the website,1: upper-level Region in the website,"Coordinate reference system projection and code, e.g. EPSG:3875",comment line,"Maybe sovereign country, dependency, or indeterminate for Country. For Province, maybe State, Province, Region, District, etc ...\",Code of sovereign country. Sovereign de facto.,Name of sovereign country de facto.,,For Provinces only.,,Id: Unique id used in the stat files. Called snowtod_id in the shapefiles. NB: let value below field id to keep type integer when import into qgis,0,"change groupadm0 in filenames into adm0group
+NB: Beware this 65535 pseudo id is used in code and then really mustnt be used as id.",0,,"Unique code of the land subdivision in this configuration file and more generally for the full modis. For country, code adm0_A3 or iso3_code. For Provinces (States) code iso 3166-2. For hucx, huc code. For hydrosheds, pfaf_id",Part of the filename of the land subdivision group mask file,"id in the data of the land subdivision group file (mask). Should be unique in the file, but two subdivisions can have the same id if their mask is extracted from distinct files.","region from which the data are extracted for the stats. MUST be filled for used land subdivisions, otherwise the landsubdivision wont appear in lists",deprecated?,deprecated?,"deprecated. SnowToday website handle this property on their side, we export everything.",1: used in the website,1: upper-level Region in the website,"Coordinate reference system projection and code, e.g. EPSG:3875",comment line,"Maybe sovereign country, dependency, or indeterminate for Country. For Province, maybe State, Province, Region, District, etc ...\",Code of sovereign country. Sovereign de facto.,Name of sovereign country de facto.,,For Provinces only.,,Id: Unique id used in the stat files. Called snowtod_id in the shapefiles. NB: let value below field id to keep type integer when import into qgis,0,"change groupadm0 in filenames into adm0group
 Stupid things, AMAndeS versus ASHimalaya_ (without S, not very consistent)"
 Afghanistan,2001,adm0,AFG,,,ASHimalaya,,,,1,0,,,Sovereign country,AFG,Afghanistan,,,,Afghanistan,2001,
 Angola,2002,adm0,AGO,,,,,,,0,0,,,Sovereign country,AGO,Angola,,,,Angola,2002,
@@ -7260,7 +7260,7 @@ San Juan - Guayas,17164,hydro4,HYD6720,,,,,,,0,0,,South America,,,,,,,San Juan -
 ,17373,hydro4,HYD7748,,,,,,,0,0,,North America,,,,,,,,17373,
 ,17374,hydro4,HYD7749,,,,,,,0,0,,North America,,,,,,,,17374,
 ,17375,hydro4,HYD7810,,,,,,,0,0,,North America,,,,,,,,17375,
-,17376,hydro4,HYD7821,,,,,,,2,0,,North America,,,,,,,,17376,
+,17376,hydro4,HYD7821,,,USAlaska,,,,2,0,,North America,,,,,,,,17376,
 ,17377,hydro4,HYD7822,,,,,,,0,0,,North America,,,,,,,,17377,
 ,17378,hydro4,HYD7823,,,,,,,0,0,,North America,,,,,,,,17378,
 ,17379,hydro4,HYD7824,,,,,,,0,0,,North America,,,,,,,,17379,
@@ -12400,7 +12400,7 @@ San Juan - Guayas,17164,hydro4,HYD6720,,,,,,,0,0,,South America,,,,,,,San Juan -
 ,24986,hydro5,HYD78266,,,,,,,0,0,,North America,,,,,,,,24986,
 ,24987,hydro5,HYD78266,,,,,,,0,0,,North America,,,,,,,,24987,
 ,24988,hydro5,HYD78267,,,,,,,0,0,,North America,,,,,,,,24988,
-,24989,hydro5,HYD78268,,,,,,,2,0,,North America,,,,,,,,24989,
+,24989,hydro5,HYD78268,,,USAlaska,,,,2,0,,North America,,,,,,,,24989,
 ,24990,hydro5,HYD78268,,,,,,,0,0,,North America,,,,,,,,24990,
 ,24991,hydro5,HYD78269,,,,,,,0,0,,North America,,,,,,,,24991,
 ,24992,hydro5,HYD78269,,,,,,,0,0,,North America,,,,,,,,24992,
