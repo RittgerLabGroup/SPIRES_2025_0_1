@@ -144,6 +144,7 @@ matlab -nodesktop -nodisplay -r "clear; "\
 "    mosaic.runWriteFiles(waterYearDate); "\
 "    variables = Variables(tileRegions(tileIdx)); "\
 "    variables.calcAlbedos(waterYearDate); "\
+"    variables.calcSnowCoverDays(waterYearDate); "\
 "    variables.calcDaysWithoutObservation(waterYearDate); "\
 "end; "\
 "if strcmp(region.regionName, 'USAlaska'); "\

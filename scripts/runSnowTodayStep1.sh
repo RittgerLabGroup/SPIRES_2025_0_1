@@ -148,8 +148,6 @@ matlab -nodesktop -nodisplay -r "clear; "\
 "rawCube.build(); "\
 "stcCube = StcCube(${inputForCube}); "\
 "stcCube.build(); "\
-"variables = Variables(region); "\
-"variables.calcSnowCoverDays(waterYearDate); "\
 "catch e; "\
 "fprintf('%s: %s\n', e.identifier, e.message); "\
 "exit(-1); "\
