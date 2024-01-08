@@ -1,0 +1,193 @@
+%---------------------------------------------------------------------------------------
+% Creation of the modis-size and sinusoidal-referenced ancillary data necessary for
+% snowToday processes:
+% regions masks, elevations, slopes, aspects, canopy heights, water and land masks.
+% Generation for the tiles that compose a big region. E.g. USAlaska, ASHimalaya, ...
+% Does not include the masks for drainage basins HUC2, HUC4.
+% Files in .geotiff and .mat format.
+% NB: Before launching the script, we need to make these operations, outside of the
+% script:
+% - cut the canopy file to the region
+% (Simard_Pinto_3DGlobalVeg_L3C_Alaska_cut.tif) and rename and put it in
+%   canopyheightPath.
+% - get the elevation tiles, rename them and put them in elevationSourcePaths.
+% - get the mod44w v006 hdf tiles, and put them in
+%    TileRegionAncillaryDataSetup.subdirectories.modisHistMod44w.
+%       NB: all mod44w v006 2015 tiles have been downloaded to this dir. Data found on
+% - get the mod09ga tiles, and put them in
+%    https://lpdaac.usgs.gov/products/mod44wv006/#tools
+%   TileRegionAncillaryDataSetup.subdirectories.modisNrtMod09ga.
+%
+% After running the script, open QGIS and run the model
+% qgisGetStcFalsePositiveModisTile.model3 on the land tiles produced by this script
+% using an updated global false positive (=dry lakes) polygon vector file, to generate
+% the raster tiles of false positives.
+%
+% Uses makeSinusoidProj.m
+% v3.alaska
+% sebastien.lenard@colorado.edu
+% 04/06/2023
+%---------------------------------------------------------------------------------------
+
+% Update this when changing platform:
+%---------------------------------------------------------------------------------------
+scratchPath = getenv('espScratchDir');
+
+% Update this when changing region:
+%---------------------------------------------------------------------------------------
+regionName = 'westernUS'; %'AMAndes'; 'ASHimalaya'; 'EURAlps'; %USAlaska';
+
+% Update this when changing source files:
+% Note that these files should be stored in modis_ancillary\canopyheight_tmp and
+% modis_ancillary\elevation_tmp.
+%---------------------------------------------------------------------------------------
+% Data from the USGS Gmted2010 product
+% https://topotools.cr.usgs.gov/gmted_viewer/viewer.htm (median 7.5 arc sec.)
+% NB: we suppose that the set of Gmted2010 files in variable elevationSourceFilenames
+% cover the full spectruum of the region modis tiles, but we don't know exactly which
+% file covers what.
+if strcmp(regionName, 'USAlaska')
+    tileRegionNames = {'h08v03', 'h09v02', 'h09v03', 'h10v02', 'h10v03', ...
+            'h11v02', 'h11v03', 'h12v01', 'h12v02', 'h13v01', 'h13v02'}; % excluded h07v03. @tobeaware
+    canopyheightFilename = 'Simard_Pinto_3DGlobalVeg_L3C_Alaska_cut.tif';
+    elevationSourceFilenames = {'50N150W_20101117_gmted_med075.tif', ...
+            '50N180W_20101117_gmted_med075.tif', ...
+            '70N150W_20101117_gmted_med075.tif', ...
+            '70N180W_20101117_gmted_med075.tif'};
+elseif strcmp(regionName, 'ASHimalaya')
+    tileRegionNames = {'h22v04', 'h22v05', 'h23v04', 'h23v05', 'h23v06', 'h24v04', ...
+        'h24v05', 'h24v06', 'h25v05', 'h25v06', 'h26v05', 'h26v06'};
+    canopyheightFilename = 'Simard_Pinto_3DGlobalVeg_L3C_ASHimalaya_cut.tif';
+    elevationSourceFilenames = {'10N030E_20101117_gmted_med075.tif', ...
+        '10N060E_20101117_gmted_med075.tif', ...
+        '10N090E_20101117_gmted_med075.tif', ...
+        '30N030E_20101117_gmted_med075.tif', ...
+        '30N060E_20101117_gmted_med075.tif', ...
+        '30N090E_20101117_gmted_med075.tif'};
+elseif strcmp(regionName, 'EURAlps')
+    tileRegionNames = {'h18v04', 'h19v04'};
+    canopyheightFilename = 'Simard_Pinto_3DGlobalVeg_L3C_Europe_cut.tif';
+    elevationSourceFilenames = {'50N000E_20101117_gmted_med075.tif', ...
+            '30N000E_20101117_gmted_med075.tif'};
+elseif strcmp(regionName, 'AMAndes')
+    tileRegionNames = {'h10v09', 'h10v10', 'h11v10', 'h11v11', 'h11v12', 'h12v12', ...
+        'h12v13', 'h13v13', 'h13v14'};
+    canopyheightFilename = 'Simard_Pinto_3DGlobalVeg_L3C_AMAndes_cut.tif';
+    elevationSourceFilenames = {'10S090W_20101117_gmted_med075.tif', ...
+        '30S090W_20101117_gmted_med075.tif', ...
+        '50S090W_20101117_gmted_med075.tif', ...
+        '30S060W_20101117_gmted_med075.tif', ...
+        '50S060W_20101117_gmted_med075.tif', ...
+        '70S090W_20101117_gmted_med075.tif'};
+elseif strcmp(regionName, 'westernUS')
+    tileRegionNames = {'h08v04', 'h08v05', 'h09v04', 'h09v05', 'h10v04'};
+    canopyheightFilename = 'Simard_Pinto_3DGlobalVeg_L3C_westernUS_cut.tif';
+    elevationSourceFilenames = {'30N150W_20101117_gmted_med075.tif', ...
+        '30N120W_20101117_gmted_med075.tif'};
+end
+
+elevationFileLabel = '_elevation_gmted_med075';
+aspectFileLabel = '_aspect_gmted_med075';
+slopeFileLabel = '_slope_gmted_med075';
+canopyheightFileLabel = '_canopyheight_simard_pinto_2011';
+exampleRegionMaskFilename = 'westernUS_mask.mat';
+
+thisVersion = 'v3.2';
+
+% Other configuration that shouldn't change much, except when moving out of modis.
+%---------------------------------------------------------------------------------------
+
+modisData = MODISData(label='v2023.1', versionOfAncillary='v3.2');
+espEnv = ESPEnv(modisData = modisData, scratchPath = scratchPath);
+%{
+Before 2023-06-23:
+georeferencing = struct(northwest = struct(x0 = -2.001534101036227e+07, ...
+    y0 = 1.000778633335726e+07), tileInfo = struct(dx = 4.633127165279165e+02, ... %4.633127165279169e+02, ...
+    dy = 4.633127165279165e+02, columnCount = 2400, rowCount = 2400));
+%}
+canopyheightPath = fullfile( ...
+    scratchPath, 'modis_ancillary', ...
+    'canopyheight_tmp', canopyheightFilename);
+
+elevationSourcePaths = fullfile( ...
+    scratchPath, ...
+    'modis_ancillary', 'elevation_tmp', elevationSourceFilenames);
+aspectSourceFilenames = strcat('aspect_', elevationSourceFilenames);
+slopeSourceFilenames = strcat('slope_', elevationSourceFilenames);
+aspectSourcePaths = fullfile( ...
+    scratchPath, ...
+    'modis_ancillary', 'aspect_tmp', aspectSourceFilenames);
+slopeSourcePaths = fullfile( ...
+    scratchPath, ...
+    'modis_ancillary', 'slope_tmp', slopeSourceFilenames);
+exampleRegionMaskPath = fullfile( ...
+    scratchPath, ...
+    'modis_ancillary', 'v3.1', 'region', exampleRegionMaskFilename);
+ancillaryDataDirectories = {'aspect', 'canopyheight', 'elevation', 'land', 'slope', ...
+    'water'};
+ancillaryDataDirectories = fullfile( ...
+    scratchPath, 'modis_ancillary', ...
+    thisVersion, ancillaryDataDirectories);
+ancillaryDataFileLabels = {aspectFileLabel, canopyheightFileLabel, ...
+    elevationFileLabel, ['_land_mod44_' ...
+    num2str(TileRegionAncillaryDataSetup.mod44wWaterThreshold * 100)], ...
+    slopeFileLabel, ['_water_mod44_' ...
+    num2str(TileRegionAncillaryDataSetup.mod44wWaterThreshold * 100)]};
+
+warning('off', 'MATLAB:structOnObject');
+% To be executed to generate all tile ancillary files.
+%---------------------------------------------------------------------------------------
+setup = TileRegionAncillaryDataSetup( ...
+    espEnv = espEnv, ...
+    parentDirectory = scratchPath, ...
+    regionName = regionName, ...
+    tileRegionNames = tileRegionNames, ...
+    version = thisVersion);
+
+% setup.generateTileProjectionInfoFiles();                  @obsolete
+setup.generateTileMaskFiles(exampleRegionMaskPath);
+setup.generateTileWaterAndLandFiles();
+setup.generateTileCanopyheightFiles(canopyheightFileLabel, canopyheightPath);
+setup.generateAspectSlopeFiles(elevationSourcePaths);
+setup.generateTileTopographicFiles('int16', elevationFileLabel, ...
+    elevationSourcePaths, 'elevation'); % see method header
+    % for required slight twirking of the RasterReprojection\util\interpolateRaster.m
+setup.generateTileTopographicFiles('uint16', aspectFileLabel, aspectSourcePaths, ...
+    'aspect');
+setup.generateTileTopographicFiles('uint8', slopeFileLabel, slopeSourcePaths, ...
+    'slope');
+
+
+% To be executed to generate ancillary files for the big region.
+%---------------------------------------------------------------------------------------
+setup = RegionAncillaryDataSetup( ...
+    espEnv = espEnv, ...
+    parentDirectory = scratchPath, ...
+    regionName = regionName, ...
+    tileRegionNames = tileRegionNames, ...
+    version = thisVersion);
+%setup.generateProjectionInfoFile();
+setup.generateMaskFile(exampleRegionMaskPath);
+setup.generateAggregatedFilesFromTileDataFiles(ancillaryDataDirectories, ...
+    ancillaryDataFileLabels);
+%{
+% To be executed to add RefMatrix and inxMosaic to the Region masks            @obsolete
+%---------------------------------------------------------------------------------------
+allRegionNames = tileRegionNames;
+allRegionNames{end + 1} = regionName;
+for regionIdx = 1:length(allRegionNames)
+    regionName = allRegionNames{regionIdx};
+    landData = load(fullfile(ancillaryDataDirectories{4}, ...
+        [regionName ancillaryDataFileLabels{4} '.mat']));
+    indxMosaic = landData.data;
+    RefMatrix = [[0, -landData.mapCellsReference.CellExtentInWorldX]; ...
+        [landData.mapCellsReference.CellExtentInWorldX, 0]; ...
+        [landData.mapCellsReference.XWorldLimits(1), ...
+        landData.mapCellsReference.YWorldLimits(2)]];
+    S = NaN;
+    save(fullfile(scratchPath, 'modis_ancillary', ...
+                'region', thisVersion, [regionName '_mask.mat']), 'indxMosaic', ...
+                'RefMatrix', 'S', '-append');
+end
+%}
+% To be executed to copy
