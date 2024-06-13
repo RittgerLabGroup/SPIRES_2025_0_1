@@ -5008,19 +5008,19 @@ Cheyenne,12722,huc4,HUC1012,USWestHuc4,85,westernUS,5,0,0.999999999999997,1,2,0,
 Missouri-Oahe,12723,huc4,HUC1013,USWestHuc4,88,westernUS,5,0,0.599490244638575,1,2,0,,,,,,,,,Missouri-Oahe,12723,
 Missouri-White,12724,huc4,HUC1014,USWestHuc4,73,westernUS,5,0,1,1,2,0,,,,,,,,,Missouri-White,12724,
 Niobrara,12725,huc4,HUC1015,USWestHuc4,84,westernUS,5,0,1,1,2,0,,,,,,,,,Niobrara,12725,
-James,12726,huc4,HUC1016,USWestHuc4,89,westernUS,5,0,0.384169321470628,1,2,0,,,,,,,,,James,12726,
-Missouri-Big Sioux,12727,huc4,HUC1017,USWestHuc4,98,westernUS,5,0,0.417450499844557,1,2,0,,,,,,,,,Missouri-Big Sioux,12727,
+James,12726,huc4,HUC1016,USWestHuc4,89,westernUS,5,0,0.384169321470628,1,0,0,,,,,,,,,James,12726,set used to 0 because below elevation spires 20240607
+Missouri-Big Sioux,12727,huc4,HUC1017,USWestHuc4,98,westernUS,5,0,0.417450499844557,1,0,0,,,,,,,,,Missouri-Big Sioux,12727,set used to 0 because below elevation spires 20240607
 North Platte,12728,huc4,HUC1018,USWestHuc4,82,westernUS,5,0,1,1,2,0,,,,,,,,,North Platte,12728,
 South Platte,12729,huc4,HUC1019,USWestHuc4,92,westernUS,5,0,0.929208189790583,1,2,0,,,,,,,,,South Platte,12729,
 Platte,12730,huc4,HUC1020,USWestHuc4,75,westernUS,5,0,1,1,2,0,,,,,,,,,Platte,12730,
 Loup,12731,huc4,HUC1021,USWestHuc4,76,westernUS,5,0,0.999999999999999,1,2,0,,,,,,,,,Loup,12731,
 Elkhorn,12732,huc4,HUC1022,USWestHuc4,77,westernUS,5,0,1,1,2,0,,,,,,,,,Elkhorn,12732,
-Missouri-Little Sioux,12733,huc4,HUC1023,USWestHuc4,81,westernUS,5,0,0.833162383260827,1,2,0,,,,,,,,,Missouri-Little Sioux,12733,
-Missouri-Nishnabotna,12734,huc4,HUC1024,USWestHuc4,94,westernUS,5,0,0.71737548548013,1,2,0,,,,,,,,,Missouri-Nishnabotna,12734,
+Missouri-Little Sioux,12733,huc4,HUC1023,USWestHuc4,81,westernUS,5,0,0.833162383260827,1,0,0,,,,,,,,,Missouri-Little Sioux,12733,set used to 0 because below elevation spires 20240607
+Missouri-Nishnabotna,12734,huc4,HUC1024,USWestHuc4,94,westernUS,5,0,0.71737548548013,1,0,0,,,,,,,,,Missouri-Nishnabotna,12734,set used to 0 because below elevation spires 20240607
 Republican,12735,huc4,HUC1025,USWestHuc4,83,westernUS,5,0,0.552566331011172,1,2,0,,,,,,,,,Republican,12735,
-Smoky Hill,12736,huc4,HUC1026,USWestHuc4,80,westernUS,5,0,0.0000115,1,2,0,,,,,,,,,Smoky Hill,12736,
-Kansas,12737,huc4,HUC1027,USWestHuc4,93,westernUS,5,0,0.455188396092128,1,2,0,,,,,,,,,Kansas,12737,
-Chariton-Grand,12738,huc4,HUC1028,USWestHuc4,74,westernUS,5,0,0.640705581775101,1,2,0,,,,,,,,,Chariton-Grand,12738,
+Smoky Hill,12736,huc4,HUC1026,USWestHuc4,80,westernUS,5,0,0.0000115,1,0,0,,,,,,,,,Smoky Hill,12736,set used to 0 because below shapefile is actually outside of tile (but curious because there is some historics…) 20240607
+Kansas,12737,huc4,HUC1027,USWestHuc4,93,westernUS,5,0,0.455188396092128,1,0,0,,,,,,,,,Kansas,12737,set used to 0 because below elevation spires 20240607
+Chariton-Grand,12738,huc4,HUC1028,USWestHuc4,74,westernUS,5,0,0.640705581775101,1,0,0,,,,,,,,,Chariton-Grand,12738,set used to 0 because below elevation spires 20240607
 Gasconade-Osage,12739,huc4,HUC1029,,,,,,,,0,0,,,,,,,,,Gasconade-Osage,12739,
 Lower Missouri,12740,huc4,HUC1030,,,,,,,,0,0,,,,,,,,,Lower Missouri,12740,
 Upper White,12741,huc4,HUC1101,,,,,,,,0,0,,,,,,,,,Upper White,12741,
@@ -5034,8 +5034,8 @@ Upper Canadian,12748,huc4,HUC1108,USWestHuc4,69,westernUS,5,0,1,1,2,0,,,,,,,,,Up
 Lower Canadian,12749,huc4,HUC1109,USWestHuc4,68,westernUS,5,0,0.800873776660921,1,2,0,,,,,,,,,Lower Canadian,12749,
 North Canadian,12750,huc4,HUC1110,USWestHuc4,71,westernUS,5,0,0.709283206981022,1,2,0,,,,,,,,,North Canadian,12750,
 Lower Arkansas,12751,huc4,HUC1111,,,,,,,,0,0,,,,,,,,,Lower Arkansas,12751,
-Red Headwaters,12752,huc4,HUC1112,USWestHuc4,66,westernUS,5,0,1,1,2,0,,,,,,,,,Red Headwaters,12752,
-Red-Washita,12753,huc4,HUC1113,USWestHuc4,67,westernUS,5,0,0.968590693333782,1,2,0,,,,,,,,,Red-Washita,12753,
+Red Headwaters,12752,huc4,HUC1112,USWestHuc4,66,westernUS,5,0,1,1,0,0,,,,,,,,,Red Headwaters,12752,set used to 0 because below elevation spires 20240607
+Red-Washita,12753,huc4,HUC1113,USWestHuc4,67,westernUS,5,0,0.968590693333782,1,0,0,,,,,,,,,Red-Washita,12753,set used to 0 because below elevation spires 20240607
 Red-Sulphur,12754,huc4,HUC1114,,,,,,,,0,0,,,,,,,,,Red-Sulphur,12754,
 Sabine,12755,huc4,HUC1201,USWestHuc4,55,,,0,0.64774730075088,1,0,0,,,,,,,,,Sabine,12755,
 Neches,12756,huc4,HUC1202,USWestHuc4,54,,,0,0.998448562839867,1,0,0,,,,,,,,,Neches,12756,
