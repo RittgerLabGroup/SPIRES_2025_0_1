@@ -285,7 +285,7 @@ classdef SpiresInversor < handle
         %
         fprintf(replace(message, {'{initMessage}', '{metaData.inputFileName}', ...
           '{metaData.inputFileLastEditDate}'}, ...
-          {['ONGOING, update input + calculations with input file'], ' ', ' '}));
+          {['ONGOING, update input + calculations'], ' ', ' '}));
       elseif s.inputFileIsToIngest && ~s.rawSnowPropertiesAreToBeInversed && ...
         ~s.weightAreToBeCalculated && ~s.correctedSnowIsToBeCalculated && ...
         ~s.spatialGrainSizeDustAreToBeCalculated
@@ -317,6 +317,7 @@ classdef SpiresInversor < handle
           '{metaData.inputFileLastEditDate}'}, ...
           {['SKIPPING, update previously done'], ...
             metaData.inputFileName, char(metaData.inputFileLastEditDate)}));
+        return;
       else
         errorStruct.identifier = [thisFunctionCode, ':InvalidForceMode'];
         errorStruct.message = sprintf( ...
@@ -749,32 +750,37 @@ classdef SpiresInversor < handle
               theseDate = theseDate, varName = varName, force = force, ...
               optim = optim);
 
-            varName = 'QF1';
+            varName = 'reflectance_quality_flag_1';
             % QF1-2 QF7 1200x1200. Input to determine weight, ndsi factor.
             % cloud.
             tmpData = espEnv.getDataForDateAndVarName(objectName, ...
               inputDataLabel, theseDate, ...
               varName, complementaryLabel, force = force, optim = optim, ...
               patternsToReplaceByJoker = patternsToReplaceByJoker);
-            varData = varData + bitget(tmpData, 1) * 2^0 + bitget(tmpData, 2) * 2^1;
+            varData = varData + cast(bitget(tmpData, 3) * 2^0, class(varData)) + ...
+              cast(bitget(tmpData, 4) * 2^1, class(varData));
+              % Cloud covers bits 2 and 3 (count starts at 0).
 
-            varName = 'QF2';
+            varName = 'reflectance_quality_flag_2';
             % cloudshadow, landwater.
             tmpData = espEnv.getDataForDateAndVarName(objectName, ...
               inputDataLabel, theseDate, ...
               varName, complementaryLabel, force = force, optim = optim, ...
               patternsToReplaceByJoker = patternsToReplaceByJoker);
-            varData = varData + bitget(tmpData, 4) * 2^2 + ...
-              bitand(tmpData, bin2dec('111')) * 2^3;
+            varData = varData + cast(bitget(tmpData, 4) * 2^2, class(varData)) + ...
+              cast(bitand(tmpData, bin2dec('111')) * 2^3, class(varData));
+              % shadow bit 3, landwater bits 0-2.
 
-            varName = 'QF7';
+            varName = 'reflectance_quality_flag_7';
             % aerosol, cirrus. NB: saltpan at position 14 kept at 0 because flag is
             % unavailable.
             tmpData = espEnv.getDataForDateAndVarName(objectName, ...
               inputDataLabel, theseDate, ...
               varName, complementaryLabel, force = force, optim = optim, ...
               patternsToReplaceByJoker = patternsToReplaceByJoker);
-            varData = varData + bitand(tmpData, bin2dec('11100')) * 2^6;
+            varData = varData + cast(bitand(tmpData, bin2dec('11100')) / 2^2 * 2^6, ...
+              class(varData));
+              % aerosol bits 2-3, cirrus bit 4.
 
             varName = 'QF_1km';
             espEnv.saveData(varData, objectName, outputDataLabel, ...
@@ -789,6 +795,7 @@ classdef SpiresInversor < handle
           % Putting the flags in a variable QF.
           % Identic to state_1km done above for mod09ga.
           % NB: part of the code should be mutualized with state...                @todo
+          % NB: since bit 15 is not set above, saltpan = 0.
           bitCount = [2, 1, 3, 2, 2, 1];
           bitPosition = [1, 3, 4, 7, 9, 15];
           bitCountCum = [0, 2, 3, 6, 8, 14];
@@ -872,6 +879,8 @@ classdef SpiresInversor < handle
           theseDate = theseDate, varName = varName, force = force, optim = optim);
           % NB: should take into account isVersion20231027 vs mine?
           % Not necessary, because weight precision has probably no influence @todo
+          % NB: beware, weights are saved in 2400x2400 for mod09ga but 1200x1200 for
+          % vnp09ga.
 
 %{
       % Code from previous version I removed.

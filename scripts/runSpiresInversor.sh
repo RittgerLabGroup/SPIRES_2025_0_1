@@ -90,8 +90,8 @@ export SLURM_EXPORT_ENV=ALL
 scriptId=spiInver
 defaultSlurmArrayTaskId=292
 expectedCountOfArguments=
-inputDataLabels=(mod09ga)
-outputDataLabels=(modisspiresdaily)
+inputDataLabels=(mod09ga vnp09ga)
+outputDataLabels=(modspiresdaily vnpspiresdaily)
 filterConfLabel=
 mainBashSource=${BASH_SOURCE}
 mainProgramName=${BASH_SOURCE[0]}
@@ -130,6 +130,7 @@ clear;
 try;
   ${modisDataInstantiation}
   ${espEnvInstantiation}
+  ${optimInstantiation}
   espEnv.configParallelismPool(${parallelWorkersNb});
   region = Regions(${inputForRegion});
   waterYearDate = WaterYearDate(${inputForWaterYearDate});
@@ -138,7 +139,7 @@ try;
   theseDate = waterYearDate.getDailyDatetimeRange();
   for dateIdx = 1:length(theseDate);
     thisDate = theseDate(dateIdx);
-    inversor.getInputAndHyperSpectralInverse(thisDate);
+    inversor.getInputAndHyperSpectralInverse(thisDate, optim = optim);
   end;
 ${catchExceptionAndExit}
 
