@@ -104,6 +104,9 @@ thisSequence=
 thisSequenceMultiplierToIndices=
 thisMonthWindow=2
 
+# Matlab package paths added.
+matlabPackages=(inpaintNans)
+
 source scripts/toolsStart.sh
 if [ $? -eq 1 ]; then
   exit 1
@@ -114,13 +117,6 @@ fi
 
 source scripts/toolsMatlab.sh
 
-# Variables for Matlab code.
-########################################################################################
-
-#machine specific parameters
-#file an directories, note closing /
-codePath="/projects/${USER}/MATLAB/SPIRES/MATLABFileExchange/Inpaint_nans";
-
 # Matlab.
 ########################################################################################
 
@@ -128,6 +124,7 @@ read -r -d '' matlabString << EOM
 
 clear;
 try;
+  ${packagePathInstantiation}
   ${modisDataInstantiation}
   ${espEnvInstantiation}
   ${optimInstantiation}
