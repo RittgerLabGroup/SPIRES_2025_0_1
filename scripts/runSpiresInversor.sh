@@ -131,7 +131,6 @@ try;
   espEnv.configParallelismPool(${parallelWorkersNb});
   region = Regions(${inputForRegion});
   waterYearDate = WaterYearDate(${inputForWaterYearDate});
-  addpath(genpath('${codePath}'));
   inversor = SpiresInversor(region);
   theseDate = waterYearDate.getDailyDatetimeRange();
   for dateIdx = 1:length(theseDate);
