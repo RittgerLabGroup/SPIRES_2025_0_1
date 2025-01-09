@@ -91,7 +91,7 @@ scriptId=spiInver
 defaultSlurmArrayTaskId=292
 expectedCountOfArguments=
 inputDataLabels=(mod09ga vnp09ga)
-outputDataLabels=(modspiresdaily vnpspiresdaily)
+outputDataLabels=(modspiresdaily vnpspiresdaily modspiresdailytifsinu modspiresdailymetadatajson modspiresdailytifsinu modspiresdailymetadatajson backgroundreflectanceformodisforwateryear backgroundreflectanceforviirsforwateryear)
 filterConfLabel=
 mainBashSource=${BASH_SOURCE}
 mainProgramName=${BASH_SOURCE[0]}
@@ -134,6 +134,7 @@ try;
   inversor = SpiresInversor(region);
   theseDate = waterYearDate.getDailyDatetimeRange();
   for dateIdx = 1:length(theseDate);
+    espEnv.checkSlurmJobStatus();
     thisDate = theseDate(dateIdx);
     inversor.getInputAndHyperSpectralInverse(thisDate, optim = optim);
   end;
