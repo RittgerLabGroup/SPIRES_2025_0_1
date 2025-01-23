@@ -88,10 +88,10 @@ export SLURM_EXPORT_ENV=ALL
 # Can be overriden by pipeline parameters in configuration.sh, itself can be overriden
 # by main script options.
 scriptId=spiTimeI
-defaultSlurmArrayTaskId=292
+defaultSlurmArrayTaskId=292001
 expectedCountOfArguments=
-inputDataLabels=(modspiresdaily)
-outputDataLabels=(modspiresyearly)
+inputDataLabels=(modspiresdaily vnpspiresdaily spiresdailytifsinu spiresdailymetadatajson)
+outputDataLabels=(modspirestimebycell vnpspirestimebycell)
 filterConfLabel=
 mainBashSource=${BASH_SOURCE}
 mainProgramName=${BASH_SOURCE[0]}
@@ -100,9 +100,9 @@ beginTime=
 
 # Following can be overriden by pipeling configuration.sh
 thisRegionType=0
-thisSequence=
-thisSequenceMultiplierToIndices=
-thisMonthWindow=2
+thisSequence=001-036
+thisSequenceMultiplierToIndices=1
+thisMonthWindow=12
 
 source scripts/toolsStart.sh
 if [ $? -eq 1 ]; then
@@ -126,6 +126,7 @@ read -r -d '' matlabString << EOM
 
 clear;
 try;
+  ${packagePathInstantiation}
   ${modisDataInstantiation}
   ${espEnvInstantiation}
   ${optimInstantiation}
@@ -133,7 +134,11 @@ try;
   region = Regions(${inputForRegion});
   waterYearDate = WaterYearDate(${inputForWaterYearDate});
   spiresTimeInterpolator = SpiresTimeInterpolator(region);
-  spiresTimeInterpolator.interpolateForWaterYearDate(waterYearDate, optim = optim);
+  monthWindows = [3, 0];
+  if waterYearDate.monthWindow >=8;
+    monthWindows = [0, 0];
+  end;
+  spiresTimeInterpolator.interpolate(waterYearDate, monthWindows, optim = optim);
 ${catchExceptionAndExit}
 
 EOM
