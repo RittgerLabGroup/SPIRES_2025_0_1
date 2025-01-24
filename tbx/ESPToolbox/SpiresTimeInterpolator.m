@@ -147,10 +147,10 @@ classdef SpiresTimeInterpolator < handle
         Tools.valueInTableForThisField( ...
         obj.region.filter.spires, 'lineName', ...
         parameterName, 'minValue');
-        % 0 for v2024.hist/v2025.nrt.0, 1 for higher versions.
+        % 0 for v2024.1.0/v2025.0.0, 1 for higher versions.
 
       if noDataDefinitionBeforeSmoothing == 0
-        % v2024.hist/v2025.nrt.0.
+        % v2024.1.0/v2025.0.0.
         snowIsNoData = ( ...
           dailyNoDataFilter | bitget(dailyZeroFilter, 6) ...
           ) ...
@@ -170,7 +170,7 @@ classdef SpiresTimeInterpolator < handle
         % - viewable_snow_fraction <= 10 or grain_size <= 40, except if detected as 0
         %   by neural network or ndsi or by spires inversion.
         % - the 2 previous except if the pixel is water or below an elevation threshold
-        %   (this last only for v2024.0d and earlier).
+        %   (this last only for v2024.0d (v2024.1.0 and earlier).
       end
       d_daily_nodata_filter_s = dailyNoDataFilter;
       dailyNoDataFilter = [];
@@ -182,10 +182,10 @@ classdef SpiresTimeInterpolator < handle
       Tools.valueInTableForThisField( ...
       obj.region.filter.spires, 'lineName', ...
       parameterName, 'minValue');
-      % 0 for v2024.hist/v2025.nrt.0, 1 for higher versions.
+      % 0 for v2024.1.0/v2025.0.0, 1 for higher versions.
 
       if zeroDefinitionBeforeSmoothing == 0
-        % v2024.hist/v2025.nrt.0.
+        % v2024.1.0/v2025.0.0.
         snowIsZero = ( ...
           bitget(dailyZeroFilter, 1) | bitget(dailyZeroFilter, 2) | ...
           bitget(dailyZeroFilter, 3) | bitget(dailyZeroFilter, 4) | ...
@@ -198,14 +198,14 @@ classdef SpiresTimeInterpolator < handle
           Tools.valueInTableForThisField( ...
           obj.region.filter.spires, 'lineName', ...
           parameterName, 'minValue');
-          % 40 in v2024.hist, former windowSize.
+          % 40 in v2024.1.0, former windowSize.
 
         parameterName = 'gapRareObservationMinDayWithObservationAboveMinValue';
         gapRareObservationSlidingWindowHalfSize = ...
           Tools.valueInTableForThisField( ...
           obj.region.filter.spires, 'lineName', ...
           parameterName, 'minValue');
-          % 20 in v2024.hist, former windowThresh.
+          % 20 in v2024.1.0, former windowThresh.
         isValidObservedSnow = ~bitget(dailyZeroFilter, 3) & ...
           ~bitget(dailyZeroFilter, 4) & ~snowIsNoData & ~snowIsZero;
           % snow fraction above 10 and grain size above 40.
@@ -214,9 +214,10 @@ classdef SpiresTimeInterpolator < handle
         dailyNoDataFilter = bitset(dailyNoDataFilter, 4, ...
           ~isNotRareObservation & isValidObservedSnow);
           % output of movingPersist() saved as the rare observation flag. This flag
-          % is set with another method below for versions higher than v2025.nrt.0.
+          % is set with another method below for versions higher than v2025.0.0.
         snowIsZero = snowIsZero | bitget(dailyNoDataFilter, 4);
       else
+        % v2025.0.1+.
         snowIsZero = ( ...
           bitget(dailyZeroFilter, 1) | bitget(dailyZeroFilter, 2) | ...
           bitget(dailyZeroFilter, 5) | bitget(dailyZeroFilter, 6) | ...
@@ -338,7 +339,7 @@ classdef SpiresTimeInterpolator < handle
         Tools.valueInTableForThisField( ...
         obj.region.filter.spires, 'lineName', ...
         'timeDetectionMethodForFalsePositive', ...
-        'minValue'); % 1 for v2025.nrt, 0 before.
+        'minValue'); % 1 for v2025.0.1, 0 before.
 
       % Fixing peak of grain/size at the end of the season or not.
       minMonthWindowForFixPeak = ...
@@ -816,15 +817,16 @@ classdef SpiresTimeInterpolator < handle
       optim.cellIdx(3) = 1;
       optim.countOfCellPerDimension(3) = 1;
 
-      [outputFilePath, ~, ~, ~] = ...
+      [outputFilePath, outputFileExists, ~, ~] = ...
         espEnv.getFilePathForWaterYearDate(objectName, outputDataLabel, ...
         waterYearDate, optim = optim);
         % NB: cell-split file. Yes the call to getFilePathForDateAndVarName for a
         % waterYearDate file is counter-intuitive.
       outputFilePath = outputFilePath{1};
       fprintf('Saving the calculations in %s...\n', outputFilePath);
-
-      delete(outputFilePath);
+      if outputFileExists(1)
+        delete(outputFilePath);
+      end
       theseDates = inputDates(dateIndicesToSave);
       save(outputFilePath, 'theseDates', '-v7.3');
       varName = 'days_without_observation_s';
@@ -897,7 +899,7 @@ classdef SpiresTimeInterpolator < handle
       end
     end
     function Xout = movingPersist(X, N, thresh)
-      % Ned's v2024.hist movingPersist method to temporally remove false positives.
+      % Ned's v2024.1.0 movingPersist method to temporally remove false positives.
       % moving threshold function
       % works along the 2nd (usually time) dimension of a cube and sets values to
       % false if their sum is below a threshold
