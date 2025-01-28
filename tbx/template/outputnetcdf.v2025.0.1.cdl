@@ -1,4 +1,4 @@
-netcdf mod09ga_061_spi_h08v04_20241001.v2025.nrt {
+netcdf mod09ga_061_spi_h08v04_20241001.v2025.0.1 {
 dimensions:
 	time = UNLIMITED ; // (1 currently)
 	x = 2400 ;
@@ -214,6 +214,8 @@ variables:
 		:time_coverage_start = "2024-10-01T00:00:00.000+0000" ;
 		:time_coverage_end = "2024-10-02T00:00:00.000+0000" ;
 		:time_coverage_duration = "P0Y0M1DT0H0M0S" ;
+    :versionOf_SPIReS = "v2025.0.1" ;
+    :versionOf_SPIReS_alternative = "v2024.0f" ;
 		:date_created = "2024-12-09T21:27:33+00:00" ;
 		:date_modified = "2024-12-09T21:27:33+00:00" ;
     :_NCProperties = "version=2,netcdf=4.7.4,hdf5=1.8.12" ;
