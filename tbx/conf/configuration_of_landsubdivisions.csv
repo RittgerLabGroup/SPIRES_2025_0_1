@@ -1,6 +1,6 @@
 name,id,subdivisionType,code,landSubdivisionName,idInDelineationFile,sourceRegionName,sourceRegionId,lowIllumination,percentCoverage,exportToSnowTodayWebsite,used,root,CRS,comment,countryType,sovereignCode,sovereignName,otherCodeForBigArea_adm0_A3,adm1Code,admGroupId,name2,id2,remarksForDeveloper,versionForProd,versionForIntegration
 "Id: Unique id uint16 used in the stat files (<65535, (max(‘uint16’)) ). Called snowtod_id in the shapefiles. NB: let value below field id to keep type integer when import into qgis.
-NB: Beware this 65535 pseudo id is used in code and then really mustn’t be used as id.",0,,"Unique code of the land subdivision in this configuration file and more generally for the full modis. For country, code adm0_A3 or iso3_code. For Provinces (States) code iso 3166-2. For hucx, huc code. For hydrosheds, pfaf_id",Part of the filename of the land subdivision group mask file,"id in the data of the land subdivision group file (mask). Should be unique in the file, but two subdivisions can have the same id if their mask is extracted from distinct files.","region from which the data are extracted for the stats. MUST be filled for used land subdivisions, otherwise the landsubdivision won’t appear in lists",,deprecated?,deprecated?,"deprecated. SnowToday website handle this property on their side, we export everything.",1: used in the website,1: upper-level Region in the website,"Coordinate reference system projection and code, e.g. EPSG:3875",comment line,"Maybe sovereign country, dependency, or indeterminate for Country. For Province, maybe State, Province, Region, District, etc ...\",Code of sovereign country. Sovereign de facto.,Name of sovereign country de facto.,,For Provinces only.,,Id: Unique id used in the stat files. Called snowtod_id in the shapefiles. NB: let value below field id to keep type integer when import into qgis,0,"change groupadm0 in filenames into adm0group
+NB: Beware this 65535 pseudo id is used in code and then really mustn’t be used as id.",0,"WARNING: Dont shift position 2 for id. Column used in bash script, keep at 2 position.","Unique code of the land subdivision in this configuration file and more generally for the full modis. For country, code adm0_A3 or iso3_code. For Provinces (States) code iso 3166-2. For hucx, huc code. For hydrosheds, pfaf_id",Part of the filename of the land subdivision group mask file,"id in the data of the land subdivision group file (mask). Should be unique in the file, but two subdivisions can have the same id if their mask is extracted from distinct files.","region from which the data are extracted for the stats. MUST be filled for used land subdivisions, otherwise the landsubdivision won’t appear in lists","WARNING: Column used in bash script, keep at 8 position.",deprecated?,deprecated?,"deprecated. SnowToday website handle this property on their side, we export everything.","WARNING: Dont shift this column of position 12, is used in bash script. Meaning: 1: used in the website",1: upper-level Region in the website,"Coordinate reference system projection and code, e.g. EPSG:3875",comment line,"Maybe sovereign country, dependency, or indeterminate for Country. For Province, maybe State, Province, Region, District, etc ...\",Code of sovereign country. Sovereign de facto.,Name of sovereign country de facto.,,For Provinces only.,,Id: Unique id used in the stat files. Called snowtod_id in the shapefiles. NB: let value below field id to keep type integer when import into qgis,0,"change groupadm0 in filenames into adm0group
 Stupid things, AMAndeS versus ASHimalaya_ (without S, not very consistent)",Version of geotiffs and stats for production web-app. Necessary only for root subdivisions.,Version of geotiffs and stats for integration web-app. Necessary only for root subdivisions.
 Afghanistan,2001,adm0,AFG,,,ASHimalaya,2,,,,1,0,,,Sovereign country,AFG,Afghanistan,,,,Afghanistan,2001,,,
 Angola,2002,adm0,AGO,,,,,,,,0,0,,,Sovereign country,AGO,Angola,,,,Angola,2002,,,
@@ -780,19 +780,19 @@ Ouham-Pendé,3674,adm1,CF-OP,,,,,,,,0,0,,,Prefecture,CAF,,CAF,CAF-805,,Ouham-Pen
 Sangha-Mbaéré,3675,adm1,CF-SE,,,,,,,,0,0,,,Economic Prefecture,CAF,,CAF,CAF-802,,Sangha-Mbaéré,3675,,,
 Ouaka,3676,adm1,CF-UK,,,,,,,,0,0,,,Prefecture,CAF,,CAF,CAF-809,,Ouaka,3676,,,
 Vakaga,3677,adm1,CF-VK,,,,,,,,0,0,,,Prefecture,CAF,,CAF,CAF-812,,Vakaga,3677,,,
-Alberta,3701,adm1,CA-AB,,,USAlaska,4,,,,2,0,,,Province,CAN,,CAN,CAN-632,,Alberta,3701,,,
-British Columbia,3702,adm1,CA-BC,,,USAlaska,4,,,,1,0,,,Province,CAN,,CAN,CAN-633,,British Columbia,3702,,,
+Alberta,3701,adm1,CA-AB,,,USAlaska,1,,,,2,0,,,Province,CAN,,CAN,CAN-632,,Alberta,3701,,,
+British Columbia,3702,adm1,CA-BC,,,USAlaska,1,,,,1,0,,,Province,CAN,,CAN,CAN-633,,British Columbia,3702,,,
 Manitoba,3703,adm1,CA-MB,,,,,,,,0,0,,,Province,CAN,,CAN,CAN-630,,Manitoba,3703,,,
 New Brunswick,3704,adm1,CA-NB,,,,,,,,0,0,,,Province,CAN,,CAN,CAN-684,,New Brunswick,3704,,,
 Newfoundland and Labrador,3705,adm1,CA-NL,,,,,,,,0,0,,,Province,CAN,,CAN,CAN-686,,Newfoundland and Labrador,3705,,,
 Nova Scotia,3706,adm1,CA-NS,,,,,,,,0,0,,,Province,CAN,,CAN,CAN-685,,Nova Scotia,3706,,,
-Northwest Territories,3707,adm1,CA-NT,,,USAlaska,4,,,,1,0,,,Territory,CAN,,CAN,CAN-635,,Northwest Territories,3707,,,
+Northwest Territories,3707,adm1,CA-NT,,,USAlaska,1,,,,1,0,,,Territory,CAN,,CAN,CAN-635,,Northwest Territories,3707,,,
 Nunavut,3708,adm1,CA-NU,,,,,,,,0,0,,,Territory,CAN,,CAN,CAN-634,,Nunavut,3708,,,
 Ontario,3709,adm1,CA-ON,,,,,,,,0,0,,,Province,CAN,,CAN,CAN-682,,Ontario,3709,,,
 Prince Edward Island,3710,adm1,CA-PE,,,,,,,,0,0,,,Province,CAN,,CAN,CAN-687,,Prince Edward Island,3710,,,
 Québec,3711,adm1,CA-QC,,,,,,,,0,0,,,Province,CAN,,CAN,CAN-683,,Québec,3711,,,
 Saskatchewan,3712,adm1,CA-SK,,,,,,,,0,0,,,Province,CAN,,CAN,CAN-631,,Saskatchewan,3712,,,
-Yukon,3713,adm1,CA-YT,,,USAlaska,4,,,,1,0,,,Territory,CAN,,CAN,CAN-636,,Yukon,3713,,,
+Yukon,3713,adm1,CA-YT,,,USAlaska,1,,,,1,0,,,Territory,CAN,,CAN,CAN-636,,Yukon,3713,,,
 Anhui,3741,adm1,CN-AH,,,,,,,,0,0,,,Province,CH1,,CHN,CHN-1179,,Anhui,3741,,,
 Beijing,3742,adm1,CN-BJ,,,,,,,,0,0,,,Municipality,CH1,,CHN,CHN-1155,,Beijing,3742,,,
 Chongqing,3743,adm1,CN-CQ,,,,,,,,0,0,,,Municipality,CH1,,CHN,CHN-1154,,Chongqing,3743,,,
@@ -12844,14 +12844,14 @@ San Juan - Guayas,17164,hydro4,HYD6720,,,,,,,,0,0,,South America,,,,,,,San Juan 
 ,25486,hydro5,HYD91480,,,,,,,,0,0,,Greenland,,,,,,,,25486,,,
 ,25487,hydro5,HYD91490,,,,,,,,0,0,,Greenland,,,,,,,,25487,,,
 ,,,,,,,,,,,,,,,,,,,,,,,,,
-Western United States,26000,groupadm0,USWest,westernUS,1,westernUS,5,0,0.98,1,2,1,EPSG:3857,,,,,,,,westernUS,26000,,v2024.0d,v2024.0f
+Western United States,26000,groupadm0,USWest,westernUS,1,westernUS,5,0,0.98,1,2,1,EPSG:3857,,,,,,,,westernUS,26000,,v2024.0d,v2025.0.1
 Alaska and western Canada,26001,groupadm0,USAlaska,,,USAlaska,1,,,,0,0,EPSG:3857,ESRI:102009,,,,,,,USAlaska,26001,,,
 High Mountain Asia,26002,groupadm0,ASHimalayas,,,ASHimalaya,2,,,,1,1,EPSG:3857,,,,,,,,ASHimalayas,26002,Root = 2 when spires available,,
 European Alps,26003,groupadm0,EurAlps,,,EurAlps,3,,,,1,0,EPSG:3857,,,,,,,,EurAlps,26003,,,
 Andes,26004,groupadm0,AMAndes,,,AMAndes,4,,,,1,1,EPSG:3857,,,,,,,,AMAndes,26004,Root = 2 when spires available,,
 Unused_26005,26005,groupadm0,Unused_26005,,,Unused_26005,0,,,,0,0,EPSG:3857,,,,,,,,Unused_26005,26005,Added 2024-10-01,,
 North East America,26006,groupadm0,USEast,,,USEast,6,,,,1,1,EPSG:3857,,,,,,,,USEast,26006,Added 2024-10-01,,
-New Zealand,26007,groupadm0,OCNewZealand,,,OCNewZealand,7,,,,1,1,EPSG:3857,,,,,,,,OCNewZealand,26007,Added 2024-10-01,,v2024.0f
+New Zealand,26007,groupadm0,OCNewZealand,,,OCNewZealand,7,,,,1,1,EPSG:3857,,,,,,,,OCNewZealand,26007,Added 2024-10-01,,v2025.0.1
 ,,,,,,,,,,,,,,,,,,,,,,,,,
 Alaska,26100,adm1part,USAlaskaWAleutian,,,USAlaska,1,,,,0,1,EPSG:3857,,,,,,,,USAlaskaWAleutian,26100,Root = 2 when spires available,,
 Canada,26101,adm0part,AMCanadaW,,,USAlaska,1,,,,0,1,EPSG:3857,,,,,,,,AMCanadaW,26101,Root = 2 when spires available,,
@@ -12865,3 +12865,8 @@ ASIranE,26108,adm0part,ASIranE,,,ASHimalaya,2,,,,1,0,,,,,,,,,ASIranE,26108,,,
 ASKazakhstanE,26109,adm0part,ASKazakhstanE,,,ASHimalaya,2,,,,1,0,,,,,,,,,ASKazakhstanE,26109,,,
 ,,,,,,,,,,,,,,,,,,,,,,,,,
 "Beware, 30001 and above ids are reserved for landsat pathrows.",,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,1600,,
