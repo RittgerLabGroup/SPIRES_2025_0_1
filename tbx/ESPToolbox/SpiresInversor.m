@@ -59,7 +59,8 @@ classdef SpiresInversor < handle
       % BandNum: 1: I1, 2: I2, 7: M2, 9: M4, 10: M5, 3: I3, 16: M11.
     variableGroupForMode = struct( ...
       metaData = [100], ...
-      mod09ga = [13, 14, 11, 12, 8, 9, 1, 2, 3, 4, 5, 6, 7, 79, 80, 81, 82, 83], ...
+      mod09ga = [13, 14, 11, 12, 8, 9, 1, 2, 3, 4, 5, 6, 7, 79, 80, 81, 82, 83, ...
+        112], ...
       vnp09ga = [13, 14, 12, 8, 1, 2, 3, 4, 5, 6, 7, 79, 80, 81, 82, 83, 109], ...
       filtering = [101], ...
       weights = [85], ...
@@ -104,7 +105,7 @@ classdef SpiresInversor < handle
       fprintf(['%s: Created SpiresInversor, region: %s.\n'], ...
         thisFunction, region.name);
     end
-    function reset(obj, thisDate, variableList)
+    function reset(obj, thisDate, variableList, varargin)
       % Create modis spires file with default or reset some variables to default.
       %
       % Parameters
@@ -114,6 +115,20 @@ classdef SpiresInversor < handle
       %   Run over several dates should be done outside this method.
       % variableList: cell(char). Indicates which field is reset and/or created if
       %   doesnt exist. Default lists are available in obj.variableGroupForMode.
+      % optim: struct(cellIdx, countOfCellPerDimension, force, logLevel,
+      %       parallelWorkersNb).
+      %   cellIdx: array(int), optional. [rowCellIdx, columnCellIdx].
+      %       Indices of the cell part of a tile. Row indices are counted from
+      %       top to bottom, column indices from left to right. Default [1, 1].
+      %   countOfCellPerDimension: array(int), optional.
+      %       [rowCellCount, columnCellCount]. Number of cells dividing the set of
+      %       rows and same for columns. E.g. if we want to divide a 2400x2400
+      %       tile in 9 cells, countOfCellPerDimension = [3, 3]. Default [1, 1].
+      %   logLevel: int, optional. Indicate the density of logs.
+      %       Default 0, all logs. The higher the less logs.
+      %   parallelWorkersNb: int, optional. If 0 (default), no parallelism.
+
+
       thisFunction = 'SpiresInversor.reset';
       espEnv = obj.region.espEnv;
       modisData = espEnv.modisData;
@@ -121,6 +136,24 @@ classdef SpiresInversor < handle
       outputDataLabel = obj.dataLabels.(modisData.inputProduct);
       varName = '';
       complementaryLabel = '';
+
+      defaultOptim = struct(cellIdx = [1, 1], ...
+        countOfCellPerDimension = [1, 1], force = 0, logLevel = 0, ...
+        parallelWorkersNb = 0);
+
+      p = inputParser;
+      addParameter(p, 'optim', struct());
+      p.StructExpand = false;
+      parse(p, varargin{:});
+      optim = p.Results.optim;
+
+      optimFieldNames = fieldnames(defaultOptim);
+      for fieldIdx = 1:length(optimFieldNames)
+        thisFieldName = optimFieldNames{fieldIdx};
+        if ~ismember(thisFieldName, fieldnames(optim))
+          optim.(thisFieldName) = defaultOptim.(thisFieldName);
+        end
+      end % fieldIx
 
       [outputFilePath, ~, ~, ~] = ...
         espEnv.getFilePathForDateAndVarName(objectName, outputDataLabel, thisDate, ...
@@ -132,8 +165,17 @@ classdef SpiresInversor < handle
       [variable, ~, ~] = espEnv.getVariable(outputDataLabel);
       for varIdx = 1:length(variableList)
         varName = variable(variable.id == variableList(varIdx), :).name{1};
-        espEnv.instantiateAndSaveData(objectName, outputDataLabel, ...
-          theseDate = thisDate, varName = varName, sourceFileName = '');
+        if varIdx == 112
+          force = struct();
+          [~, ~, thisSize] = espEnv.getIndicesForCellForDataLabel( ...
+            objectName, outputDataLabel, force = force, optim = optim);
+          data = zeros([thisSize, 3], 'uint8');
+          espEnv.saveData(objectName, outputDataLabel, ...
+            theseDate = thisDate, varName = varName, sourceFileName = '');
+        else
+          espEnv.instantiateAndSaveData(objectName, outputDataLabel, ...
+            theseDate = thisDate, varName = varName, sourceFileName = '');
+        end
         fprintf(['%s: Reset %d: %s.\n'], ...
           thisFunction, variableList(varIdx), varName);
       end
@@ -326,7 +368,7 @@ classdef SpiresInversor < handle
           obj.variableGroupForMode.spires];
           %, obj.variableGroupForMode.gap, ...
           %obj.variableGroupForMode.smooth, obj.variableGroupForMode.post];
-        obj.reset(thisDate, variableList);
+        obj.reset(thisDate, variableList, optim = optim);
         metaData.statusOfIngest = 1;
         metaData.statusOfWeight = 1;
         metaData.statusOfInversion = 1;
@@ -1503,7 +1545,7 @@ classdef SpiresInversor < handle
           thisFunctionCode);
 
         obj.reset(thisDate, [obj.variableGroupForMode.others, ...
-          obj.variableGroupForMode.spires]);
+          obj.variableGroupForMode.spires], optim = optim);
           %, obj.variableGroupForMode.gap, ...
           %obj.variableGroupForMode.smooth, obj.variableGroupForMode.post]);
 
@@ -3016,13 +3058,15 @@ classdef SpiresInversor < handle
       espEnv.saveData(dailyNoDataFilter, objectName, outputDataLabel, ...
         theseDate = theseDate, varName = varName, force = force, ...
         optim = optim, sourceFileName = sourceFileName);
-      fprintf(['%s: Saved daily_nodata_filter_s temporary version.\n'], ...
+      fprintf(['%s: Saved daily_nodata_filter_s temporary version before ', ...
+        'interpolation.\n'], ...
         thisFunctionCode);
       varName = 'daily_zero_filter_s';
       espEnv.saveData(dailyZeroFilter, objectName, outputDataLabel, ...
         theseDate = theseDate, varName = varName, force = force, ...
         optim = optim, sourceFileName = sourceFileName);
-      fprintf(['%s: Saved daily_zero_filter_s temporary version.\n'], ...
+      fprintf(['%s: Saved daily_zero_filter_s temporary version before ', ...
+        'interpolation.\n'], ...
         thisFunctionCode);
       % Instantiate/Save additional variables, calculated in other methods/later in the
       % process
