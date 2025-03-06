@@ -106,9 +106,6 @@ thisSequence=0
 thisSequenceMultiplierToIndices=1
 thisMonthWindow=12
 
-# Matlab package paths added.
-matlabPackages=(parBal spiresCore spiresGeneral spiresModisHdf spiresTimeSpace)
-
 source scripts/toolsStart.sh
 if [ $? -eq 1 ]; then
   exit 1
@@ -127,6 +124,7 @@ clear;
 try;
   ${packagePathInstantiation}
   ${modisDataInstantiation}
+  ${waterYearDateInstantiation}
   ${espEnvInstantiation}
   rng(${SLURM_ARRAY_TASK_ID});
   pauseTime = mtimes(rand(1), 120);
@@ -134,7 +132,6 @@ try;
   pause(pauseTime);
   espEnv.configParallelismPool(${parallelWorkersNb});
   region = Regions(${inputForRegion});
-  waterYearDate = WaterYearDate(${inputForWaterYearDate});
   converter = SpiresConverterMatToTif(region);
   converter.run(waterYearDate);
 ${catchExceptionAndExit}

@@ -126,11 +126,11 @@ clear;
 try;
   ${packagePathInstantiation}
   ${modisDataInstantiation}
+  ${waterYearDateInstantiation}
   ${espEnvInstantiation}
   ${optimInstantiation}
   espEnv.configParallelismPool(${parallelWorkersNb});
   region = Regions(${inputForRegion});
-  waterYearDate = WaterYearDate(${inputForWaterYearDate});
   inversor = SpiresInversor(region);
   theseDate = waterYearDate.getDailyDatetimeRange();
   for dateIdx = 1:length(theseDate);

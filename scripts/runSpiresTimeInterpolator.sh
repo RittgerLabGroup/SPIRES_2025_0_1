@@ -128,16 +128,13 @@ clear;
 try;
   ${packagePathInstantiation}
   ${modisDataInstantiation}
+  ${waterYearDateInstantiation}
   ${espEnvInstantiation}
   ${optimInstantiation}
   espEnv.configParallelismPool(${parallelWorkersNb});
   region = Regions(${inputForRegion});
-  waterYearDate = WaterYearDate(${inputForWaterYearDate});
   spiresTimeInterpolator = SpiresTimeInterpolator(region);
-  monthWindows = [3, 0];
-  if waterYearDate.monthWindow >=8;
-    monthWindows = [0, 0];
-  end;
+  monthWindows = [3, 3];
   spiresTimeInterpolator.interpolate(waterYearDate, monthWindows, optim = optim);
 ${catchExceptionAndExit}
 
