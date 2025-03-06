@@ -277,6 +277,18 @@ classdef SpiresTimeInterpolator < handle
       d_dust_concentration_s = reshape(espEnv.getDataForWaterYearDateAndVarName( ...
         objectName, inputDataLabel, waterYearDateInFiles, varName, ...
         optim = optim), [thisSize(1) * thisSize(2), thisSize(3)]);
+        
+      % 2025-02-21. Set to min grain size and min dust before and after water year,
+      % so as not to impact the interpolation.
+      [outputVariable, ~] = espEnv.getVariable(outputDataLabel, ...
+        inputDataLabel = inputDataLabel);
+        % NB: here the input and output data are in application of same class and
+        % nodata, min, max.
+      grainSizeOutputVariable = outputVariable(outputVariable.id == 57, :);
+      dustConcentrationOutputVariable = outputVariable(outputVariable.id == 58, :);
+      d_grain_size_s(:, ~dateIndicesToSave) = grainSizeOutputVariable.min(1);
+      d_dust_concentration_s(:, ~dateIndicesToSave) = ...
+        dustConcentrationOutputVariable.min(1);
 
       % Resampling of weights for viirs.
       parameterName = 'imresizeInterpolationMethod';
@@ -298,8 +310,6 @@ classdef SpiresTimeInterpolator < handle
           zeros([thisSize(1) * thisSize(2), thisSize(3)], 'uint16');
       d_days_with_absent_snow_observed_s = d_days_with_snow_observed_s;
       d_days_without_observation_s = d_days_with_snow_observed_s;
-
-
       % Configuration parameters.
       %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
       setToNoObservationBelowThisNumberOfDaysOfSnow = ...
@@ -365,10 +375,6 @@ classdef SpiresTimeInterpolator < handle
         Tools.valueInTableForThisField( ...
         obj.region.filter.spires, 'lineName', ...
         'peakFixingMaximalDurationInDay', 'minValue'); % 40 days.
-      [outputVariable, ~] = espEnv.getVariable(outputDataLabel, ...
-        inputDataLabel = inputDataLabel);
-        % NB: here the input and output data are in application of same class and
-        % nodata, min, max.
       iceFraction = reshape( ...
         espEnv.getDataForObjectNameDataLabel(objectName, 'icened', optim = optim), ...
         [1, thisSize(1) * thisSize(2)]);
@@ -376,6 +382,10 @@ classdef SpiresTimeInterpolator < handle
       tic
       fprintf(['Start of the calculation of temporal filter and interpolation of', ...
         ' variables for each pixel...\n']);
+      if timeDetectionMethodForFalsePositive == 1
+          fprintf(['Set rare observation flag with method based on days without ',...
+            'observations...\n']);
+      end
       thisDataQueue = parallel.pool.DataQueue;
       obj.pixelIsInterpolated = ...
         zeros([1, size(d_viewable_snow_fraction_s, 1)], 'uint32');
@@ -383,429 +393,503 @@ classdef SpiresTimeInterpolator < handle
 
       parfor pixelIdx = 1:size(d_viewable_snow_fraction_s, 1)
         espEnv.checkSlurmJobStatus();
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        % Temporal sliding window to determine if we have enough pixels for smoothing
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        % fprintf('Temporal filter to filter periods with enough observations...\n');
-        % If not enough pixels, suggest cloudy period.
-        thisViewableSnowFraction = d_viewable_snow_fraction_s(pixelIdx, :)';
-        thisIsData = ones(size(thisViewableSnowFraction), 'int16');
-        thisIsData(thisViewableSnowFraction == intmax('uint8')) = intmax('int16');
-        thisIsData(thisViewableSnowFraction == 0) = 0;
-        % Periods of days with snow observed.
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        thisDaySinceObservationZero  = ones(size(thisIsData), 'int16');
-          % int16 to make diff, which can be negative.
-        thisDaySinceObservationZero(thisIsData == intmax('int16') | thisIsData ~= 0) = 0;
+        try
+          %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+          % Temporal sliding window to determine if we have enough pixels for smoothing
+          %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+          % fprintf('Temporal filter to filter periods with enough observations...\n');
+          % If not enough pixels, suggest cloudy period.
+          thisViewableSnowFraction = d_viewable_snow_fraction_s(pixelIdx, :)';
+          thisIsData = ones(size(thisViewableSnowFraction), 'int16');
+          thisIsData(thisViewableSnowFraction == intmax('uint8')) = intmax('int16');
+          thisIsData(thisViewableSnowFraction == 0) = 0;
+          % Periods of days with snow observed.
+          %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+          thisDaySinceObservationZero  = ones(size(thisIsData), 'int16');
+            % int16 to make diff, which can be negative.
+          thisDaySinceObservationZero(thisIsData == intmax('int16') | thisIsData ~= 0) = 0;
 
-        indicesForPeriods = cumsum([1; abs(diff(thisDaySinceObservationZero, 1, 1))]);
+          indicesForPeriods = cumsum([1; abs(diff(thisDaySinceObservationZero, 1, 1))]);
 
-        isEqualSuccessiveIndicesForPeriods = ...
-          int16([1; indicesForPeriods(1:end - 1, :)] == indicesForPeriods);
+          isEqualSuccessiveIndicesForPeriods = ...
+            int16([1; indicesForPeriods(1:end - 1, :)] == indicesForPeriods);
 
-        thisDaySinceObservationZeroWithOne = thisIsData; % zeros(size(z));
-        thisDaySinceObservationZeroWithOne(thisDaySinceObservationZeroWithOne == intmax('int16')) = 0; % thisDaySinceObservationZeroWithOne(1) = isnan(z(1)) | z(1) ~= 0;
-        for rowIdx = 2:size(thisDaySinceObservationZeroWithOne, 1)
-          thisDaySinceObservationZeroWithOne(rowIdx) = ...
-            thisDaySinceObservationZeroWithOne(rowIdx) ...
-            + isEqualSuccessiveIndicesForPeriods(rowIdx) * ...
-            thisDaySinceObservationZeroWithOne(rowIdx -1);
-          %thisDaySinceObservationZeroWithOne(rowIdx) = isEqualSuccessiveIndicesForPeriods(rowIdx) ...
-          %   .* thisIsData(rowIdx) + isEqualSuccessiveIndicesForPeriods(rowIdx) * thisDaySinceObservationZeroWithOne(rowIdx -1);
-        end
-
-        thisDayWithSnowObserved = thisDaySinceObservationZeroWithOne;
-        for rowIdx = size(thisDayWithSnowObserved, 1) - 1: -1: 1
-          thisDayWithSnowObserved(rowIdx) = ...
-            isEqualSuccessiveIndicesForPeriods(rowIdx + 1) ...
-            .* thisDayWithSnowObserved(rowIdx + 1) + ...
-            int16(~isEqualSuccessiveIndicesForPeriods(rowIdx + 1)) ...
-            .* thisDayWithSnowObserved(rowIdx);
-        end
-        d_days_with_snow_observed_s(pixelIdx, :) = uint16(thisDayWithSnowObserved)';
-
-        % Periods with absent snow observed.
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        thisDaySinceObservationSnow  = ones(size(thisIsData), 'int16');
-          % int16 to make diff, which can be negative.
-        thisDaySinceObservationSnow(thisIsData == intmax('int16') | thisIsData ~= 1) = 0;
-
-        indicesForPeriods = cumsum([1; abs(diff(thisDaySinceObservationSnow, 1, 1))]);
-
-        isEqualSuccessiveIndicesForPeriods = ...
-          int16([1; indicesForPeriods(1:end - 1, :)] == indicesForPeriods);
-
-        thisDaySinceObservationSnowWithAbsent = zeros(size(thisIsData));
-        thisDaySinceObservationSnowWithAbsent(thisIsData == 0) = 1;
-        thisDaySinceObservationSnowWithAbsent(thisIsData == 1) = 0;
-        thisDaySinceObservationSnowWithAbsent(thisIsData == intmax('int16')) = 0;
-        for rowIdx = 2:size(thisDaySinceObservationSnowWithAbsent, 1)
-          thisDaySinceObservationSnowWithAbsent(rowIdx) = ...
-            thisDaySinceObservationSnowWithAbsent(rowIdx) + ...
-            isEqualSuccessiveIndicesForPeriods(rowIdx) * ...
-            thisDaySinceObservationSnowWithAbsent(rowIdx -1);
-        end
-
-        thisDayWithAbsentSnowObserved = thisDaySinceObservationSnowWithAbsent;
-        for rowIdx = size(thisDayWithAbsentSnowObserved, 1) - 1: -1: 1
-          thisDayWithAbsentSnowObserved(rowIdx) = ...
-            isEqualSuccessiveIndicesForPeriods(rowIdx + 1) ...
-            .* thisDayWithAbsentSnowObserved(rowIdx + 1) + ...
-            int16(~isEqualSuccessiveIndicesForPeriods(rowIdx + 1)) ...
-            .* thisDayWithAbsentSnowObserved(rowIdx);
-        end
-        d_days_with_absent_snow_observed_s(pixelIdx, :) = ...
-          uint16(thisDayWithAbsentSnowObserved)';
-
-        % Periods with no observation.
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        thisDaySince = ones(size(thisIsData), 'int16');
-
-        % Determine which day is without observation.
-        thisDaySince(thisIsData ~= intmax('int16')) = 0;
-
-        indicesForPeriods = cumsum([1; abs(diff(thisDaySince, 1, 1))]);
-        isEqualSuccessiveIndicesForPeriods = ...
-          int16([1; indicesForPeriods(1:end - 1, :)] == indicesForPeriods);
-        indicesForPeriods = [];
-
-        for rowIdx = 2:size(thisDaySince, 1)
-          thisDaySince(rowIdx) = isEqualSuccessiveIndicesForPeriods(rowIdx) ...
-            .* thisDaySince(rowIdx - 1) + thisDaySince(rowIdx);
-        end
-
-        thisDayWithout = thisDaySince;
-        for rowIdx = size(thisDayWithout, 1) - 1: -1: 1
-          thisDayWithout(rowIdx) = ...
-            isEqualSuccessiveIndicesForPeriods(rowIdx + 1) ...
-            .* thisDayWithout(rowIdx + 1) + ...
-            int16(~isEqualSuccessiveIndicesForPeriods(rowIdx + 1)) ...
-            .* thisDayWithout(rowIdx);
-        end
-        d_days_without_observation_s(pixelIdx, :) = ...
-          uint16(thisDayWithout)';
-
-        if timeDetectionMethodForFalsePositive == 1
-          fprintf(['Set rare observation flag with method based on days without ',...
-            'observations...\n']);
-          % 2. take the number of days with observations how many observations > 10
-          % after the last 0 observed do we have in the last weeks.
-            % for each day, calculate the number of days with snow between 2 zeros.
-            % NB: in Ned's model, all these pixels are set to 0, including those with
-            % ice clouds
-          % No application of moving Window as a test but let appear a lot of snow which
-          % are actually clouds. Seb 20241026.
-          thisDayWithinRareObservations = thisDayWithSnowObserved < ...
-            setToNoObservationBelowThisNumberOfDaysOfSnow & ...
-            thisDayWithSnowObserved > 0;
-            % all periods when there are less than 5 days of observed snow are set to no
-            % data.
-          thisDayWithinRareObservations = thisDayWithinRareObservations | ...
-            (thisDayWithAbsentSnowObserved < ...
-            setToNoObservationBelowThisNumberOfDaysOfAbsentSnow & ...
-            thisDayWithAbsentSnowObserved > 0);
-            % all periods when there are less than 3 days of observed absent snow are
-            % set to no data.
-            % NB: There's a problem here with false absent snow linked to the
-            % application of ndsi, which doesnt work well with reflectance below 10.
-            % NB: This filter forces a reset of snow when there's only one zero in a
-            % series. It would be nice to correct that behavior.
-          thisDailyNoDataFilter = d_daily_nodata_filter_s(pixelIdx, :)';
-          thisDailyNoDataFilter = bitset(thisDailyNoDataFilter, 4, ...
-            thisDayWithinRareObservations);
-          d_daily_nodata_filter_s(pixelIdx, :) = thisDailyNoDataFilter';
-
-          thisViewableSnowFraction(thisDayWithinRareObservations) = intmax('uint8');
-        end
-        thisDayWithout = [];
-        thisDayWithSnowObserved = [];
-        thisDayWithAbsentSnowObserved = [];
-
-        thisSnowIsNoData = thisViewableSnowFraction == intmax('uint8');
-        thisSnowIsZero = thisViewableSnowFraction == 0;
-
-        % Handling of the pixels without observation over the full period.
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        % NB: Contrary to Ned, all pixels in water are set to 0, and not nodata.
-        % NB: to smooth using the fit function, we need at least two observations.
-        if sum(~thisSnowIsNoData & ~thisSnowIsZero) < ...
-          max(setToNoObservationBelowThisNumberOfDaysOfSnow, 2)
-          d_viewable_snow_fraction_s(pixelIdx, :) = 0;
-          d_snow_fraction_s(pixelIdx, :) = 0;
-          d_snow_cover_days_s(pixelIdx, :) = 0;
-          d_grain_size_s(pixelIdx, :) = intmax('uint16');
-          d_dust_concentration_s(pixelIdx, :) = intmax('uint16');
-          continue;
-        end
-
-        % Interpolation of viewable_snow_fraction_s.
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        thisOutputVariable = outputVariable(outputVariable.id == 54, :);
-        x = (1:size(thisViewableSnowFraction, 1))';
-        y = thisViewableSnowFraction;
-        thisWeight = weight(pixelIdx, :)';
-        F = fit(x, double(y), 'smoothingspline', ...
-          weights = double(thisWeight), ...
-          exclude = thisSnowIsNoData, ...
-          SmoothingParam = smoothingSplineParamForSnowAndDust);
-        y = uint8(max(min(F(x), thisOutputVariable.max(1)), thisOutputVariable.min(1)));
-        y(y <= setToNoObservationBelowThisValueOfRawSnowFraction) = 0;
-        % As for STC, 20241107.
-        % For any fitted values past the last date with a
-        % measured value, the spline can produce a large "bullwhip"
-        % artifact
-        % Find fitted values after the last date with a measured value
-        % and propagate the last "believable" fitted value to end
-        % This overwrites the spline "bullwhip"
-        lastIdxWithObservation = find(thisSnowIsNoData == 0, 1, 'last');
-        y(lastIdxWithObservation:length(y)) = y(lastIdxWithObservation);
-        d_viewable_snow_fraction_s(pixelIdx, :) = y';
-        thisViewableSnowFraction = d_viewable_snow_fraction_s(pixelIdx, :)';
-
-        % Interpolation of snow_fraction_s.
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        thisOutputVariable = outputVariable(outputVariable.id == 54, :);
-        y = d_snow_fraction_s(pixelIdx, :)';
-        F = fit(x, double(y), 'smoothingspline', ...
-          weights = double(thisWeight), ...
-          exclude = thisSnowIsNoData, ...
-          SmoothingParam = smoothingSplineParamForSnowAndDust);
-        y = uint8(max(min(F(x), thisOutputVariable.max(1)), ...
-          double(iceFraction(pixelIdx))));
-        y(thisViewableSnowFraction ...
-          <= setToNoObservationBelowThisValueOfRawSnowFraction) = 0;
-          % NB: Apparently this also helps to remove the small bumps close to zero
-          % of the spline that doesn't correspond to any data, e.g. h09v05 pixel 3,
-          % november 2024.
-        y(lastIdxWithObservation:length(y)) = y(lastIdxWithObservation);
-        d_snow_fraction_s(pixelIdx, :) = y';
-
-        thisSnowIsAboveMinimum = ...
-          y > snowCoverDayIsSetToZeroIfSnowFractionBelowThisValue;
-
-        % Calculation of snowCoverDays.
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        % NB: no elevation threshold.
-        varName = 'snow_cover_days_s';
-        thisSnowCoverDay = d_snow_cover_days_s(pixelIdx, :)';
-        thisSnowCoverDay(dateIndicesToSave) = ...
-          uint16(thisSnowIsAboveMinimum(dateIndicesToSave));
-        thisSnowCoverDay = cumsum(thisSnowCoverDay);
-        d_snow_cover_days_s(pixelIdx, :) = thisSnowCoverDay';
-
-        % Interpolation of grain_size_s and dust_concentration_s.
-        % (if snow fraction above 10).
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        % NB: in Ned's version, there doesnt seem to be a restriction for grain size
-        % on snow fraction below 10.
-        thisGrainSize = d_grain_size_s(pixelIdx, :)';
-        thisDustConcentration = d_dust_concentration_s(pixelIdx, :)';
-        grainSizeOutputVariable = outputVariable(outputVariable.id == 57, :);
-        dustConcentrationOutputVariable = outputVariable(outputVariable.id == 58, :);
-        grainSizeSetToNoData = thisSnowIsNoData | thisSnowIsZero | ...
-          thisGrainSize < setToNoObservationBelowThisValueOfSpatialGrainSize | ...
-          thisGrainSize > grainSizeOutputVariable.max(1) | ...
-          (thisDustConcentration > dustConcentrationOutputVariable.max(1) & ...
-          thisDustConcentration ~= intmax('uint16'));
-          % NB: ~thisSnowIsAboveMinimum includes thisSnowIsNoData and thisSnowIsZero
-        dustConcentrationSetToNoData = ...
-          grainSizeSetToNoData | thisDustConcentration == intmax('uint16');
-        if sum(~grainSizeSetToNoData) < 2
-          d_grain_size_s(pixelIdx, :) = intmax('uint16');
-          d_dust_concentration_s(pixelIdx, :) = intmax('uint16');
-          continue;
-        end
-          % We assume here that by default when there's not enough grain size valid,
-          % there'll be even less dust concentration valids (because the higher snow
-          % fraction threshold.
-
-        thisGrainSize(grainSizeSetToNoData) = intmax('uint16');
-        thisDustConcentration(dustConcentrationSetToNoData) = intmax('uint16');
-
-        % Near real time early season.
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        if ~peakGrainSizeIsToFix
-          % Interpolation of grain_size_s.
-          %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-          y = thisGrainSize;
-          y(1) = 0; % to avoid high values at start of the season. Doesnt work that much
-            % because of the spline nature.
-          F = fit(x, double(y), 'smoothingspline', ...
-            weights = double(thisWeight), ...
-            exclude = [0; grainSizeSetToNoData(2:end)], ...
-            SmoothingParam = smoothingSplineParamForGrainSize);
-          y = F(x);
-          y(lastIdxWithObservation:length(y)) = y(lastIdxWithObservation);
-          thisGrainSize = y;
-
-          % Interpolation of dust_concentration_s.
-          %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-          if sum(~dustConcentrationSetToNoData) >= 2
-            thisDustConcentration(thisGrainSize <= ...
-              smoothingDustSetToZeroBeforeGrainSizeMaxWhenBelowGrainSizeValue) = 0;
-              % 300 mic.
-              % Here we restrict a lot the observations, which make the fit very
-              % impacted only by a few observations...                          @warning
-            y = thisDustConcentration;
-            y(1) = 0; % to avoid high values at start of the season.
-            F = fit(x, double(y), 'smoothingspline', ...
-                weights = double(thisWeight), ...
-                exclude = [0; dustConcentrationSetToNoData(2:end)], ...
-                SmoothingParam = smoothingSplineParamForSnowAndDust);
-            y = F(x);
-            y(lastIdxWithObservation:length(y)) = y(lastIdxWithObservation);
-            thisDustConcentration = y;
-          else
-            thisDustConcentration = ...
-              intmax('uint16') * ones(size(thisDustConcentration), 'uint16');
+          thisDaySinceObservationZeroWithOne = thisIsData; % zeros(size(z));
+          thisDaySinceObservationZeroWithOne(thisDaySinceObservationZeroWithOne == intmax('int16')) = 0; % thisDaySinceObservationZeroWithOne(1) = isnan(z(1)) | z(1) ~= 0;
+          for rowIdx = 2:size(thisDaySinceObservationZeroWithOne, 1)
+            thisDaySinceObservationZeroWithOne(rowIdx) = ...
+              thisDaySinceObservationZeroWithOne(rowIdx) ...
+              + isEqualSuccessiveIndicesForPeriods(rowIdx) * ...
+              thisDaySinceObservationZeroWithOne(rowIdx -1);
+            %thisDaySinceObservationZeroWithOne(rowIdx) = isEqualSuccessiveIndicesForPeriods(rowIdx) ...
+            %   .* thisIsData(rowIdx) + isEqualSuccessiveIndicesForPeriods(rowIdx) * thisDaySinceObservationZeroWithOne(rowIdx -1);
           end
-          % Near real time spring and late season, or historic full wateryear.
-          % Seb 2024-05-23: peak for NRT. Cannot work as for historic because when
-          % there is still snow on the last day of NRT record, we don't know if it's
-          % the last day of snow.
-          % NB: This corrrection is done because as snow recedes, some mixed pixels
-          % artificially get lower grain size with the unmixing, because soil and
-          % vegetation are uncovered.
-          %
-        else % if ~peakGrainSizeIsToFix
-          % Grain size.
-          %%%%%%%%%%%%%
 
-          % set values after peak grain radius to peak
-          thisGrainSize = double(thisGrainSize);
-          thisGrainSize(grainSizeSetToNoData) = NaN;
-          thisGrainSize = hampel(thisGrainSize, 2, 2);
-          thisGrainSize(grainSizeSetToNoData) = NaN;
+          thisDayWithSnowObserved = thisDaySinceObservationZeroWithOne;
+          for rowIdx = size(thisDayWithSnowObserved, 1) - 1: -1: 1
+            thisDayWithSnowObserved(rowIdx) = ...
+              isEqualSuccessiveIndicesForPeriods(rowIdx + 1) ...
+              .* thisDayWithSnowObserved(rowIdx + 1) + ...
+              int16(~isEqualSuccessiveIndicesForPeriods(rowIdx + 1)) ...
+              .* thisDayWithSnowObserved(rowIdx);
+          end
+          d_days_with_snow_observed_s(pixelIdx, :) = uint16(thisDayWithSnowObserved)';
 
-            % remove spikes and drops.
-          lastIdxWithObservation = find(grainSizeSetToNoData == 0, 1, 'last');
-            % meltOutday. If no obs, we shouldn't be there.
-          [valueOfLastDayWithMaximum, lastDayWithMaximum] = ...
-            max([repmat(NaN, [lastIdxWithObservation - ...
-            peakFixingMaximalDurationInDay, 1]); ...
-            double(thisGrainSize( ...
-              max(1, lastIdxWithObservation - ...
-              peakFixingMaximalDurationInDay + 1):end))]);
-            % Day when grain size reached the peak just before melting.
+          % Periods with absent snow observed.
+          %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+          thisDaySinceObservationSnow  = ones(size(thisIsData), 'int16');
+            % int16 to make diff, which can be negative.
+          thisDaySinceObservationSnow(thisIsData == intmax('int16') | thisIsData ~= 1) = 0;
 
-          % We only interpolate the pixels having enough data until the last day with
-          % maximum included.
-          if lastDayWithMaximum > 2 && ...
-            sum(~grainSizeSetToNoData(1:lastDayWithMaximum)) >= 2
+          indicesForPeriods = cumsum([1; abs(diff(thisDaySinceObservationSnow, 1, 1))]);
 
-            % Set 1st day to min, helps with keeping spline in check.
-            thisGrainSize(1) = grainSizeOutputVariable.min(1);
-            thisWeight(1) = 1;
+          isEqualSuccessiveIndicesForPeriods = ...
+            int16([1; indicesForPeriods(1:end - 1, :)] == indicesForPeriods);
 
-            % a. From start to day before max grain size.
-            % NB: to obtain F, we include the lastDayWithMaximum, to be sure to have
-            % at least 2 days with data.
-            x = (1:lastDayWithMaximum - 1)';
-            y = thisGrainSize(1:lastDayWithMaximum);
-            F = fit([x; lastDayWithMaximum], y, 'smoothingspline', ...
-                weights = double(thisWeight([x; lastDayWithMaximum])), ...
-                exclude = [0; grainSizeSetToNoData(2:lastDayWithMaximum - 1)], ...
-                SmoothingParam = smoothingSplineParamForGrainSize);
-            thisGrainSize(x) = F(x);
+          thisDaySinceObservationSnowWithAbsent = zeros(size(thisIsData));
+          thisDaySinceObservationSnowWithAbsent(thisIsData == 0) = 1;
+          thisDaySinceObservationSnowWithAbsent(thisIsData == 1) = 0;
+          thisDaySinceObservationSnowWithAbsent(thisIsData == intmax('int16')) = 0;
+          for rowIdx = 2:size(thisDaySinceObservationSnowWithAbsent, 1)
+            thisDaySinceObservationSnowWithAbsent(rowIdx) = ...
+              thisDaySinceObservationSnowWithAbsent(rowIdx) + ...
+              isEqualSuccessiveIndicesForPeriods(rowIdx) * ...
+              thisDaySinceObservationSnowWithAbsent(rowIdx -1);
+          end
 
-            % b. From max grain size to 7 days before end of record or the end of record
-            % if not full water year.
-            % set those days to (near) max grain size.
-            thisGrainSize(lastDayWithMaximum: ...
-              (length(thisGrainSize) - peakFixingDayWithoutCorrection)) = ...
-              valueOfLastDayWithMaximum;
+          thisDayWithAbsentSnowObserved = thisDaySinceObservationSnowWithAbsent;
+          for rowIdx = size(thisDayWithAbsentSnowObserved, 1) - 1: -1: 1
+            thisDayWithAbsentSnowObserved(rowIdx) = ...
+              isEqualSuccessiveIndicesForPeriods(rowIdx + 1) ...
+              .* thisDayWithAbsentSnowObserved(rowIdx + 1) + ...
+              int16(~isEqualSuccessiveIndicesForPeriods(rowIdx + 1)) ...
+              .* thisDayWithAbsentSnowObserved(rowIdx);
+          end
+          d_days_with_absent_snow_observed_s(pixelIdx, :) = ...
+            uint16(thisDayWithAbsentSnowObserved)';
 
-            %c. last 7 days of record, if full water year, are splined from max to min.
-            if peakFixingDayWithoutCorrection ~= 0
-              x = [length(thisGrainSize) - peakFixingDayWithoutCorrection, ...
-                length(thisGrainSize)];
-              y = [0, valueOfLastDayWithMaximum, grainSizeOutputVariable.min(1), 0];
-              F = spline(x, y);
-              thisGrainSize(x(1):x(2)) = fnval(F, x(1):x(2));
-            end
-            thisGrainSize = uint16(max(min(thisGrainSize, ...
-              grainSizeOutputVariable.max(1)), ...
-              grainSizeOutputVariable.min(1)));
+          % Periods with no observation.
+          %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+          thisDaySince = ones(size(thisIsData), 'int16');
 
-            % Dust concentration.
-            %%%%%%%%%%%%%%%%%%%%%
-            % We only interpolate the pixels having enough data until the last day with
-            % maximum included.
-            if sum(~dustConcentrationSetToNoData(1:lastDayWithMaximum)) >= 2
-            % Set to 0 all dust concentrations for days with low grain size before the
-            % day of max grain size.
-              thisDustConcentration((thisGrainSize <= ...
-                smoothingDustSetToZeroBeforeGrainSizeMaxWhenBelowGrainSizeValue) & ...
-                [ones([lastDayWithMaximum - 1, 1]); ...
-                zeros([length(thisDustConcentration) - lastDayWithMaximum + 1, 1])]) = 0;
-              %set dust to zero on day 1
-              thisDustConcentration(1) = 0;
-              thisWeight(1) = 1;
+          % Determine which day is without observation.
+          thisDaySince(thisIsData ~= intmax('int16')) = 0;
 
-              % a. From start to day before max grain size.
-              x = (1:lastDayWithMaximum - 1)';
-              y = thisDustConcentration(1:lastDayWithMaximum);
-              F = fit([x; lastDayWithMaximum] , double(y), 'smoothingspline', ...
-                weights = double(thisWeight([x; lastDayWithMaximum])), ...
-                exclude = ...
-                  [0; dustConcentrationSetToNoData(2:lastDayWithMaximum)], ...
-                SmoothingParam = smoothingSplineParamForSnowAndDust);
-              thisDustConcentration(x) = F(x);
+          indicesForPeriods = cumsum([1; abs(diff(thisDaySince, 1, 1))]);
+          isEqualSuccessiveIndicesForPeriods = ...
+            int16([1; indicesForPeriods(1:end - 1, :)] == indicesForPeriods);
+          indicesForPeriods = [];
 
-              % b. From max grain size to 7 days before end of record or the end of record
-              % if not full water year.
-              thisDustConcentration(lastDayWithMaximum: ...
-                (length(thisDustConcentration) - peakFixingDayWithoutCorrection)) = ...
-                thisDustConcentration(lastDayWithMaximum);
-                % NB: Warning: if there's not many pixels with snow > 90 that date,
-                % this value will be probably nodata...                           @warning
-              if thisDustConcentration(lastDayWithMaximum) == intmax('uint16')
-                thisDustConcentration(lastDayWithMaximum: ...
-                (length(thisDustConcentration) - peakFixingDayWithoutCorrection)) = ...
-                  thisDustConcentration( ...
-                  find(dustConcentrationSetToNoData(1:lastDayWithMaximum - 1) == 0, ...
-                  1, 'last'));
-              end
+          for rowIdx = 2:size(thisDaySince, 1)
+            thisDaySince(rowIdx) = isEqualSuccessiveIndicesForPeriods(rowIdx) ...
+              .* thisDaySince(rowIdx - 1) + thisDaySince(rowIdx);
+          end
 
-              %c. last 7 days of record, if full water year, are splined from max to min.
-              if peakFixingDayWithoutCorrection ~= 0
-                x = ...
-                  [length(thisDustConcentration) - peakFixingDayWithoutCorrection, ...
-                  length(thisDustConcentration)];
-                y = [0, valueOfLastDayWithMaximum, ...
-                  dustConcentrationOutputVariable.min(1), 0];
-                F = spline(x, y);
-                thisDustConcentration(x(1):x(2)) = fnval(F, x(1):x(2));
-              end
-              thisDustConcentration = uint16(max(min(thisDustConcentration, ...
-                dustConcentrationOutputVariable.max(1)), ...
-                dustConcentrationOutputVariable.min(1)));
+          thisDayWithout = thisDaySince;
+          for rowIdx = size(thisDayWithout, 1) - 1: -1: 1
+            thisDayWithout(rowIdx) = ...
+              isEqualSuccessiveIndicesForPeriods(rowIdx + 1) ...
+              .* thisDayWithout(rowIdx + 1) + ...
+              int16(~isEqualSuccessiveIndicesForPeriods(rowIdx + 1)) ...
+              .* thisDayWithout(rowIdx);
+          end
+          d_days_without_observation_s(pixelIdx, :) = ...
+            uint16(thisDayWithout)';
+
+          if timeDetectionMethodForFalsePositive == 1
+            % 2. take the number of days with observations how many observations > 10
+            % after the last 0 observed do we have in the last weeks.
+              % for each day, calculate the number of days with snow between 2 zeros.
+              % NB: in Ned's model, all these pixels are set to 0, including those with
+              % ice clouds
+            % No application of moving Window as a test but let appear a lot of snow which
+            % are actually clouds. Seb 20241026.
+            thisDayWithinRareObservations = thisDayWithSnowObserved < ...
+              setToNoObservationBelowThisNumberOfDaysOfSnow & ...
+              thisDayWithSnowObserved > 0;
+              % all periods when there are less than 5 days of observed snow are set to no
+              % data.
+            thisDayWithinRareObservations = thisDayWithinRareObservations | ...
+              (thisDayWithAbsentSnowObserved < ...
+              setToNoObservationBelowThisNumberOfDaysOfAbsentSnow & ...
+              thisDayWithAbsentSnowObserved > 0);
+              % all periods when there are less than 3 days of observed absent snow are
+              % set to no data.
+              % NB: There's a problem here with false absent snow linked to the
+              % application of ndsi, which doesnt work well with reflectance below 10.
+              % NB: This filter forces a reset of snow when there's only one zero in a
+              % series. It would be nice to correct that behavior.
+            thisDailyNoDataFilter = d_daily_nodata_filter_s(pixelIdx, :)';
+            thisDailyNoDataFilter = bitset(thisDailyNoDataFilter, 4, ...
+              thisDayWithinRareObservations);
+            d_daily_nodata_filter_s(pixelIdx, :) = thisDailyNoDataFilter';
+
+            thisViewableSnowFraction(thisDayWithinRareObservations) = intmax('uint8');
+          end
+          thisDayWithout = [];
+          thisDayWithSnowObserved = [];
+          thisDayWithAbsentSnowObserved = [];
+
+          thisSnowIsNoData = thisViewableSnowFraction == intmax('uint8');
+          thisSnowIsZero = thisViewableSnowFraction == 0;
+
+          % Handling of the pixels without observation over the full period.
+          %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+          % NB: Contrary to Ned, all pixels in water are set to 0, and not nodata.
+          % NB: to smooth using the fit function, we need at least two observations.
+          if sum(~thisSnowIsNoData & ~thisSnowIsZero) < ...
+            max(setToNoObservationBelowThisNumberOfDaysOfSnow, 2)
+            d_viewable_snow_fraction_s(pixelIdx, :) = 0;
+            d_snow_fraction_s(pixelIdx, :) = 0;
+                      d_viewable_snow_fraction_s_old(pixelIdx, :) = 0;
+            d_snow_fraction_s_old(pixelIdx, :) = 0;
+            d_snow_cover_days_s(pixelIdx, :) = 0;
+            d_grain_size_s(pixelIdx, :) = intmax('uint16');
+            d_dust_concentration_s(pixelIdx, :) = intmax('uint16');
+            send(thisDataQueue, pixelIdx);
+            continue;
+          end
+
+          % Interpolation of viewable_snow_fraction_s.
+          %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+          thisOutputVariable = outputVariable(outputVariable.id == 54, :);
+          x = (1:size(thisViewableSnowFraction, 1))'; 
+          y = thisViewableSnowFraction;
+          thisWeight = weight(pixelIdx, :)';
+          
+          % 2025-02-21. Pre-linear interpolation to limit amplitude of spline bumps.
+          % Doesn't seem to have huge impact. Needs further investigation.
+          y = interp1(x(~thisSnowIsNoData), double(y(~thisSnowIsNoData)), ...
+            x, 'linear', 'extrap');
+          thisWeight(thisSnowIsNoData) = 5;
+
+          % Regular spline interpolation, not really perfect.
+          % Known artefacts: the weights don't seem to
+          % have a big impact, still some bumps when 1 data alone, or if difference of
+          % successive data too big, can not take into account this lonely points.
+          %                                                                       @warning
+          F = fit(x, y, 'smoothingspline', ...
+            weights = double(thisWeight), ...
+            exclude = thisSnowIsNoData, ...
+            SmoothingParam = smoothingSplineParamForSnowAndDust);
+          y = uint8(max(min(F(x), thisOutputVariable.max(1)), thisOutputVariable.min(1)));
+          y(y <= setToNoObservationBelowThisValueOfRawSnowFraction) = 0;
+          % As for STC, 20241107.
+          % For any fitted values past the last date with a
+          % measured value, the spline can produce a large "bullwhip"
+          % artifact
+          % Find fitted values after the last date with a measured value
+          % and propagate the last "believable" fitted value to end
+          % This overwrites the spline "bullwhip"
+          lastIdxWithObservation = find(thisSnowIsNoData == 0, 1, 'last');
+          y(lastIdxWithObservation:length(y)) = y(lastIdxWithObservation);
+          firstIdxWithObservation = find(thisSnowIsNoData == 0, 1, 'first');
+          y(1:firstIdxWithObservation) = y(firstIdxWithObservation);
+            % Added 2025-02-04. We also had anomalies in extrapolating before first
+            % observation in smoothing spline.
+          d_viewable_snow_fraction_s(pixelIdx, :) = y';       
+          thisViewableSnowFraction = d_viewable_snow_fraction_s(pixelIdx, :)';
+
+          % Interpolation of snow_fraction_s.
+          %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+          thisOutputVariable = outputVariable(outputVariable.id == 54, :);
+          y = d_snow_fraction_s(pixelIdx, :)';
+          
+          % 2025-02-21. Pre-linear interpolation to limit amplitude of spline bumps.
+          y = interp1(x(~thisSnowIsNoData), double(y(~thisSnowIsNoData)), ...
+            x, 'linear', 'extrap');
+          
+          F = fit(x, y, 'smoothingspline', ...
+            weights = double(thisWeight), ...
+            exclude = thisSnowIsNoData, ...
+            SmoothingParam = smoothingSplineParamForSnowAndDust);
+          y = uint8(max(min(F(x), thisOutputVariable.max(1)), ...
+            double(iceFraction(pixelIdx))));
+          y(thisViewableSnowFraction ...
+            <= setToNoObservationBelowThisValueOfRawSnowFraction) = 0;
+            % NB: Apparently this also helps to remove the small bumps close to zero
+            % of the spline that doesn't correspond to any data, e.g. h09v05 pixel 3,
+            % november 2024.
+          y(lastIdxWithObservation:length(y)) = y(lastIdxWithObservation);
+          y(1:firstIdxWithObservation) = y(firstIdxWithObservation); % 2025-02-04.
+          d_snow_fraction_s(pixelIdx, :) = y';
+
+          thisSnowIsAboveMinimum = ...
+            y > snowCoverDayIsSetToZeroIfSnowFractionBelowThisValue;
+
+          % Calculation of snowCoverDays.
+          %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+          % NB: no elevation threshold.
+          varName = 'snow_cover_days_s';
+          thisSnowCoverDay = d_snow_cover_days_s(pixelIdx, :)';
+          thisSnowCoverDay(dateIndicesToSave) = ...
+            uint16(thisSnowIsAboveMinimum(dateIndicesToSave));
+          thisSnowCoverDay = cumsum(thisSnowCoverDay);
+          d_snow_cover_days_s(pixelIdx, :) = thisSnowCoverDay';
+
+          % Interpolation of grain_size_s and dust_concentration_s.
+          % (if snow fraction above 10).
+          %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+          % NB: in Ned's version, there doesnt seem to be a restriction for grain size
+          % on snow fraction below 10.
+          thisGrainSize = d_grain_size_s(pixelIdx, :)';
+          thisDustConcentration = d_dust_concentration_s(pixelIdx, :)';
+          grainSizeSetToNoData = thisSnowIsNoData | thisSnowIsZero | ...
+            thisGrainSize < setToNoObservationBelowThisValueOfSpatialGrainSize | ...
+            thisGrainSize > grainSizeOutputVariable.max(1) | ...
+            (thisDustConcentration > dustConcentrationOutputVariable.max(1) & ...
+            thisDustConcentration ~= intmax('uint16'));
+            % NB: ~thisSnowIsAboveMinimum includes thisSnowIsNoData and thisSnowIsZero
+          dustConcentrationSetToNoData = ...
+            grainSizeSetToNoData | thisDustConcentration == intmax('uint16');
+          if sum(~grainSizeSetToNoData) < 2
+            d_grain_size_s(pixelIdx, :) = intmax('uint16');
+            d_dust_concentration_s(pixelIdx, :) = intmax('uint16');
+            send(thisDataQueue, pixelIdx);
+            continue;
+          end
+            % We assume here that by default when there's not enough grain size valid,
+            % there'll be even less dust concentration valids (because the higher snow
+            % fraction threshold.
+
+          thisGrainSize(grainSizeSetToNoData) = intmax('uint16');
+          thisDustConcentration(dustConcentrationSetToNoData) = intmax('uint16');
+
+          % Near real time early season.
+          %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+          if ~peakGrainSizeIsToFix
+            % Interpolation of grain_size_s.
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            y = thisGrainSize;
+            % y(1) = 0; % to avoid high values at start of the season. Doesnt work that much
+              % because of the spline nature. 2025-02-21 Removed.
+
+            % 2025-02-21. Pre-linear interpolation to limit amplitude of spline bumps.           
+            y = interp1(x(~grainSizeSetToNoData), double(y(~grainSizeSetToNoData)), ...
+              x, 'linear', 'extrap');
+            F = fit(x, y, 'smoothingspline', ...
+              weights = double(thisWeight), ...
+              exclude = [0; grainSizeSetToNoData(2:end)], ...
+              SmoothingParam = smoothingSplineParamForGrainSize);
+            y = F(x);
+            % 2025-02-24 Fix both ends with first and last observed grain size.
+            lastIdxWithObservation = find(grainSizeSetToNoData == 0, 1, 'last');
+            y(lastIdxWithObservation:length(y)) = y(lastIdxWithObservation);
+            firstIdxWithObservation = find(grainSizeSetToNoData == 0, 1, 'first');
+            y(1:firstIdxWithObservation) = y(firstIdxWithObservation);
+            thisGrainSize = y;
+
+            % Interpolation of dust_concentration_s.
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            if sum(~dustConcentrationSetToNoData) >= 2
+              thisDustConcentration(thisGrainSize <= ...
+                smoothingDustSetToZeroBeforeGrainSizeMaxWhenBelowGrainSizeValue) = 0;
+                % 300 mic.
+                % Here we restrict a lot the observations, which make the fit very
+                % impacted only by a few observations...                          @warning
+              y = thisDustConcentration;
+              % y(1) = 0; % to avoid high values at start of the season. 2025-02-21
+              % Removed.
+              
+              % 2025-02-21. Pre-linear interpolation to limit amplitude of spline bumps.
+              y = interp1(x(~dustConcentrationSetToNoData), ...
+                double(y(~dustConcentrationSetToNoData)), ...
+                x, 'linear', 'extrap');
+              F = fit(x, y, 'smoothingspline', ...
+                  weights = double(thisWeight), ...
+                  exclude = [0; dustConcentrationSetToNoData(2:end)], ...
+                  SmoothingParam = smoothingSplineParamForSnowAndDust);
+              y = F(x);
+              % 2025-02-24 Fix both ends with first and last observed grain size.
+              lastIdxWithObservation = ...
+                find(dustConcentrationSetToNoData == 0, 1, 'last');
+              y(lastIdxWithObservation:length(y)) = y(lastIdxWithObservation);
+              firstIdxWithObservation = ...
+                find(dustConcentrationSetToNoData == 0, 1, 'first');
+              y(1:firstIdxWithObservation) = y(firstIdxWithObservation);
+              thisDustConcentration = y;
             else
               thisDustConcentration = ...
                 intmax('uint16') * ones(size(thisDustConcentration), 'uint16');
-            end % if sum(dustConcentrationSetToNoData(1:lastDayWithMaximum)) >= 2
-          else % if sum(grainSizeSetToNoData(1:lastDayWithMaximum)) >= 2
-            thisGrainSize = ...
-              intmax('uint16') * ones(size(thisGrainSize), 'uint16');
-            thisDustConcentration = ...
-              intmax('uint16') * ones(size(thisDustConcentration), 'uint16');
-          end % sum(grainSizeSetToNoData(1:lastDayWithMaximum)) >= 2
-        end % ~peakGrainSizeIsToFix
+            end
+            % Near real time spring and late season, or historic full wateryear.
+            % Seb 2024-05-23: peak for NRT. Cannot work as for historic because when
+            % there is still snow on the last day of NRT record, we don't know if it's
+            % the last day of snow.
+            % NB: This corrrection is done because as snow recedes, some mixed pixels
+            % artificially get lower grain size with the unmixing, because soil and
+            % vegetation are uncovered.
+            %
+          else % if ~peakGrainSizeIsToFix
+            % Grain size.
+            %%%%%%%%%%%%%
 
-        thisGrainSize(thisGrainSize ~= intmax('uint16')) = uint16(max( ...
-          min(thisGrainSize(thisGrainSize ~= intmax('uint16')), ...
-            grainSizeOutputVariable.max(1)), ...
-            grainSizeOutputVariable.min(1)));
-        thisGrainSize(~thisSnowIsAboveMinimum) = intmax('uint16');
-        thisDustConcentration(thisDustConcentration ~= intmax('uint16')) = ...
-          uint16(max( ...
-          min(thisDustConcentration(thisDustConcentration ~= intmax('uint16')), ...
-            dustConcentrationOutputVariable.max(1)), ...
-            dustConcentrationOutputVariable.min(1)));
-        thisDustConcentration(~thisSnowIsAboveMinimum) = intmax('uint16');
+            % set values after peak grain radius to peak
+            thisGrainSize = double(thisGrainSize);
+            thisGrainSize(grainSizeSetToNoData) = NaN;
+            thisGrainSize = hampel(thisGrainSize, 2, 2);
+            thisGrainSize(grainSizeSetToNoData) = NaN;
 
-        d_grain_size_s(pixelIdx, :) = thisGrainSize';
-        d_dust_concentration_s(pixelIdx, :) = thisDustConcentration';
+              % remove spikes and drops.
+            lastIdxWithObservation = find(grainSizeSetToNoData == 0, 1, 'last');
+              % meltOutday. If no obs, we shouldn't be there.
+            [valueOfLastDayWithMaximum, lastDayWithMaximum] = ...
+              max([repmat(NaN, [lastIdxWithObservation - ...
+              peakFixingMaximalDurationInDay, 1]); ...
+              double(thisGrainSize( ...
+                max(1, lastIdxWithObservation - ...
+                peakFixingMaximalDurationInDay + 1):end))]);
+              % Day when grain size reached the peak just before melting.
+
+            % We only interpolate the pixels having enough data until the last day with
+            % maximum included.
+            if lastDayWithMaximum > 2 && ...
+              sum(~grainSizeSetToNoData(1:lastDayWithMaximum)) >= 2
+
+              % Set 1st day to min, helps with keeping spline in check.
+              thisGrainSize(1) = grainSizeOutputVariable.min(1);
+              thisWeight(1) = 1;
+
+              % a. From start to day before max grain size.
+              % NB: to obtain F, we include the lastDayWithMaximum, to be sure to have
+              % at least 2 days with data.
+              x = (1:lastDayWithMaximum - 1)';
+              y = thisGrainSize(1:lastDayWithMaximum);
+              
+              % 2025-02-21. Pre-linear interpolation to limit amplitude of spline bumps.
+              thatgrainSizeSetToNoData = grainSizeSetToNoData(1:lastDayWithMaximum);
+              thatX = (1:lastDayWithMaximum)';
+              y = interp1(thatX(~thatgrainSizeSetToNoData), ...
+                double(y(~thatgrainSizeSetToNoData)), ...
+                thatX, 'linear', 'extrap');
+              F = fit([x; lastDayWithMaximum], y, 'smoothingspline', ...
+                  weights = double(thisWeight([x; lastDayWithMaximum])), ...
+                  exclude = [0; grainSizeSetToNoData(2:lastDayWithMaximum - 1)], ...
+                  SmoothingParam = smoothingSplineParamForGrainSize);
+              y = F(x);
+              firstIdxWithObservation = ...
+                find(grainSizeSetToNoData(1:lastDayWithMaximum) == 0, 1, 'first');
+              y(1:firstIdxWithObservation) = y(firstIdxWithObservation);
+              thisGrainSize(x) = y;
+
+              % b. From max grain size to 7 days before end of record or the end of record
+              % if not full water year.
+              % set those days to (near) max grain size.
+              thisGrainSize(lastDayWithMaximum: ...
+                (length(thisGrainSize) - peakFixingDayWithoutCorrection)) = ...
+                valueOfLastDayWithMaximum;
+
+              %c. last 7 days of record, if full water year, are splined from max to min.
+              % 2025-02-21. Should be the last date of the water year, not the last
+              % date of the data used for interpolation.
+              if peakFixingDayWithoutCorrection ~= 0
+                x = [dateIndicesToSave(end) - peakFixingDayWithoutCorrection, ...
+                  dateIndicesToSave(end)];
+                y = [0, valueOfLastDayWithMaximum, grainSizeOutputVariable.min(1), 0];
+                F = spline(x, y);
+                thisGrainSize(x(1):x(2)) = fnval(F, x(1):x(2));
+              end
+              thisGrainSize = uint16(max(min(thisGrainSize, ...
+                grainSizeOutputVariable.max(1)), ...
+                grainSizeOutputVariable.min(1)));
+
+              % Dust concentration.
+              %%%%%%%%%%%%%%%%%%%%%
+              % We only interpolate the pixels having enough data until the last day with
+              % maximum included.
+              if sum(~dustConcentrationSetToNoData(1:lastDayWithMaximum)) >= 2
+              % Set to 0 all dust concentrations for days with low grain size before the
+              % day of max grain size.
+                thisDustConcentration((thisGrainSize <= ...
+                  smoothingDustSetToZeroBeforeGrainSizeMaxWhenBelowGrainSizeValue) & ...
+                  [ones([lastDayWithMaximum - 1, 1]); ...
+                  zeros([length(thisDustConcentration) - lastDayWithMaximum + 1, 1])]) = 0;
+                %set dust to zero on day 1
+                thisDustConcentration(1) = 0;
+                thisWeight(1) = 1;
+
+                % a. From start to day before max grain size.
+                x = (1:lastDayWithMaximum - 1)';
+                y = thisDustConcentration(1:lastDayWithMaximum);
+                % 2025-02-21. Pre-linear interpolation to limit amplitude of spline bumps.
+                thatDustConcentrationSetToNoData = ...
+                  dustConcentrationSetToNoData(1:lastDayWithMaximum);
+                y = interp1(thatX(~thatDustConcentrationSetToNoData), ...
+                  double(y(~thatDustConcentrationSetToNoData)), ...
+                  thatX, 'linear', 'extrap');
+                F = fit([x; lastDayWithMaximum] , y, 'smoothingspline', ...
+                  weights = double(thisWeight([x; lastDayWithMaximum])), ...
+                  exclude = ...
+                    [0; dustConcentrationSetToNoData(2:lastDayWithMaximum)], ...
+                  SmoothingParam = smoothingSplineParamForSnowAndDust);
+                y = F(x);
+                firstIdxWithObservation = ...
+                  find(dustConcentrationSetToNoData(1:lastDayWithMaximum) == 0, 1, ...
+                  'first');
+                y(1:firstIdxWithObservation) = y(firstIdxWithObservation);
+                thisDustConcentration(x) = y;
+
+                % b. From max grain size to 7 days before end of record or the end of record
+                % if not full water year.
+                thisDustConcentration(lastDayWithMaximum: ...
+                  (length(thisDustConcentration) - peakFixingDayWithoutCorrection)) = ...
+                  thisDustConcentration(lastDayWithMaximum);
+                  % NB: Warning: if there's not many pixels with snow > 90 that date,
+                  % this value will be probably nodata...                           @warning
+                if thisDustConcentration(lastDayWithMaximum) == intmax('uint16')
+                  thisDustConcentration(lastDayWithMaximum: ...
+                  (length(thisDustConcentration) - peakFixingDayWithoutCorrection)) = ...
+                    thisDustConcentration( ...
+                    find(dustConcentrationSetToNoData(1:lastDayWithMaximum - 1) == 0, ...
+                    1, 'last'));
+                end
+
+                %c. last 7 days of record, if full water year, are splined from max to min.
+                % 2025-02-21. Should be the last date of the water year, not the last
+                % date of the data used for interpolation.
+                if peakFixingDayWithoutCorrection ~= 0
+                  x = ...
+                    [dateIndicesToSave(end) - peakFixingDayWithoutCorrection, ...
+                    dateIndicesToSave(end) ];
+                  y = [0, valueOfLastDayWithMaximum, ...
+                    dustConcentrationOutputVariable.min(1), 0];
+                  F = spline(x, y);
+                  thisDustConcentration(x(1):x(2)) = fnval(F, x(1):x(2));
+                end
+                thisDustConcentration = uint16(max(min(thisDustConcentration, ...
+                  dustConcentrationOutputVariable.max(1)), ...
+                  dustConcentrationOutputVariable.min(1)));
+              else
+                thisDustConcentration = ...
+                  intmax('uint16') * ones(size(thisDustConcentration), 'uint16');
+              end % if sum(dustConcentrationSetToNoData(1:lastDayWithMaximum)) >= 2
+            else % if sum(grainSizeSetToNoData(1:lastDayWithMaximum)) >= 2
+              thisGrainSize = ...
+                intmax('uint16') * ones(size(thisGrainSize), 'uint16');
+              thisDustConcentration = ...
+                intmax('uint16') * ones(size(thisDustConcentration), 'uint16');
+            end % sum(grainSizeSetToNoData(1:lastDayWithMaximum)) >= 2
+          end % ~peakGrainSizeIsToFix
+
+          thisGrainSize(thisGrainSize ~= intmax('uint16')) = uint16(max( ...
+            min(thisGrainSize(thisGrainSize ~= intmax('uint16')), ...
+              grainSizeOutputVariable.max(1)), ...
+              grainSizeOutputVariable.min(1)));
+          thisGrainSize(~thisSnowIsAboveMinimum) = intmax('uint16');
+          thisDustConcentration(thisDustConcentration ~= intmax('uint16')) = ...
+            uint16(max( ...
+            min(thisDustConcentration(thisDustConcentration ~= intmax('uint16')), ...
+              dustConcentrationOutputVariable.max(1)), ...
+              dustConcentrationOutputVariable.min(1)));
+          thisDustConcentration(~thisSnowIsAboveMinimum) = intmax('uint16');
+
+          d_grain_size_s(pixelIdx, :) = thisGrainSize';
+          d_dust_concentration_s(pixelIdx, :) = thisDustConcentration';
+          send(thisDataQueue, pixelIdx);
+        catch thisException
+          warning('Error with pixelIdx: %d.', pixelIdx);
+          rethrow(thisException);
+        end
       end % parfor pixelIdx = 1:size(d_viewable_snow_fraction_s, 1)
 
       fprintf(['Done the calculation of temporal filter and interpolation of', ...
@@ -893,7 +977,7 @@ classdef SpiresTimeInterpolator < handle
     function printPixelIsInterpolated(obj, pixelIdx)
       obj.pixelIsInterpolated(pixelIdx) = 1;
       sumOfPixelIsDone = sum(obj.pixelIsInterpolated);
-      if mod(sumOfPixelIsDone, 500) == 0
+      if mod(sumOfPixelIsDone, 2000) == 0
         fprintf(['%s - %d/%d interpolated...\n'], char(datetime(), 'HH:mm:ss'), ...
           sumOfPixelIsDone, length(obj.pixelIsInterpolated));
       end
