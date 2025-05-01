@@ -5098,7 +5098,7 @@ Klamath-Northern California Coastal,12812,huc4,HUC1801,USWestHuc4,10,westernUS,5
 Sacramento,12813,huc4,HUC1802,USWestHuc4,6,westernUS,5,0,1,1,2,0,,,,,,,,,Sacramento,12813,,,
 Tulare-Buena Vista Lakes,12814,huc4,HUC1803,USWestHuc4,9,westernUS,5,0,1,1,2,0,,,,,,,,,Tulare-Buena Vista Lakes,12814,,,
 San Joaquin,12815,huc4,HUC1804,USWestHuc4,8,westernUS,5,0,0.999999999999999,1,2,0,,,,,,,,,San Joaquin,12815,,,
-San Francisco Bay,12816,huc4,HUC1805,USWestHuc4,4,westernUS,5,0,0.999999999999999,1,2,0,,,,,,,,,San Francisco Bay,12816,,,
+San Francisco Bay,12816,huc4,HUC1805,USWestHuc4,4,westernUS,5,0,0.999999999999999,1,0,0,,,,,,,,,San Francisco Bay,12816,,,
 Central California Coastal,12817,huc4,HUC1806,USWestHuc4,1,westernUS,5,0,0.999999999999999,1,2,0,,,,,,,,,Central California Coastal,12817,,,
 Southern California Coastal,12818,huc4,HUC1807,USWestHuc4,2,westernUS,5,0,0.999684334021525,1,2,0,,,,,,,,,Southern California Coastal,12818,,,
 North Lahontan,12819,huc4,HUC1808,USWestHuc4,7,westernUS,5,0,1,1,2,0,,,,,,,,,North Lahontan,12819,,,
