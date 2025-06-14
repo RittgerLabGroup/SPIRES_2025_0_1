@@ -165,12 +165,12 @@ classdef SpiresInversor < handle
       [variable, ~, ~] = espEnv.getVariable(outputDataLabel);
       for varIdx = 1:length(variableList)
         varName = variable(variable.id == variableList(varIdx), :).name{1};
-        if varIdx == 112
+        if variableList(varIdx) == 112
           force = struct();
           [~, ~, thisSize] = espEnv.getIndicesForCellForDataLabel( ...
             objectName, outputDataLabel, force = force, optim = optim);
           data = zeros([thisSize, 3], 'uint8');
-          espEnv.saveData(objectName, outputDataLabel, ...
+          espEnv.saveData(data, objectName, outputDataLabel, ...
             theseDate = thisDate, varName = varName, sourceFileName = '');
         else
           espEnv.instantiateAndSaveData(objectName, outputDataLabel, ...
@@ -365,9 +365,9 @@ classdef SpiresInversor < handle
           obj.variableGroupForMode.filtering, ...
           obj.variableGroupForMode.weights, ...
           obj.variableGroupForMode.others, ...
-          obj.variableGroupForMode.spires];
-          %, obj.variableGroupForMode.gap, ...
-          %obj.variableGroupForMode.smooth, obj.variableGroupForMode.post];
+          obj.variableGroupForMode.spires, ...
+          obj.variableGroupForMode.gap, ...
+          obj.variableGroupForMode.smooth, obj.variableGroupForMode.post];
         obj.reset(thisDate, variableList, optim = optim);
         metaData.statusOfIngest = 1;
         metaData.statusOfWeight = 1;
@@ -1545,9 +1545,9 @@ classdef SpiresInversor < handle
           thisFunctionCode);
 
         obj.reset(thisDate, [obj.variableGroupForMode.others, ...
-          obj.variableGroupForMode.spires], optim = optim);
-          %, obj.variableGroupForMode.gap, ...
-          %obj.variableGroupForMode.smooth, obj.variableGroupForMode.post]);
+          obj.variableGroupForMode.spires, obj.variableGroupForMode.gap, ...
+          obj.variableGroupForMode.smooth, obj.variableGroupForMode.post], ...
+          optim = optim);
 
         % Saving metadata.
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1913,12 +1913,6 @@ classdef SpiresInversor < handle
                 double(backgroundReflectance(:, referenceIdx)) / 100;
               thisSolarZenith = double(solarZenith(referenceIdx));
 
-
-
-
-
-
-
               % Background solution.
               [X, ~] = fmincon(@(x) obj.hyperspectralLookupByNed(x, ...
                   thisReflectance, thisBackgroundReflectance, thisSolarZenith), ...
@@ -1987,12 +1981,6 @@ classdef SpiresInversor < handle
                 fminconParameters.startAndRangeOfValues(3, :), [], ...
                 optimoptions('fmincon', Display = 'none', Algorithm = 'sqp'));
 
-
-
-
-
-
-
               if abs(X(1) - XForNoBackground(1)) < ...
                 spiresSnowFractionDifferenceBackgroundNoBackground
                 X = XForNoBackground;
@@ -2013,19 +2001,19 @@ classdef SpiresInversor < handle
           varIdx = 1; % snow_fraction in percent.
           thisOutputVariable = outputVariable(outputVariable.id == 86, :);
           referenceViewableSnowFraction(referenceIdx) = ...
-            cast(X(1) / thisOutputVariable.divisor(1), thisOutputVariable.type{1});
+            cast(X(1) * thisOutputVariable.divisor(1), thisOutputVariable.type{1});
           varIdx = 2; % shade_fraction in percent.
           thisOutputVariable = outputVariable(outputVariable.id == 88, :);
           referenceShadeFraction(referenceIdx) = ...
-            cast(X(2) / thisOutputVariable.divisor(1), thisOutputVariable.type{1});
+            cast(X(2) * thisOutputVariable.divisor(1), thisOutputVariable.type{1});
           varIdx = 3; % grain_size in um.
           thisOutputVariable = outputVariable(outputVariable.id == 89, :);
           referenceGrainSize(referenceIdx) = ...
-            cast(X(3) / thisOutputVariable.divisor(1), thisOutputVariable.type{1});
+            cast(X(3) * thisOutputVariable.divisor(1), thisOutputVariable.type{1});
           varIdx = 4; % dust_concentration in 10 * ppm.
           thisOutputVariable = outputVariable(outputVariable.id == 90, :);
           referenceDustConcentration(referenceIdx) = ...
-            cast(X(4) / thisOutputVariable.divisor(1), thisOutputVariable.type{1});
+            cast(X(4) * thisOutputVariable.divisor(1), thisOutputVariable.type{1});
           send(thisDataQueue, referenceIdx);
         end  % parfor referenceIdx
         fprintf('Inversed each reference pixel in %.2f mins.\n', toc / 60);
@@ -3071,8 +3059,8 @@ classdef SpiresInversor < handle
       % Instantiate/Save additional variables, calculated in other methods/later in the
       % process
       %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-      % obj.reset(thisDate, [obj.variableGroupForMode.gap, ...
-      %    obj.variableGroupForMode.smooth, obj.variableGroupForMode.post]);
+      obj.reset(thisDate, [obj.variableGroupForMode.gap, ...
+        obj.variableGroupForMode.smooth, obj.variableGroupForMode.post]);
 
       % Saving metadata.
       %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
