@@ -134,7 +134,11 @@ try;
   espEnv.configParallelismPool(${parallelWorkersNb});
   region = Regions(${inputForRegion});
   spiresTimeInterpolator = SpiresTimeInterpolator(region);
-  monthWindows = [3, 3];
+  if strcmp(espEnv.waterYearDate.getNrtOrHist(), 'hist');
+    monthWindows = [3, 3];
+  else;
+    monthWindows = [3, 0];
+  end;
   spiresTimeInterpolator.interpolate(waterYearDate, monthWindows, optim = optim);
 ${catchExceptionAndExit}
 
