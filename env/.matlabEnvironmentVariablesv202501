@@ -1,0 +1,18 @@
+# To edit to your configuration.
+########################################################################################
+# Time zone for parallel pool.
+export TZ=America/Denver
+
+# Absolute path of root directory of the project code, to edit to your configuration.
+export thisEspProjectDir=${projectDir}RLG/SPIRES_2025_0_1/
+export matlabPathForESPToolbox=${thisEspProjectDir}tbx/ESPToolbox
+
+# ESP external matlab package paths
+export matlabPathForInpaintNans=${thisEspProjectDir}external/Inpaint_nans
+export matlabPathForParBal=${projectDir}MATLAB/ParBal
+  # https://github.com/edwardbair/ParBal
+
+# Not to be edited.
+########################################################################################
+# Paths to shared and specific source.
+export webColorMapFilePathInJson=${thisEspProjectDir}tbx/conf/colormaps.json
