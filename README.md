@@ -8,23 +8,23 @@ For this purpose, the code first downloads the MOD09GA files for any region. The
 
 # Installation and code organization.
 
-[Install and requirements](doc/user_guide/install_spires_v202501.md)
-with [output netcdf specifities](doc/user_guide/output_netcdf.md)
+[Install and requirements](doc/user_guide_v202501/install_spires_v202501.md)
+with [output netcdf specifities](doc/user_guide_v202501/output_netcdf_v202501.md)
 
-[Code organization](doc/user_guide/code_organization_spires_v202501.md)
+[Code  and ancillary data organization](doc/user_guide_v202501/code_organization_spires_v202501.md). This page also briefly presents the diversity of the code blocks and how each block interacts with another within the use of a HPC environment and [Slurm](https://slurm.schedmd.com/documentation.html).
 
 
 # Run in historics or near real time.
 
-[SPIReS v2025.0.1 Algorithm near-real time (NRT) run](doc/user_guide/spires_v202501_run_nrt_pipeline.md)
+[SPIReS v2025.0.1 Algorithm near-real time (NRT) run](doc/user_guide_v202501/spires_run_nrt_pipeline_v202501.md)
 
-[SPIReS v2025.0.1 Algorithm historic (HIST) run](doc/user_guide/spires_v202501_run_historics.md)
+[SPIReS v2025.0.1 Algorithm historic (HIST) run](doc/user_guide_v202501/spires_run_historics_v202501.md)
 
-[Checking logs and job result](doc/user_guide/checking_logs.md)
+[Checking logs and job result](doc/user_guide_v202501/checking_logs_v202501.md)
 
 # Complementary documentation.
 
-[Data file organization](doc/user_guide/data_organization_spires_v202410.md)
+[Data file organization](doc/user_guide_v202501/data_organization_spires_v202410.md)
 
 
 
@@ -47,3 +47,25 @@ with [output netcdf specifities](doc/user_guide/output_netcdf.md)
 
 
 <br><br><br>
+----------------------------------------------------------------------------------------
+ PROJECT
+ -------
+ - Owner: University of Colorado Boulder
+ - License: Creative Commons BY 4.0. You are free to (1) share: copy and redistribute
+   the material in any medium or format for any purpose, even commercially; (2) Adapt:
+   remix, transform, and build upon the material for any purpose, even commercially;
+   Under the following terms, (3) Attribution: You must give appropriate credit,
+   provide a link to the license, and indicate if changes were made. You may do so in
+   any reasonable manner, but not in any way that suggests the licensor endorses you or
+   your use. https://creativecommons.org/licenses/by/4.0/.
+ - Citation: TO DETERMINE.
+   https://nsidc.org/snow-today.
+ - Principal Investigator: Karl Rittger
+
+ THIS SCRIPT
+ -----------
+ - Contributors: Sebastien Lenard (SLE)
+ - Emails: sebastien.lenard@gmail.com
+ - Creation date: 2025-04-29 by SLE
+ - Last update: 2025-07-03 by SLE
+----------------------------------------------------------------------------------------
