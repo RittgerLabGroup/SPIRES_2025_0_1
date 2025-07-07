@@ -1,0 +1,37 @@
+# To edit to your configuration.
+########################################################################################
+# Time zone for parallel pool.
+export TZ=America/Denver
+
+# Absolute path of root directory of the project code, to edit to your configuration.
+export thisEspProjectDir=${espProjectDir}
+  # $espProjectDir defined in .bashrc.
+export matlabPathForESPToolbox=${thisEspProjectDir}matlab/
+# export matlabPathForThisProject=
+  # Defined in toolsStart.sh
+
+# ESP external matlab package paths
+export matlabPathForInpaintNans=${thisEspProjectDir}external/Inpaint_nans
+export matlabPathForParBal=${projectDir}MATLAB/ParBal
+  # https://github.com/edwardbair/ParBal
+export matlabPathForRasterReprojection=${projectDir}MATLAB/RasterReprojection
+  # https://github.com/DozierJeff/RasterReprojection
+
+# For Spires v2024.1.0 only.
+export matlabPathForSpiresCore=${projectDir}MATLAB/SPIRES/core
+  # https://github.com/edwardbair/SPIRES
+export matlabPathForSpiresModisHdf=${projectDir}MATLAB/SPIRES/MODIS_HDF
+export matlabPathForSpiresRasterReprojection=${projectDir}MATLAB/SPIRES/RasterReprojection
+export matlabPathForSpiresMccm=${projectDir}MATLAB/SPIRES/MccM
+export matlabPathForSpiresMappping=${projectDir}MATLAB/SPIRES/Mappping
+export matlabPathForSpiresGeneral=${projectDir}MATLAB/SPIRES/General
+export matlabPathForSpiresTimeSpace=${projectDir}MATLAB/SPIRES/TimeSpace
+
+# For creation/update new regions only
+export matlabPathForESPUpdates=${thisEspProjectDir}updates
+
+
+# Not to be edited.
+########################################################################################
+# Paths to shared and specific source.
+export webColorMapFilePathInJson=${thisEspProjectDir}conf/colormaps.json
