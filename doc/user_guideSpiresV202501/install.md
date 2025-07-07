@@ -1,0 +1,72 @@
+# Install
+
+This page gives information about the install step of the project.
+
+After cloning the code to your local repository, you need to configure environment variables and generate the netcdf templates.
+
+## Requirements
+
+### Hardware requirements.
+
+The code makes a heavy use of parallelization, and store a number of big intermediary files, which makes the code is more appropriate to run on a supercomputer. But for testing, it's not impossible to run it partly on a personal laptop.
+
+All tests before code delivery have been done on a supercomputer.
+
+### Software requirements.
+
+The code includes bash and matlab scripts.
+Code tested on:
+- Red Hat Enterprise Linux 8.10 with kernel Linux 4.18.0
+- bash 4.4.20, with some commands installed such as bc, wget
+- Slurm 23.02.8
+- Matlab R2021b, nco/4.8.1 (https://nco.sourceforge.net/)
+
+Many matlab scripts should work on a laptop (mac OC or windows 11), with some environment variables set. But that wasn't tested extensively.
+
+More info on code and ancillary data organization [here](code_organization.md).
+
+## Install.
+
+### Github.
+
+1. Create a fork of the project https://github.com/RittgerLabGroup/SPIRES_2025_0_1.
+2. Clone this fork locally (see https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository).
+3. Create a local copy of ParBal (https://github.com/edwardbair/ParBal).
+4. Create a local copy of RasterReprojection (https://github.com/DozierJeff/RasterReprojection).
+
+There is no need for a local copy of original SPIRES (https://github.com/edwardbair/SPIRES/).
+
+### Initialize the environment file env/.matlabEnvironmentVariablesSpiresV202501.
+
+Set up the variables in the `To edit to your configuration` part to your local configuration. This is where you can redefine paths to the code of this project (`$thisEspProjectDir`) and complementary matlab packages. 
+
+A user should edit their `env/.matlabEnvironmentVariablesSpiresV202501` configuration file to make sure the paths for the SPIReS v2025.0.1, ParBal, RasterReprojection version codes correspond to the paths on their project space (.bashrc environment variable `${projectDir}`).
+
+### Initialize the environment file .netrc.
+Copy the file .netrc from home/ to your home. Then edit the file with your login / password for earthdata.
+
+### Initialize the environment file .bashrc.
+Copy or merge the file .bashrc from home/ to your home or the .bashrc already present in your home.
+
+You then need to edit the variables with your local values. Reach out to the developers of this project to help you for that task.
+
+Beware of these specific variables:
+
+- `$espLogDir`. This is location of all the logs of the project and has these obligatory requirements:
+  - This location **must** be unique and accessible in read/write to all the users of the project for an institution/university. This is facilitated by the naming of a `$level3User` in the `~.bashrc`.
+  - This location **must** be on the resource which has the highest probability to always stay connected to the slurm cluster. In CU configuration, I chose the resource `projects`.
+  - The non respect of these requirements was cause of either an absence of logging or a loss of log files in the past.
+  - These requirements are not necessary for a run on personal laptop without sollicitating access with shared folders.
+
+- `$nrt3ModapsEosdisNasaGovToken`. This is a token personal to the linux user. You should edit the value of $nrt3ModapsEosdisNasaGovToken to the personal token you will retrieve from earthdata, https://urs.earthdata.nasa.gov/profile, generate Token (06/23/2025). This token is temporary and you'll receive regular alerts from earthdata to replace it.
+
+WARNING: The files in `env/` and `home/` are the only ones which should be edited for install. It is not recommended to edit other files, except for advanced use, outside of data production and release.
+
+### Generate the netcdf templates.
+
+The code include .cdl files for each version of the netcdf to be produced. For each of them, a .nc template file should be generated, following instructions in [Output netcdf](output_netcdf.md).
+
+
+
+
+<br><br><br>
