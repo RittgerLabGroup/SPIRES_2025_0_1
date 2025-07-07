@@ -8,23 +8,23 @@ For this purpose, the code first downloads the MOD09GA files for any region. The
 
 # Installation and code organization.
 
-[Install and requirements](doc/user_guide_v202501/install_spires_v202501.md)
-with [output netcdf specifities](doc/user_guide_v202501/output_netcdf_v202501.md)
+[Install and requirements](doc/user_guideSpiresV202501/install.md)
+with [output netcdf specifities](doc/user_guideSpiresV202501/output_netcdf.md)
 
-[Code  and ancillary data organization](doc/user_guide_v202501/code_organization_spires_v202501.md). This page also briefly presents the diversity of the code blocks and how each block interacts with another within the use of a HPC environment and [Slurm](https://slurm.schedmd.com/documentation.html).
+[Code  and ancillary data organization](doc/user_guideSpiresV202501/code_organization.md). This page also briefly presents the diversity of the code blocks and how each block interacts with another within the use of a HPC environment and [Slurm](https://slurm.schedmd.com/documentation.html).
 
 
 # Run in historics or near real time.
 
-[SPIReS v2025.0.1 Algorithm near-real time (NRT) run](doc/user_guide_v202501/spires_run_nrt_pipeline_v202501.md)
+[SPIReS v2025.0.1 Algorithm near-real time (NRT) run](doc/user_guideSpiresV202501/run_nrt_pipeline.md)
 
-[SPIReS v2025.0.1 Algorithm historic (HIST) run](doc/user_guide_v202501/spires_run_historics_v202501.md)
+[SPIReS v2025.0.1 Algorithm historic step (HIST) run](doc/user_guideSpiresV202501/run_historic_step.md)
 
-[Checking logs and job result](doc/user_guide_v202501/checking_logs_v202501.md)
+[Checking logs and job result](doc/user_guideSpiresV202501/checking_logs.md)
 
 # Complementary documentation.
 
-[Data file organization](doc/user_guide_v202501/data_organization_spires_v202410.md)
+[Data file organization](doc/user_guideSpiresV202501/data_organization.md)
 
 
 
