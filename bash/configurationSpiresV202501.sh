@@ -4,22 +4,23 @@
 
 # Script core.
 ########################################################################################
-source env/.matlabEnvironmentVariablesV202501
+source env/.matlabEnvironmentVariablesSpiresV202501
 
 # Configuration of scriptIds associated to script relative filePaths.
 ########################################################################################
 # scriptIds=(mod09gaI spiFillC spiSmooC moSpires scdInCub daMosaic snoStep3 webExpSn)
 declare -A scriptIdFilePathAssociations
-scriptIdFilePathAssociations[mod09gaI]="./scripts/runGetMod09gaFiles.sh"
-scriptIdFilePathAssociations[spiInver]="./scripts/runSpiresInversor.sh"
-scriptIdFilePathAssociations[spiTimeI]="./scripts/runSpiresTimeInterpolator.sh"
-scriptIdFilePathAssociations[moSpires]="./scripts/runUpdateMosaicWithSpiresData.sh"
-scriptIdFilePathAssociations[daNetCDF]="./scripts/runESPNetCDF.sh"
-scriptIdFilePathAssociations[daMosBig]="./scripts/runUpdateMosaicBigRegion.sh"
-scriptIdFilePathAssociations[daGeoBig]="./scripts/runUpdateGeotiffBigRegion.sh"
-scriptIdFilePathAssociations[daStatis]="./scripts/runUpdateDailyStatistics.sh"
-scriptIdFilePathAssociations[webExpSn]="./scripts/runWebExportSnowToday.sh"
-scriptIdFilePathAssociations[ftpExpor]="./scripts/runFtpExport.sh"
+scriptIdFilePathAssociations[mod09gaI]="./bash/runGetMod09gaFiles.sh"
+scriptIdFilePathAssociations[spiInver]="./bashSpiresV202501/runSpiresInversor.sh"
+scriptIdFilePathAssociations[spiTimeI]="./bashSpiresV202501/runSpiresTimeInterpolator.sh"
+scriptIdFilePathAssociations[moSpires]="./bash/runUpdateMosaicWithSpiresData.sh"
+scriptIdFilePathAssociations[daNetCDF]="./bash/runESPNetCDF.sh"
+scriptIdFilePathAssociations[daMosBig]="./bash/runUpdateMosaicBigRegion.sh"
+scriptIdFilePathAssociations[daGeoBig]="./bash/runUpdateGeotiffBigRegion.sh"
+scriptIdFilePathAssociations[daStatis]="./bash/runUpdateDailyStatistics.sh"
+scriptIdFilePathAssociations[webExpSn]="./bash/runWebExportSnowToday.sh"
+scriptIdFilePathAssociations[ftpExpor]="./bash/runFtpExport.sh"
+scriptIdFilePathAssociations[rSynchro]="./bash/runSync.sh"
 
 ########################################################################################
 # Versions of ancillary data.
