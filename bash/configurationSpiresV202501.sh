@@ -11,6 +11,9 @@ source env/.matlabEnvironmentVariablesSpiresV202501
 # scriptIds=(mod09gaI spiFillC spiSmooC moSpires scdInCub daMosaic snoStep3 webExpSn)
 declare -A scriptIdFilePathAssociations
 scriptIdFilePathAssociations[mod09gaI]="./bash/runGetMod09gaFiles.sh"
+scriptIdFilePathAssociations[spiInges]="./bashSpiresV202501/runSpiresInversor.sh"
+  # Same script as spiInver.
+scriptIdFilePathAssociations[spiBackg]="./bashSpiresV202501/runSpiresAncillary.sh"
 scriptIdFilePathAssociations[spiInver]="./bashSpiresV202501/runSpiresInversor.sh"
 scriptIdFilePathAssociations[spiTimeI]="./bashSpiresV202501/runSpiresTimeInterpolator.sh"
 scriptIdFilePathAssociations[moSpires]="./bash/runUpdateMosaicWithSpiresData.sh"
@@ -76,41 +79,7 @@ monthWindowsForConfOfMonths[141]=1
 # Implemented like this because not possible to put arrays in values of a dictionary.
 
 ########################################################################################
-# Pipeline 2, stopping at mosaic .mats.
-########################################################################################
-
-pipeLineScriptIds2=(mod09gaI spiFillC spiSmooC moSpires scdInCub)
-pipeLineLabels2=(v061 v2024.0d v2024.0d v2024.0d v2024.0d v2024.0d v2024.0d v2024.0d v2024.0d v2024.0d)
-pipeLineRegionTypes2=(0 0 0 0 0 0 1 1 1 10)
-  # 0: tile, 1: big region, 10: all regions.
-pipeLineSequences2=(0 0 001-036 0 0 0 0 0 001-033 0)
-pipeLineSequenceMultiplierToIndices2=(1 1 1 1 1 1 1 1 3 1)
-pipeLineMonthWindows2=(2 2 12 12 12 12 12 0 12 12)
-pipeLineParallelWorkersNb2=(0 18 10 10 0 2 6 0 0 0)
-
-# sbatch parameters
-pipeLineTasksPerNode2=(1 18 10 10 5 2 6 1 1 1)
-pipeLineMems2=(1G 140G 30G 40G 30G 5G 30G 24G 8G 3G)
-pipeLineTimes2=(01:30:00 23:45:00 03:30:00 00:30:00 00:20:00 00:30:00 00:30:00 00:20:00 03:30:00 01:30:00)
-# NB: daGeoBig: time for generation of the last day only.
-# NB: daStatis: time for 3 subdivisions only.
-
-# Bypassing the unavailability of declare -n in bash 4.2.
-# declare -n could have been used in toolsStart.sh to reference these arrays, but
-# it's only available in bash 4.4, while blanca/login/alpine nodes are in bash 4.2
-printf -v pipeLineScriptIdsString2 '%s ' ${pipeLineScriptIds2[@]}
-printf -v pipeLineLabelsString2 '%s ' ${pipeLineLabels2[@]}
-printf -v pipeLineRegionTypesString2 '%s ' ${pipeLineRegionTypes2[@]}
-printf -v pipeLineSequencesString2 '%s ' ${pipeLineSequences2[@]}
-printf -v pipeLineSequenceMultiplierToIndicesString2 '%s ' ${pipeLineSequenceMultiplierToIndices2[@]}
-printf -v pipeLineMonthWindowsString2 '%s ' ${pipeLineMonthWindows2[@]}
-printf -v pipeLineParallelWorkersNbString2 '%s ' ${pipeLineParallelWorkersNb2[@]}
-printf -v pipeLineTasksPerNodeString2 '%s ' ${pipeLineTasksPerNode2[@]}
-printf -v pipeLineMemsString2 '%s ' ${pipeLineMems2[@]}
-printf -v pipeLineTimesString2 '%s ' ${pipeLineTimes2[@]}
-
-########################################################################################
-# Pipeline 3, for regions with implementation >= v2024.0f.
+# Pipeline 3, for regions with implementation >= v2025.0.1.
 ########################################################################################
 # pipeLineScriptIds3=(mod09gaI spiInver spiSmooC moSpires daNetCDF daGeoBig daStatis webExpSn ftpExpor)
 pipeLineBigRegionId3=7 # New Zealand.
@@ -118,7 +87,7 @@ pipeLineVersionOfAncillary3=v3.2
 pipeLineInputProductAndVersion3=mod09ga.061
 pipeLineControlScriptId3=snr25017
 pipeLineControlTime3=11:30:00
-thatLabel=v2025.0.1; # v2024.0f
+thatLabel=v2025.0.1;
 pipeLineScriptIds3=(mod09gaI spiInver spiTimeI moSpires daNetCDF daGeoBig daStatis ftpExpor webExpSn)
 pipeLineLabels3=(v061 ${thatLabel} ${thatLabel} ${thatLabel} ${thatLabel} ${thatLabel} ${thatLabel} ${thatLabel} ${thatLabel}) 
 pipeLineRegionTypes3=(0 0 0 0 0 1 1 1 10)
