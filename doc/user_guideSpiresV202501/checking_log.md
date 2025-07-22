@@ -155,6 +155,20 @@ cat *292*19647585*.out | grep "Matlab string" -A 50
 ```
 Convenient to debug the code on a Matlab interactive session.
 
+### Cancel jobs during execution.
+
+If something goes wrong during the execution and there's for instance an infinite sequences of resubmissions, the user can take advantage of the following procedure to cancel the jobs in a clean way.
+
+First cancel the main monitoring job running the script `runSubmitter.sh`, using the slurm command `scancel`. This will prevent the automatic resubmission of jobs.
+
+Then, list the jobs to be cancelled. For each of them, create an empty file (with command touch) in the user's `$espScratchDir` (defined in `.bashrc`), folder `espJobs`. Each file should have a filename in the format `${slurmJobId}_scancel.txt`, where `${slurmJobId}` is the job id, for instance `${espScratchDir}espJobs/19938144_1093_scancel.txt` for the job `19938144_1093`. 
+
+Once done, the matlab central Data Manager class (`espEnv`) will check if this file exist and if yes will trigger an error that will cancel the job.
+
+Some jobs do not use directly matlab, steps `mod09ga` and `daGeoBig` [at the date of 2025-07-21]. You can cancel these jobs using the slurm command `scancel`.
+
+Last, if you don't have any running job and still see with the command/alias `squeue` some jobs blocked by a dependency, you can execute the alias `scancelDepN` to cancel them all (alias defined in `.bashrc`).
+
 ### After execution.
 
 After execution, an array synthesizing the achievement status is displayed at the end of the log.
