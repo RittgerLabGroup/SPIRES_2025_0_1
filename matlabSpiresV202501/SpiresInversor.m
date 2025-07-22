@@ -685,8 +685,8 @@ classdef SpiresInversor < handle
         sizeForOnePixel = [1, 1];
           % pixel size at nadir, height width in km.
           % RMQ: the exact size is more 463x2 m?                          @tocheck
-        [ppl, ppt, ~] = pixelSize(earthRadius, orbitHeight, sizeForOnePixel, ...
-          double(sensorZenith));
+        [ppl, ppt, ~] = espEnv.modisData.pixelSize(earthRadius, orbitHeight, ...
+          sizeForOnePixel, double(sensorZenith));
           % ppl: pixel size in along-track direction, ppt: pixel size in
           % cross-track direction.
           % in function call to sind(sensorZenith) which requires double.
