@@ -5,6 +5,10 @@
 # This rsync will only create or update files, it's not a mirror <> copy.
 # NB: Use environment variables espArchiveDir and espScratchDir. Don't forget to set
 # them.
+#
+# bash/runRsync.sh -h for all options and arguments.
+#
+
 #SBATCH --export=NONE
 #SBATCH --mail-type=FAIL,INVALID_DEPEND,TIME_LIMIT,REQUEUE,ARRAY_TASKS
 

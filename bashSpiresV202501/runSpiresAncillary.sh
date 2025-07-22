@@ -1,12 +1,11 @@
 #!/bin/bash
 #
-# Generate and interpolate spires gap filled cubes for a given tile
-# and water year.
-#
+# Generate background reflectance ancillary data for SPIReS v2025+
 # Read bash/configurationForHelp.sh for all options and arguments.
 #
 #SBATCH --export=NONE
 #SBATCH --mail-type=FAIL,INVALID_DEPEND,TIME_LIMIT,REQUEUE,ARRAY_TASKS
+
 
 export SLURM_EXPORT_ENV=ALL
 
@@ -15,11 +14,11 @@ export SLURM_EXPORT_ENV=ALL
 # Main script constants. 
 # Can be overriden by pipeline parameters in configuration.sh, itself can be overriden
 # by main script options.
-scriptId=spiTimeI
-defaultSlurmArrayTaskId=292001
+scriptId=spispiBackg
+defaultSlurmArrayTaskId=292
 expectedCountOfArguments=
-inputDataLabels=(modspiresdaily vnpspiresdaily spiresdailytifsinu spiresdailymetadatajson)
-outputDataLabels=(modspirestimebycell vnpspirestimebycell)
+inputDataLabels=(modspiresdailytifsinu modspiresdailymetadatajson)
+outputDataLabels=(backgroundreflectanceformodisforwateryear)
 filterConfLabel=
 mainBashSource=${BASH_SOURCE}
 mainProgramName=${BASH_SOURCE[0]}
@@ -28,9 +27,12 @@ beginTime=
 
 # Following can be overriden by pipeling configuration.sh
 thisRegionType=0
-thisSequence=001-036
-thisSequenceMultiplierToIndices=1
-thisMonthWindow=12
+thisSequence=
+thisSequenceMultiplierToIndices=
+thisMonthWindow=4
+
+# Matlab package paths added.
+matlabPackages=(inpaintNans)
 
 source bash/toolsStart.sh
 if [ $? -eq 1 ]; then
@@ -41,11 +43,6 @@ fi
 # None.
 
 source bash/toolsMatlab.sh
-
-# Variables for Matlab code.
-########################################################################################
-
-#machine specific parameters.
 
 # Matlab.
 ########################################################################################
@@ -61,19 +58,12 @@ try;
   ${optimInstantiation}
   espEnv.configParallelismPool(${parallelWorkersNb});
   region = Regions(${inputForRegion});
-  spiresTimeInterpolator = SpiresTimeInterpolator(region);
-  if strcmp(espEnv.waterYearDate.getNrtOrHist(), 'hist');
-    monthWindows = [3, 3];
-  else;
-    monthWindows = [3, 0];
+  ancillary = SpiresAncillary(region);
+  ancillary.calculateBackgroundReflectance(waterYearDate.getWaterYear());
   end;
-  spiresTimeInterpolator.interpolate(waterYearDate, monthWindows, optim = optim);
 ${catchExceptionAndExit}
 
 EOM
 
 # Launch Matlab and terminate bash script.
 source bash/toolsStop.sh
-
-# "if ${nbDays} ~= 0; theseDates = theseDates((end - ${nbDays}):end); end; "
-
