@@ -11,6 +11,8 @@ The NRT pipeline is a production chain which goal is to generate and deliver out
 
 Because there's a limit in the number of tasks we can submit in parallel to the Slurm cluster, we advise creating new, distinct pipelines to add new big regions. Each pipeline uses the same code but is configured differently and should be run one after the other.
 
+Note that *NRT* in *NRT pipeline* is a label for the *daily* use of this pipeline to update data. It's not to be confused with the *NRT* and *historical* labels for the input data (e.g. MOD09GA data files), which are determined by the providers of remote sensing products. The NRT pipeline ingest both NRT and historical input data.
+
 **Big regions** are arbitrary sets of tiles ([MODIS Tiles](https://modis-land.gsfc.nasa.gov/MODLAND_grid.html)) for which we run the production chain in parallel. Their definition is in the [regionConf](code_organization.md#list-of-configuration-files).
 
 To carry out the work objectives of the pipeline, we submit a call to a virtual supervisor, named `runSubmitter.sh`. Once started through a Slurm job, this supervisor divides the workload of the pipeline into multiple tasks to carry out sequentially and/or parallelly, each task corresponding to an individual Slurm job. The `runSubmitter.sh` monitors the execution of these tasks as described [here](code_organization.md#code-interactions-within-a-submission-to-slurm). 
