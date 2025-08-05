@@ -25,9 +25,9 @@ Each step will generate data for a set of objects, referenced by **objectId** or
 
 For each object to handle, the process launches as many parallel jobs as the number of objects given to the step. This corresponds to 1 job per object, except (1) for the step *daStatis*, for which it combines several objects in the same job, and (2) for the step *spiTimeI* (in SPIReS v2025.0.1), for which it divides the interpolation task into 36 jobs. If the pipeline handles the big region covering 5 tiles, this generates the submission of 5x36=180 parallel jobs, and more if job failure occurs. 
 
-**WaterYearDate**. Each step runs over a [specific period of time](#steps-and-scriptid). To control that period of time, we designed the concept of WaterYearDate. This class allows the code to cover a period knowing (1) the last date of the period, and (2) the month window before this date. For instance, if I want to cover the ongoing WaterYear for the Western US and if today is 2025/07/10, the WaterYearDate will be set to the date of 2025/07/09, with a window of 12 months. The code automatically cuts the period at the start of the waterYear, and the WaterYearDate will cover only the period from 10/01/2024 to 2025/07/09, that is, 10 months, with the last month cut after the 10th day.
+**WaterYearDate**. Each step runs over a [specific period of time](#steps-and-scriptid). To control that period of time, we designed the concept of WaterYearDate. This class allows the code to cover a period knowing (1) the last date of the period, and (2) the month window before this date. For instance, if I want to cover the ongoing WaterYear for the Western US and if today is 2025-07-10, the WaterYearDate will be set to the date of 2025-07-09, with a window of 12 months. The code automatically cuts the period at the start of the waterYear, and the WaterYearDate will cover only the period from 2024-10-01 to 2025-07-09, that is, 10 months, with the last month cut after the 10th day.
 
-**WaterYear**. A water year is the period over which users tend to study the hydrology of snowy watersheds. The concept is designed to be certain that the peak of snow cover and snowmelt is not at the start or the end of the period. For SPIReS v2024.1.0, the water year N is coded to start 10/01/(N-1) and end 30/09/N, for instance, 10/01/2024 to 09/30/2025 for water year 2025.
+**WaterYear**. A water year is the period over which users tend to study the hydrology of snowy watersheds. The concept is designed to be certain that the peak of snow cover and snowmelt is not at the start or the end of the period. For SPIReS v2024.1.0, the water year N is coded to start (N-1)-10-01 and end N-30-09, for instance, 2024-10-01 to 2025-09-30 for water year 2025.
 
 
 **Data, input data, intermediary data, output data, ancillary data**. In the scope of this project, data are discrete spatio-temporal information, either extracted from remote sensors, or calculated with the input of the data from remote sensors. Data can be temporal sequences of rasters for a specific region of the Earth, but also spatio-temporal statistics determined from these rasters, as displayed in the [snow-today website](https://nsidc.org/snow-today/snow-viewer).
@@ -232,13 +232,13 @@ After the user's reply "y", `runSubmitter.sh` job is submitted. Once started, it
 
 The pipeline has some expectations over the input and intermediary data available.
 
-- For a water year N, the `spiInver` data **must** have been generated starting Sept (Northern Hemisphere) / Apr (Southern Hemisphere), N - 1 until date of today - 2 months. For instance, for `westernUS` if the date of today = 03/15/2025, the data must have been generated from 09/01/2024 to 01/31/2025.
+- For a water year N, the `spiInver` data **must** have been generated starting Sept (Northern Hemisphere) / Apr (Southern Hemisphere), N - 1 until date of today - 2 months. For instance, for `westernUS` if the date of today = 2025-03-15, the data must have been generated from 2024-09-01 to 2025-01-31.
 
 - For a water year N, the `spiBackg` data (background reflectance) **must** have been generated from Aug-Sept N-1 (Northern Hemisphere) / Jan-March N-1 (Southern Hemisphere). This is carried out by the step `spiBackg` in the [generation of historics](run_historic_step.m).
 
 - The `dailycsv` statistic files of previous years **must** have been generated, for a correct display on the snow-today website.
 
-- The output `NetCDF` and `dailycsv` files are generated for the full ongoing water year, from 10/1 until the date of today - 1. The geotiffs for the web-app are only generated for the last day.
+- The output `NetCDF` and `dailycsv` files are generated for the full ongoing water year, from 10-01 until the date of today - 1. The geotiffs for the web-app are only generated for the last day.
 
 ## Location of input, intermediary, and output data.
 
