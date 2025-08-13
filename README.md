@@ -6,6 +6,8 @@ The algorithm produces daily raster images of snow cover and snow surface proper
 
 For this purpose, the code first downloads the MOD09GA files for any region. Then, it carried out the different steps of the SPIReS algorithm v2025.0.1. The output files consist of netcdf files with values for snow variables per modis tile and day, and statistic files used by the [snow-today website](https://nsidc.org/snow-today/snow-viewer).
 
+A brief description of the evolutions implemented for SPIReS v2025.0.1 compared to the [SPIReS v2024.1.0](https://github.com/RittgerLabGroup/SPIRES_2024_1_0) (Rittger et al., 2025) is available (here)[evolution_vs_previous_version.md].
+
 # Installation and code organization.
 
 [Install and requirements](doc/user_guideSpiresV202501/install.md)
@@ -33,6 +35,7 @@ with [output netcdf specifities](doc/user_guideSpiresV202501/output_netcdf.md)
 - Bair, E. H., Abreu Calfa, A., Rittger, K., & Dozier, J. (2018). Using machine learning for real-time estimates of snow water equivalent in the watersheds of Afghanistan. The Cryosphere 12(5), 1579-1594, doi: 10.5194/tc-12-1579-2018. https://github.com/edwardbair/ParBal. 
 - Bair, E. H., Rittger, K., Davis, R. E., Painter, T. H., & Dozier, J. (2016). Validating reconstruction of snow water equivalent in California\'s Sierra Nevada using measurements from the NASA Airborne Snow Observatory. Water Resources Research 52, doi: 10.1002/2016WR018704. 
 - Bair, E.H., Stillinger, T., & Dozier, J. (2021). Snow Property Inversion from Remote Sensing (SPIReS): A generalized multispectral unmixing approach with examples from MODIS and Landsat 8 OLI. IEEE Transactions on Geoscience and Remote Sensing 59(9), 7270-7284, doi: 10.1109/TGRS.2020.3040328. https://github.com/edwardbair/SPIRES. 
+- Lenard, S. J.P., Rittger, K., Palomaki, R., & Dozier, J. (2024). Early results for snow surface properties from SPIReS multispectral unmixing of VIIRS NPP/Suomi land surface reflectance data: extending the MODIS record. AGU Fall Meeting abstracts, C23C-0461. https://agu.confex.com/agu/agu24/meetingapp.cgi/Paper/1696949.
 - Palomaki, R. T., Rittger, K., Lenard, S. J. P., Bair, E. H., Dozier, J., Skiles, M., & Painter, T. H. (2025). Assessment for mapping snow albedo from MODIS. Remote Sensing of Environment 326, 114742, https://doi.org/10.1016/j.rse.2025.114742.
 - Rittger, K., Bair, E.H., Kahl, A., & Dozier, J. (2016). Spatial estimates of snow water equivalent from reconstruction. Advances in Water Resources 94, 345-363, doi: 10.1016/j.advwatres.2016.05.015.
 - Stillinger, T., Rittger, K., Raleigh, M.S., Michell, A., Davis, R.E., & Bair, E.H. (2023). Landsat, MODIS, and VIIRS snow cover mapping algorithm performance as validated by airborne lidar datasets. The Cryosphere 17, 567-590, doi: 10.5194/tc-17-567-2023.
@@ -67,5 +70,5 @@ with [output netcdf specifities](doc/user_guideSpiresV202501/output_netcdf.md)
  - Contributors: Sebastien Lenard (SLE)
  - Emails: sebastien.lenard@gmail.com
  - Creation date: 2025-04-29 by SLE
- - Last update: 2025-07-03 by SLE
+ - Last update: 2025-08-12 by SLE
 ----------------------------------------------------------------------------------------
