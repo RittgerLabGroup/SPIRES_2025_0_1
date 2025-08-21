@@ -134,19 +134,19 @@ In this project, used at step `mod09ga`. | ~/.netrc |
 |---|---|---|---|
 | id_rsa | linux environment | Linux user-specific private and public key files to automatic authentication to remote servers. storing credentials to access remote servers.<br> In this project, used at step `webExpSn`. | ~/.ssh/id_rsa_nusnow |
 |---|---|---|---|
-| matlabConf | bash environment | User-specific configuration script that contains all paths to matlab code necessary for the project.<br> During installation, the user should edit the part entitled `# To edit to your configuration.` <br> In particular, the variable `thisEspProjectDir` should be set to the path of the user's local repository, and the paths of external packages adapted to the paths the user decided for installation. | `env/.matlabEnvironmentVariablesSpiresV202410` |
+| matlabConf | bash environment | User-specific configuration script that contains all paths to matlab code necessary for the project.<br> During installation, the user should edit the part entitled `# To edit to your configuration.` <br> In particular, the variable `thisEspProjectDir` should be set to the path of the user's local repository, and the paths of external packages adapted to the paths the user decided for installation. | `env/.matlabEnvironmentVariablesSpiresV202501` |
 |---|---|---|---|
-| bashConf | bash environment | Configuration of the NRT pipeline steps, with slurm configuration + general bash configuration. Used for NRT pipeline + historicals. | `bash/configurationSpiresV202410.sh` |
+| bashConf | bash environment | Configuration of the NRT pipeline steps, with slurm configuration + general bash configuration. Used for NRT pipeline + historicals. | `bash/configurationSpiresV202501.sh` |
 |---|---|---|---|
-| bashConfHist | bash environment | Configuration of the historic steps, with slurm configuration. Used for historicals. | `bash/configurationForHistoricsSpiresV202410.sh` |
+| bashConfHist | bash environment | Configuration of the historic steps, with slurm configuration. Used for historicals. | `bash/configurationForHistoricsSpiresV202501.sh` |
 |---|---|---|---|
-| fileConf | matlab environment | File path patterns associated with all dataLabels, which identify the type of data or ancillary data. Also includes information on date format within the file, and file names given during export to the web-app, step `webExpSn`. <br> Currently, this conf file is not used by the bash scripts, which, when necessary at steps `mod09ga` and `ftpExpor`, hard code the file paths. | `conf/configuration_of_filepathsSpiresV202410.csv` |
+| fileConf | matlab environment | File path patterns associated with all dataLabels, which identify the type of data or ancillary data. Also includes information on date format within the file, and file names given during export to the web-app, step `webExpSn`. <br> Currently, this conf file is not used by the bash scripts, which, when necessary at steps `mod09ga` and `ftpExpor`, hard code the file paths. | `conf/configuration_of_filepathsSpiresV202501.csv` |
 |---|---|---|---|
-| regionConf | bash + matlab environment | Definition of regions, for tiles and big regions, including their `objectId` (column `id`), the version of their ancillary data (column `versionOfAncillary`), and, for tiles, the big region they belong to (column `bigRegionId`). <br> This conf is called by the bash scripts using `awk` function and the column order **MUST NEVER** be changed in this file. | `conf/configuration_of_regionsSpiresV202410.csv` |
+| regionConf | bash + matlab environment | Definition of regions, for tiles and big regions, including their `objectId` (column `id`), the version of their ancillary data (column `versionOfAncillary`), and, for tiles, the big region they belong to (column `bigRegionId`). <br> This conf is called by the bash scripts using `awk` function and the column order **MUST NEVER** be changed in this file. | `conf/configuration_of_regionsSpiresV202501.csv` |
 |---|---|---|---|
-| subdivisionConf | matlab environment | Definition of the land subdivisions, that is the territories used to calculate statistics and to focus on snow patterns in the images displayed on the Snow-Today website. Configuration used in the step `daStatis` and `webExpSn` | `conf/configuration_of_landsubdivisionsSpiresV202410.csv` |
+| subdivisionConf | matlab environment | Definition of the land subdivisions, that is the territories used to calculate statistics and to focus on snow patterns in the images displayed on the Snow-Today website. Configuration used in the step `daStatis` and `webExpSn` | `conf/configuration_of_landsubdivisionsSpiresV202501.csv` |
 |---|---|---|---|
-| varVersionConf | matlab environment | Definition of input/ouput for variables depending the input and ouput DataLabel, with formats, size, names in files. | `conf/configuration_of_versionsvariablesSpiresV202410.csv` |
+| varVersionConf | matlab environment | Definition of input/ouput for variables depending the input and ouput DataLabel, with formats, size, names in files. | `conf/configuration_of_versionsvariablesSpiresV202501.csv` |
 |---|---|---|---|
 
 The list is not exhaustive, with ~10 configuration files to document in addition.

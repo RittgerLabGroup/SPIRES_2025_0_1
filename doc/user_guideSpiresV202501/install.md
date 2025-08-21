@@ -125,7 +125,7 @@ For the rest of the installation, the user should go to the root of the user's l
 
 ### Initialize the environment file matlabEnvironmentVariables.
 
-For SPIReS v2024.1.0, *matlabEnvironmentVariables* is the file `env/.matlabEnvironmentVariablesSpiresV202501`.
+For SPIReS v2025.0.1, *matlabEnvironmentVariables* is the file `env/.matlabEnvironmentVariablesSpiresV202501`.
 
 Set up the variables in the `To edit to your configuration` part to your local configuration. This is where you can redefine paths to the code of this project (`$thisEspProjectDir`) and complementary MATLAB packages. 
 
@@ -293,7 +293,7 @@ The primary source of ancillary data is stored in `${espArchiveDirNrt}` (defined
 
 ### Ancillary data files.
 
-For SPIReS v2024.1.0, we set the list of the relative paths to ancillary data files [in this file](conf/configuration_of_filepathsSpires.csv) [2025/07/10].
+For SPIReS v2025.0.1, we set the list of the relative paths to ancillary data files [in this file](conf/configuration_of_filepathsSpires.csv) [2025/07/10].
 
 | dataLabel | Description | Paths | Use in steps | Comment |
 |---|---|---|---|---|

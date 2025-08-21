@@ -203,7 +203,7 @@ confOfMonthId=120
 optionForWaterYearDateString=
 thisEnvironment=SpiresV202501
 optionForEndYear="-f 2000"
-scriptId=spiInge
+scriptId=spiInges
 optionForLagTimeBetweenSubmissionOfYears=
 bash/submitHistoric.sh -B $bigRegionId -C $confOfMonthId $optionForWaterYearDateString -E $thisEnvironment $optionForEndYear -s $scriptId $optionForLagTimeBetweenSubmissionOfYears
 ```

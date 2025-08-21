@@ -127,10 +127,10 @@ The user notes the job id of the `runSubmitter.sh`, here `20164305` and would<su
 
 To run it without the prompt:
 ```bash
-thisEnvironment=SpiresV202410
+thisEnvironment=SpiresV202501
 pipelineId=1
 
-bash/submitNrt.sh -E SpiresV202501 -v 10 -Z 3
+bash/submitNrt.sh -E $thisEnvironment -v 10 -Z 3
 ```
 The script will achieve this without waiting for the user's input and will submit the job.
 
@@ -143,7 +143,7 @@ For testing, the user should first `rsync` the folders `modis_ancillary`, `modis
 
 Then the user can execute:
 ```bash
-thisEnvironment=SpiresV202410
+thisEnvironment=SpiresV202501
 pipelineId=1
 bash/submitNrt.sh -E $thisEnvironment -W 1 -y $espScratchDir -Z $pipelineId daStatis
 ```
@@ -194,7 +194,7 @@ Scenario 4: you want to automatize the launch of the script, for instance using 
 
 The script starts by printing the current directory (working directory). Then it collects the option and argument values and prints a synthesis, with default values if necessary.
 
-Then it loads `bash/configurationSpiresV202401.sh`, `SpiresV202501` being the option `-E thisEnvironment` given to `submitNrt.sh`. That script first loads `env/.matlabEnvironmentVariablesSpiresV202501`, where all matlab paths are configured for this project. And then it instantiates the configuration of each step of the pipeline `3`, given by the parameter `-Z pipelineId`. The configuration includes the configuration of the pipeline itself, that is (1) the sequence of scripts to execute, given by `pipeLineScriptIds3` for `pipelineId=3`, (2) the big regions for which data will be generated (not too many regions can be added to a pipeline, it sometimes requires creating an additional pipeline), but also (3) individual Slurm step submission options such as task number, memory, and time-wall.
+Then it loads `bash/configurationSpiresV202501.sh`, `SpiresV202501` being the option `-E thisEnvironment` given to `submitNrt.sh`. That script first loads `env/.matlabEnvironmentVariablesSpiresV202501`, where all matlab paths are configured for this project. And then it instantiates the configuration of each step of the pipeline `3`, given by the parameter `-Z pipelineId`. The configuration includes the configuration of the pipeline itself, that is (1) the sequence of scripts to execute, given by `pipeLineScriptIds3` for `pipelineId=3`, (2) the big regions for which data will be generated (not too many regions can be added to a pipeline, it sometimes requires creating an additional pipeline), but also (3) individual Slurm step submission options such as task number, memory, and time-wall.
 
 Once done, the script loads `bash/toolsRegion.sh`. That script instantiates all the region configuration, mainly from `conf/configuration_of_regions.csv`, with a few hard-coded variables.
 
@@ -262,7 +262,7 @@ A method to cleanly cancel (=kill) jobs is described [here](checking_log.md#canc
 
 ### Steps and scriptId
 
-Here are the NRT- and historic-generation steps for SPIReS v2024.1.0:
+Here are the NRT- and historic-generation steps for SPIReS v2025.0.1:
 
 | # | scriptId | description | NRT | historical | period for NRT  | period for historicals |
 |---|---|---|---|---|---|---|
@@ -322,7 +322,7 @@ Here are a few examples of objects:
 | 12778 | Colorado Headwaters HUC1401 | subdivision huc4 | subdivisions |
 |---|---|---|---|
 
-Full list is in the regions file `conf/configuration_of_regionsSpiresV202410.csv` and the subdivisions file `conf/configuration_of_landsubdivisionsSpiresV202410.csv`.
+Full list is in the regions file `conf/configuration_of_regionsSpiresV202501.csv` and the subdivisions file `conf/configuration_of_landsubdivisionsSpiresV202501.csv`.
 
 ### DataLabels
 
@@ -376,7 +376,7 @@ The data spaces are:
 |---|---|---|---|---|
 | `projectDir` | code | ~/.bashrc | |
 |---|---|---|---|---|
-| `thisEspProjectDir` | code | env/.matlabEnvironmentVariablesSpiresV202410 | other projects, such as external matlab packages are also defined in this file |
+| `thisEspProjectDir` | code | env/.matlabEnvironmentVariablesSpiresV202501 | other projects, such as external matlab packages are also defined in this file |
 | `espLogDir` | code | ~/.bashrc | centralized location of logs. |
 |---|---|---|---|---|
 | `espScratchDir` | scratch | ~/.bashrc | variable `$slurmAlternativeScratchDir1` points to the same space, was added to handle directory links that matlab can sometimes not handle correctly. |

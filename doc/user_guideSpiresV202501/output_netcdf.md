@@ -35,7 +35,7 @@ Current available templates:
 ```bash
 cdlFilePath=${espDevProjectDir}template/outputnetcdf.v2025.0.1.hist.cdl
   # Candidate for Global mod09ga SPIReS (v2 (?) for NSIDC).
-cdlFilePath=${espDevProjectDir}template/outputnetcdf.v2024.0.1.nrt.cdl
+cdlFilePath=${espDevProjectDir}template/outputnetcdf.v2025.0.1.nrt.cdl
   # Same as above, for near real time data.
 ```
 
