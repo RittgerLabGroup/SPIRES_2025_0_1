@@ -90,7 +90,7 @@ thisEnvironment=SpiresV202501
   # For this project MUST be SpiresV202501.
 optionForEndYear="-f 2023"
   # Year considered for the work. Here, since confOfMonthId=20, the work will cover October to December of 2023, which corresponds to the first part of the waterYear 2024 in the Northern Hemisphere as defined for this project. If the user want the second part, the user should set confOfMonthId=30 and optionForEndYear="-f 2024".
-scriptId=mod09ga
+scriptId=mod09gaI
   # Code of the step/script to use. Full list of codes is in the variable $authorizedScriptIds defined in conf/configurationForHistoricsSpiresV202501.sh.
 optionForLagTimeBetweenSubmissionOfYears=
   # Most steps don't require this option. But occasionally, in particular for steps handling interpolation (for SPIReS v2025.0.1 step spiTimeI), the number of jobs to submit for the step is just too big, and we need to insert a lag between submission to avoid to overwhelm slurm and have jobs rejected. In that case, the syntax is optionForLagTimeBetweenSubmissionOfYears="-t 1h" for instance, to have a lag of 1 h between the various submissions required when the user launches the command below, or optionForLagTimeBetweenSubmissionOfYears="-t 30m" for a lag of 30 minutes.
@@ -106,7 +106,7 @@ confOfMonthId=30
 optionForWaterYearDateString=
 thisEnvironment=SpiresV202501
 optionForEndYear="-f 2024"
-scriptId=mod09ga
+scriptId=mod09gaI
 optionForLagTimeBetweenSubmissionOfYears=
 bash/submitHistoric.sh -B $bigRegionId -C $confOfMonthId $optionForWaterYearDateString -E $thisEnvironment $optionForEndYear -s $scriptId $optionForLagTimeBetweenSubmissionOfYears
 ```
@@ -119,7 +119,7 @@ confOfMonthId=130
 optionForWaterYearDateString=
 thisEnvironment=SpiresV202501
 optionForEndYear="-f 2023"
-scriptId=mod09ga
+scriptId=mod09gaI
 optionForLagTimeBetweenSubmissionOfYears=
 bash/submitHistoric.sh -B $bigRegionId -C $confOfMonthId $optionForWaterYearDateString -E $thisEnvironment $optionForEndYear -s $scriptId $optionForLagTimeBetweenSubmissionOfYears
 ```
@@ -131,7 +131,7 @@ confOfMonthId=120
 optionForWaterYearDateString=
 thisEnvironment=SpiresV202501
 optionForEndYear="-f 2024"
-scriptId=mod09ga
+scriptId=mod09gaI
 optionForLagTimeBetweenSubmissionOfYears=
 bash/submitHistoric.sh -B $bigRegionId -C $confOfMonthId $optionForWaterYearDateString -E $thisEnvironment $optionForEndYear -s $scriptId $optionForLagTimeBetweenSubmissionOfYears
 ```
@@ -162,7 +162,7 @@ confOfMonthId=41
 optionForWaterYearDateString=
 thisEnvironment=SpiresV202501
 optionForEndYear="-f 2000"
-scriptId=mod09ga
+scriptId=mod09gaI
 optionForLagTimeBetweenSubmissionOfYears=
 bash/submitHistoric.sh -B $bigRegionId -C $confOfMonthId $optionForWaterYearDateString -E $thisEnvironment $optionForEndYear -s $scriptId $optionForLagTimeBetweenSubmissionOfYears
 ```
@@ -174,7 +174,7 @@ confOfMonthId=120
 optionForWaterYearDateString=
 thisEnvironment=SpiresV202501
 optionForEndYear="-f 2000"
-scriptId=mod09ga
+scriptId=mod09gaI
 optionForLagTimeBetweenSubmissionOfYears=
 bash/submitHistoric.sh -B $bigRegionId -C $confOfMonthId $optionForWaterYearDateString -E $thisEnvironment $optionForEndYear -s $scriptId $optionForLagTimeBetweenSubmissionOfYears
 ```
