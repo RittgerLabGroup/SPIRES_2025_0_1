@@ -116,8 +116,8 @@ For SPIReS v2025.0.1, the remote repository is https://github.com/RittgerLabGrou
 
 1. Create a fork of the project of the remote repository.
 2. Clone this fork to a local repository (see https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository).
-3. Create a local copy of ParBal (https://github.com/edwardbair/ParBal).
-4. Create a local copy of RasterReprojection (https://github.com/DozierJeff/RasterReprojection).
+3. Create a local copy of ParBal (https://github.com/edwardbair/ParBal) into a MATLAB subfolder.
+4. Create a local copy of RasterReprojection (https://github.com/DozierJeff/RasterReprojection) into a MATLAB subfolder.
 
 For SPIReS v2025.0.1, there is no need for a local copy of original SPIReS (https://github.com/edwardbair/SPIRES/).
 
