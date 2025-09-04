@@ -89,7 +89,7 @@ pipeLineControlScriptId3=snr25017
 pipeLineControlTime3=11:30:00
 thatLabel=v2025.0.1;
 pipeLineScriptIds3=(mod09gaI spiInver spiTimeI moSpires daNetCDF daGeoBig daStatis ftpExpor webExpSn)
-pipeLineLabels3=(v061 ${thatLabel} ${thatLabel} ${thatLabel} ${thatLabel} ${thatLabel} ${thatLabel} ${thatLabel} ${thatLabel}) 
+pipeLineLabels3=(v061 v061 ${thatLabel} ${thatLabel} ${thatLabel} ${thatLabel} ${thatLabel} ${thatLabel} ${thatLabel}) 
 pipeLineRegionTypes3=(0 0 0 0 0 1 1 1 10)
   # 0: tile, 1: big region, 10: all regions.
 pipeLineSequences3=(0 0 001-036 0 0 0 999 0 0)
