@@ -74,7 +74,7 @@ classdef SpiresAncillary < handle
           datetime(thisYear, 3, 31, 12, 0 ,0);
         fprintf('South...\n');
       else
-        theseDate = datetime(thisYear, 6, 1, 12, 0 ,0): ...
+        theseDate = datetime(thisYear, 8, 1, 12, 0 ,0): ...
           datetime(thisYear, 9, 30, 12, 0 ,0);
         fprintf('North...\n');
       end
