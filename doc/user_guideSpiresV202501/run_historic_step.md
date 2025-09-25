@@ -65,7 +65,7 @@ In the following instructions, we focus on the production chain for `westernUS` 
 
 The procedure for the Southern Hemisphere is the same as for the Northern Hemisphere, except for the parametering of the options `bigRegionId`, `confOfMonthId`, `optionForWaterYearDateString`, and `optionForEndYear`.
 
-**Step `mod09ga`**. First, the user needs to download the input remote sensing data to their scratch. For this, the user submits (1) a series of jobs that cover the first part of the waterYear N, from October to December of the year N-1 for the Northern Hemisphere, as defined in this project, and (2) a series of jobs that cover the second part of the waterYear N, from January to September of the year N for the Northern Hemisphere. 
+**Step `mod09gaI`**. First, the user needs to download the input remote sensing data to their scratch. For this, the user submits (1) a series of jobs that cover the first part of the waterYear N, from October to December of the year N-1 for the Northern Hemisphere, as defined in this project, and (2) a series of jobs that cover the second part of the waterYear N, from January to September of the year N for the Northern Hemisphere. 
 
 For the Southern Hemisphere, (1) covers April to December N-1, and (2) covers January to March N.
 
@@ -90,7 +90,7 @@ thisEnvironment=SpiresV202501
   # For this project MUST be SpiresV202501.
 optionForEndYear="-f 2023"
   # Year considered for the work. Here, since confOfMonthId=20, the work will cover October to December of 2023, which corresponds to the first part of the waterYear 2024 in the Northern Hemisphere as defined for this project. If the user want the second part, the user should set confOfMonthId=30 and optionForEndYear="-f 2024".
-scriptId=mod09ga
+scriptId=mod09gaI
   # Code of the step/script to use. Full list of codes is in the variable $authorizedScriptIds defined in conf/configurationForHistoricsSpiresV202501.sh.
 optionForLagTimeBetweenSubmissionOfYears=
   # Most steps don't require this option. But occasionally, in particular for steps handling interpolation (for SPIReS v2025.0.1 step spiTimeI), the number of jobs to submit for the step is just too big, and we need to insert a lag between submission to avoid to overwhelm slurm and have jobs rejected. In that case, the syntax is optionForLagTimeBetweenSubmissionOfYears="-t 1h" for instance, to have a lag of 1 h between the various submissions required when the user launches the command below, or optionForLagTimeBetweenSubmissionOfYears="-t 30m" for a lag of 30 minutes.
@@ -106,7 +106,7 @@ confOfMonthId=30
 optionForWaterYearDateString=
 thisEnvironment=SpiresV202501
 optionForEndYear="-f 2024"
-scriptId=mod09ga
+scriptId=mod09gaI
 optionForLagTimeBetweenSubmissionOfYears=
 bash/submitHistoric.sh -B $bigRegionId -C $confOfMonthId $optionForWaterYearDateString -E $thisEnvironment $optionForEndYear -s $scriptId $optionForLagTimeBetweenSubmissionOfYears
 ```
@@ -119,7 +119,7 @@ confOfMonthId=130
 optionForWaterYearDateString=
 thisEnvironment=SpiresV202501
 optionForEndYear="-f 2023"
-scriptId=mod09ga
+scriptId=mod09gaI
 optionForLagTimeBetweenSubmissionOfYears=
 bash/submitHistoric.sh -B $bigRegionId -C $confOfMonthId $optionForWaterYearDateString -E $thisEnvironment $optionForEndYear -s $scriptId $optionForLagTimeBetweenSubmissionOfYears
 ```
@@ -131,7 +131,7 @@ confOfMonthId=120
 optionForWaterYearDateString=
 thisEnvironment=SpiresV202501
 optionForEndYear="-f 2024"
-scriptId=mod09ga
+scriptId=mod09gaI
 optionForLagTimeBetweenSubmissionOfYears=
 bash/submitHistoric.sh -B $bigRegionId -C $confOfMonthId $optionForWaterYearDateString -E $thisEnvironment $optionForEndYear -s $scriptId $optionForLagTimeBetweenSubmissionOfYears
 ```
@@ -153,7 +153,7 @@ In total, to handle the step `mod09ga` for `westernUS` for waterYear 2024, a min
 
 
 
-**Step `mod09ga` first waterYear only**. In this project, the first waterYear for MODIS is 2001. In addition to the step `mod09ga` previously run for that year, the user also needs to collect the files of the months before the start of the waterYear (4 for the Northern Hemisphere, 3 for the Southern one). These data are necessary for the determination of the background reflectance (~=snow-free) data that will be used by SPIReS v2025.0.1 for the waterYear.
+**Step `mod09gaI` first waterYear only**. In this project, the first waterYear for MODIS is 2001. In addition to the step `mod09ga` previously run for that year, the user also needs to collect the files of the months before the start of the waterYear (4 for the Northern Hemisphere, 3 for the Southern one). These data are necessary for the determination of the background reflectance (~=snow-free) data that will be used by SPIReS v2025.0.1 for the waterYear.
 
 *For the Northern Hemisphere*, the commands are:
 ```bash
@@ -162,7 +162,7 @@ confOfMonthId=41
 optionForWaterYearDateString=
 thisEnvironment=SpiresV202501
 optionForEndYear="-f 2000"
-scriptId=mod09ga
+scriptId=mod09gaI
 optionForLagTimeBetweenSubmissionOfYears=
 bash/submitHistoric.sh -B $bigRegionId -C $confOfMonthId $optionForWaterYearDateString -E $thisEnvironment $optionForEndYear -s $scriptId $optionForLagTimeBetweenSubmissionOfYears
 ```
@@ -174,7 +174,7 @@ confOfMonthId=120
 optionForWaterYearDateString=
 thisEnvironment=SpiresV202501
 optionForEndYear="-f 2000"
-scriptId=mod09ga
+scriptId=mod09gaI
 optionForLagTimeBetweenSubmissionOfYears=
 bash/submitHistoric.sh -B $bigRegionId -C $confOfMonthId $optionForWaterYearDateString -E $thisEnvironment $optionForEndYear -s $scriptId $optionForLagTimeBetweenSubmissionOfYears
 ```
@@ -217,10 +217,10 @@ bash/submitHistoric.sh -B $bigRegionId -C $confOfMonthId $optionForWaterYearDate
 *For the Northern Hemisphere*, the commands are:
 ```bash
 bigRegionId=5
-confOfMonthId=0
-optionForWaterYearDateString=2024-09-30-4
+confOfMonthId=51
+optionForWaterYearDateString=
 thisEnvironment=SpiresV202501
-optionForEndYear=""
+optionForEndYear="-f 2001"
 scriptId=spiBackg
 optionForLagTimeBetweenSubmissionOfYears=
 bash/submitHistoric.sh -B $bigRegionId -C $confOfMonthId $optionForWaterYearDateString -E $thisEnvironment $optionForEndYear -s $scriptId $optionForLagTimeBetweenSubmissionOfYears
@@ -238,8 +238,9 @@ optionForLagTimeBetweenSubmissionOfYears=
 bash/submitHistoric.sh -B $bigRegionId -C $confOfMonthId $optionForWaterYearDateString -E $thisEnvironment $optionForEndYear -s $scriptId $optionForLagTimeBetweenSubmissionOfYears
 ```
 
-In both cases, the same commands should be used for the first waterYear, by adapting `optionForWaterYearDateString=2000-09-30-4` for the Northern Hemisphere, and `optionForWaterYearDateString=2000-03-31-3` for the Southern Hemisphere.
+For the Northern Hemsisphere the command above will generate background reflectance .mat files for water year 2001 using reflectance data of the months August and September of 2000. The background reflectance .mat file name will contain the the string '2001'. If the user does not wish to generate each year sequentially the background reflectance for the water year of interest can be generated by modifying the `optionForEndYear` string in the steps `mod09gaI` first water year only, `spiInges`, and `spiBackg`.
 
+Generation of background reflectance files has not yet been tested for the Southern Hemisphere. 
 
 
 **Step `spiInver`**. Crucially, before submitting this step, the user MUST have monitored the outcome of the previous step `mod09ga` and `spiBackg`, as indicated [above](#run-as-a-beginner). This duty is to be carried out for each step.
