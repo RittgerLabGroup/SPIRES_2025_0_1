@@ -123,6 +123,26 @@ For SPIReS v2025.0.1, there is no need for a local copy of original SPIReS (http
 
 For the rest of the installation, the user should go to the root of the user's local repository (using `cd $whateverThisLocalRepositoryIs`, the user replacing $whateverThisLocalRepositoryIs by the path they decided).
 
+### Create conda environment with gdal installed.
+
+The NRT pipeline step `daGeoBig` requires a conda environment to be set up with gdal installed. The gdal library path is hard-coded to `/projects/${USER}/software/anaconda/envs/myqgis.3.36.0/lib/python3.12/site-packages/osgeo_utils/` on line 92 of `bash/runUpdateGeotiffBigRegion.sh`. Therefore the user must create a conda environment with the name "myqgis.3.36.0".  
+
+This can be done by running the following command in a terminal: 
+```bash
+conda create --prefix /projects/$USER/software/anaconda/envs/myqgis.3.36.0 -c conda-forge python=3.12 gdal geopandas rasterio fiona
+```
+This will install gdal along with additional python dependencies.  
+
+Although not necessary for this project, the user can also install QGIS by instead running:
+```bash
+conda create --prefix /projects/$USER/software/anaconda/envs/myqgis.3.36.0 -c conda-forge python=3.12 qgis=3.36 gdal
+```  
+  
+Successful creation of the conda environment can be checked by:
+```bash
+conda env list
+```
+
 ### Initialize the environment file matlabEnvironmentVariables.
 
 For SPIReS v2025.0.1, *matlabEnvironmentVariables* is the file `env/.matlabEnvironmentVariablesSpiresV202501`.
