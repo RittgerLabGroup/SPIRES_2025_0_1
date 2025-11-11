@@ -40,6 +40,16 @@ fi
 # Argument setting.
 # None.
 
+
+# Create directories for incoming integration data with permissions 777
+incoming_dirs=(geotiffs plots regions shapes)
+for incoming_dir in ${incoming_dirs[@]}; do
+  incoming_dir_path=${espWebExportRootDirForIntegration}snow-surface-properties/${incoming_dir}
+  ssh -i ${espWebExportSshKeyFilePath} ${espWebExportUser}@${espWebExportDomain} \
+    "mkdir -p ${incoming_dir_path}; chmod 777 ${incoming_dir_path}"
+  echo "Created directory $incoming_dir_path"
+done
+
 source bash/toolsMatlab.sh
 
 # Matlab.
