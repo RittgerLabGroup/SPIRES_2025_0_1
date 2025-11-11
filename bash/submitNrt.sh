@@ -185,13 +185,24 @@ exclude="";
 ########################################################################################
 
 indexInScriptConfigurations=$(echo ${pipeLineScriptIds[@]/${scriptId}//} | cut -d/ -f1 | wc -w | tr -d ' ')
-stepId=$((( $indexInScriptConfigurations + 1)))
-inputLabel=${pipeLineLabels[${indexInScriptConfigurations}]}
-outputLabel=$inputLabel
-indexOfPreLastScript=$((( ${#pipeLineScriptIds[@]} - 1 )))
-if [[ $indexInScriptConfigurations -lt $indexOfPreLastScript && $scriptId != mod09gaI ]]; then
-  outputLabel=${pipeLineLabels[ (( $indexInScriptConfigurations + 1 )) ]}
+
+## FIX ME - testing input and output labels
+#stepId=$((( $indexInScriptConfigurations + 1)))
+#inputLabel=${pipeLineLabels[${indexInScriptConfigurations}]}
+#outputLabel=$inputLabel
+#indexOfPreLastScript=$((( ${#pipeLineScriptIds[@]} - 1 )))
+#if [[ $indexInScriptConfigurations -lt $indexOfPreLastScript && $scriptId != mod09gaI ]]; then
+#  outputLabel=${pipeLineLabels[ (( $indexInScriptConfigurations + 1 )) ]}
+#fi
+
+if [ ${indexInScriptConfigurations} -gt 0 ]; then
+  inputLabel=${pipeLineLabels[$((${indexInScriptConfigurations} - 1 ))]}
+else 
+  inputLabel=${pipeLineLabels[${indexInScriptConfigurations}]}
 fi
+
+outputLabel=${pipeLineLabels[${indexInScriptConfigurations}]}
+
 
 scriptPath=${scriptIdFilePathAssociations[${scriptId}]}
 scriptRegionType=${pipeLineRegionTypes[${indexInScriptConfigurations}]}
