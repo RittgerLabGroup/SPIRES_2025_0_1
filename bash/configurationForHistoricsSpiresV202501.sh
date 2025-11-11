@@ -27,7 +27,7 @@ scriptIdJobNames=(mod0 sIng sBac sInv sTim moSp netC stat)
 scriptInputLabels=(v061 v061 v2025.0.1 v061 v2025.0.1 v2025.0.1 v2025.0.1 v2025.0.1)
 scriptOutputLabels=(v061 v2025.0.1 v2025.0.1 v2025.0.1 v2025.0.1 v2025.0.1 v2025.0.1 v2025.0.1)
 scriptModes=(0 11 0 0 0 0 0 1)
-scriptRegionTypes=(0 0 0 0 0 0 1 1)
+scriptRegionTypes=(0 0 0 0 0 0 0 1)
   # 0: tile, 1: big region, 10: all regions.
 scriptSequences=(0 0 0 0 001-036 0 0 001-033)
 scriptSequenceMultiplierToIndices=(1 1 1 1 1 1 1 3)
