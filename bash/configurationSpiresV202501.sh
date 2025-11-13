@@ -23,6 +23,7 @@ scriptIdFilePathAssociations[daGeoBig]="./bash/runUpdateGeotiffBigRegion.sh"
 scriptIdFilePathAssociations[daStatis]="./bash/runUpdateDailyStatistics.sh"
 scriptIdFilePathAssociations[webExpSn]="./bash/runWebExportSnowToday.sh"
 scriptIdFilePathAssociations[ftpExpor]="./bash/runFtpExport.sh"
+scriptIdFilePathAssociations[rSynchro]="./bash/runRsync.sh"
 
 ########################################################################################
 # Versions of ancillary data.
@@ -88,7 +89,12 @@ pipeLineControlScriptId3=snr25017
 pipeLineControlTime3=11:30:00
 thatLabel=v2025.0.1;
 pipeLineScriptIds3=(mod09gaI spiInver spiTimeI moSpires daNetCDF daGeoBig daStatis ftpExpor webExpSn)
-pipeLineLabels3=(v061 ${thatLabel} ${thatLabel} ${thatLabel} ${thatLabel} ${thatLabel} ${thatLabel} ${thatLabel} ${thatLabel}) 
+# web export step removed from pipeline, done at end of western US pipeline
+#pipeLineScriptIds3=(mod09gaI spiInver spiTimeI moSpires daNetCDF daGeoBig daStatis ftpExpor)
+## FIX ME - testing pipeline labels
+#pipeLineLabels3=(v061 v061 ${thatLabel} ${thatLabel} ${thatLabel} ${thatLabel} ${thatLabel} ${thatLabel} ${thatLabel}) 
+pipeLineLabels3=(v061 ${thatLabel} ${thatLabel} ${thatLabel} ${thatLabel} ${thatLabel} ${thatLabel} ${thatLabel} ${thatLabel})
+
 pipeLineRegionTypes3=(0 0 0 0 0 1 1 1 10)
   # 0: tile, 1: big region, 10: all regions.
 pipeLineSequences3=(0 0 001-036 0 0 0 999 0 0)
@@ -103,7 +109,7 @@ pipeLineParallelWorkersNb3=(0 14 10 14 2 0 0 0 0) # moSpires temporarily to 14 r
 # sbatch parameters
 pipeLineTasksPerNode3=(1 14 10 18 2 1 1 1 1) # moSpires temporarily to 18 rather than 10 
 pipeLineMems3=(1G 44G 60G 60G 5G 8G 8G 1G 3G) # spiTimeI: set temporarily 60G rather than 30G. to confirm!! spiMo: set temporarily to 60G rather than 40G.
-pipeLineTimes3=(01:30:00 01:45:00 02:30:00 04:30:00 00:30:00 00:20:00 04:00:00 01:30:00 01:30:00) # mosaic temporarily to 4:30 rather than 0:30
+pipeLineTimes3=(01:30:00 01:45:00 02:30:00 04:30:00 00:30:00 00:20:00 04:00:00 01:30:00 04:00:00) # mosaic temporarily to 4:30 rather than 0:30
 # NB: daGeoBig: time for generation of the last day only.
 # NB: daStatis: time for 3 subdivisions only.
 
@@ -120,3 +126,53 @@ printf -v pipeLineParallelWorkersNbString3 '%s ' ${pipeLineParallelWorkersNb3[@]
 printf -v pipeLineTasksPerNodeString3 '%s ' ${pipeLineTasksPerNode3[@]}
 printf -v pipeLineMemsString3 '%s ' ${pipeLineMems3[@]}
 printf -v pipeLineTimesString3 '%s ' ${pipeLineTimes3[@]}
+
+
+
+########################################################################################
+# Pipeline 5, for regions with implementation >= v2025.0.1.
+########################################################################################
+# pipeLineScriptIds3=(mod09gaI spiInver spiSmooC moSpires daNetCDF daGeoBig daStatis webExpSn ftpExpor)
+pipeLineBigRegionId5=5 # New western US.
+pipeLineVersionOfAncillary5=v3.2
+pipeLineInputProductAndVersion5=mod09ga.061
+pipeLineControlScriptId5=snr25015
+pipeLineControlTime5=11:30:00
+thatLabel=v2025.0.1;
+pipeLineScriptIds5=(mod09gaI spiInver spiTimeI moSpires daNetCDF daGeoBig daStatis ftpExpor webExpSn)
+## FIX ME - testing pipeline labels
+#pipeLineLabels3=(v061 v061 ${thatLabel} ${thatLabel} ${thatLabel} ${thatLabel} ${thatLabel} ${thatLabel} ${thatLabel})
+pipeLineLabels5=(v061 ${thatLabel} ${thatLabel} ${thatLabel} ${thatLabel} ${thatLabel} ${thatLabel} ${thatLabel} ${thatLabel})
+
+pipeLineRegionTypes5=(0 0 0 0 0 1 1 1 10)
+  # 0: tile, 1: big region, 10: all regions.
+pipeLineSequences5=(0 0 001-036 0 0 0 999 0 0)
+  # NB: probably need to adapt the number of sequences for daStatis dynamically as a
+  # function of the nb of subdivisions. Chose 001 for New Zealand.                 @todo
+  # 999 indicates that the sequence will be updated during the run by toolStart.sh as
+  # a function of landsubdivisions available per bigRegion.
+pipeLineSequenceMultiplierToIndices5=(1 1 1 1 1 1 3 1 1)
+pipeLineMonthWindows5=(2 2 12 12 12 0 12 12 12)
+pipeLineParallelWorkersNb5=(0 14 10 14 2 0 0 0 0) # moSpires temporarily to 14 rather than 10
+
+# sbatch parameters
+pipeLineTasksPerNode5=(1 14 10 18 2 1 1 1 1) # moSpires temporarily to 18 rather than 10
+pipeLineMems5=(1G 44G 60G 60G 5G 8G 8G 1G 3G) # spiTimeI: set temporarily 60G rather than 30G. to confirm!! spiMo: set temporarily to 60G rather than 40G.
+pipeLineTimes5=(01:30:00 01:45:00 02:30:00 04:30:00 00:30:00 00:20:00 04:00:00 01:30:00 04:00:00) # mosaic temporarily to 4:30 rather than 0:30
+# NB: daGeoBig: time for generation of the last day only.
+# NB: daStatis: time for 3 subdivisions only.
+
+# Bypassing the unavailability of declare -n in bash 4.2.
+# declare -n could have been used in toolsStart.sh to reference these arrays, but
+# it's only available in bash 4.4, while blanca/login/alpine nodes are in bash 4.2
+printf -v pipeLineScriptIdsString5 '%s ' ${pipeLineScriptIds5[@]}
+printf -v pipeLineLabelsString5 '%s ' ${pipeLineLabels5[@]}
+printf -v pipeLineRegionTypesString5 '%s ' ${pipeLineRegionTypes5[@]}
+printf -v pipeLineSequencesString5 '%s ' ${pipeLineSequences5[@]}
+printf -v pipeLineSequenceMultiplierToIndicesString5 '%s ' ${pipeLineSequenceMultiplierToIndices5[@]}
+printf -v pipeLineMonthWindowsString5 '%s ' ${pipeLineMonthWindows5[@]}
+printf -v pipeLineParallelWorkersNbString5 '%s ' ${pipeLineParallelWorkersNb5[@]}
+printf -v pipeLineTasksPerNodeString5 '%s ' ${pipeLineTasksPerNode5[@]}
+printf -v pipeLineMemsString5 '%s ' ${pipeLineMems3[@]}
+printf -v pipeLineTimesString5 '%s ' ${pipeLineTimes3[@]}
+

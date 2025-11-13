@@ -121,7 +121,7 @@ function downloadTileFromDaacURLToLocal() {
     localDirectoryPath=$3
 
     if [ ! -d "$localDirectoryPath" ]; then
-        mkdir -p "$thisDirlocalDirectoryPathectoryPath"
+        mkdir -p "$localDirectoryPath"
     fi
     # Loop through each filename matching the pattern
     curl -b ~/.urs_cookies -L -n "$remoteDirectoryUrl" | \
@@ -175,6 +175,16 @@ EOM
         # 3. Download the file, resuming if interrupted
 
         curl -b ~/.urs_cookies -L -n --continue-at - "${remoteDirectoryUrl}${remoteFilename}" -o "$localFilePath"
+
+	# 4. Check file type, delete and redownload if not hdf4 (files are often corrupt which breaks next steps
+        file_type=$(file -b "$localFilePath")
+	if [[ "$file_type" == *"Hierarchical Data Format (version 4) data"* ]]; then
+            echo "Download successful and file ${localFilePath} is HDF4."
+        else
+            echo "File is not HDF4. Deleting and retrying..."
+            rm -f "$localFilePath"
+            curl -b ~/.urs_cookies -L -n --continue-at - "${remoteDirectoryUrl}${remoteFilename}" -o "$localFilePath"
+        fi
     done
 }
 

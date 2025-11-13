@@ -60,7 +60,6 @@ try;
   region = Regions(${inputForRegion});
   ancillary = SpiresAncillary(region);
   ancillary.calculateBackgroundReflectance(waterYearDate.getWaterYear());
-  end;
 ${catchExceptionAndExit}
 
 EOM

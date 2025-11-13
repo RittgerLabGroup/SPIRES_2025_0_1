@@ -258,6 +258,12 @@ No other option or argument is available for this submission script. That implie
 
 A method to cleanly cancel (=kill) jobs is described [here](checking_log.md#cancel-jobs-during-execution).
 
+## Adding regions to integration and production pipelines.
+
+Currently, the integration pipeline has been run for New Zealand and the western United States. Initially, only a New Zealand pipeline was set up; the western US was added by configuring a new `pipelineID` in the file `bash/configurationSpiresV202501.sh`. 
+
+Additionally, the file `conf/configuration_of_landsubdivisions.csv` was modified by adding 'v2025.0.1' to the column 'versionForIntegration' to the row where 'name' was equal to 'Western United States'. Neither region has yet been tested in production. 
+
 ## Appendices
 
 ### Steps and scriptId

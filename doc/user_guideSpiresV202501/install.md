@@ -116,12 +116,32 @@ For SPIReS v2025.0.1, the remote repository is https://github.com/RittgerLabGrou
 
 1. Create a fork of the project of the remote repository.
 2. Clone this fork to a local repository (see https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository).
-3. Create a local copy of ParBal (https://github.com/edwardbair/ParBal) into a MATLAB subfolder.
-4. Create a local copy of RasterReprojection (https://github.com/DozierJeff/RasterReprojection) into a MATLAB subfolder.
+3. Create a local copy of ParBal (https://github.com/edwardbair/ParBal).
+4. Create a local copy of RasterReprojection (https://github.com/DozierJeff/RasterReprojection).
 
 For SPIReS v2025.0.1, there is no need for a local copy of original SPIReS (https://github.com/edwardbair/SPIRES/).
 
 For the rest of the installation, the user should go to the root of the user's local repository (using `cd $whateverThisLocalRepositoryIs`, the user replacing $whateverThisLocalRepositoryIs by the path they decided).
+
+### Create conda environment with gdal installed.
+
+The NRT pipeline step `daGeoBig` requires a conda environment to be set up with gdal installed. The gdal library path is hard-coded to `/projects/${USER}/software/anaconda/envs/myqgis.3.36.0/lib/python3.12/site-packages/osgeo_utils/` on line 92 of `bash/runUpdateGeotiffBigRegion.sh`. Therefore the user must create a conda environment with the name "myqgis.3.36.0".  
+
+This can be done by running the following command in a terminal: 
+```bash
+conda create --prefix /projects/$USER/software/anaconda/envs/myqgis.3.36.0 -c conda-forge python=3.12 gdal geopandas rasterio fiona
+```
+This will install gdal along with additional python dependencies.  
+
+Although not necessary for this project, the user can also install QGIS by instead running:
+```bash
+conda create --prefix /projects/$USER/software/anaconda/envs/myqgis.3.36.0 -c conda-forge python=3.12 qgis=3.36 gdal
+```  
+  
+Successful creation of the conda environment can be checked by:
+```bash
+conda env list
+```
 
 ### Initialize the environment file matlabEnvironmentVariables.
 
