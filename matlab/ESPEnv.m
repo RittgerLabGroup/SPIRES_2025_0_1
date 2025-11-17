@@ -5760,7 +5760,7 @@ classdef ESPEnv < handle
                 end
                 if strcmp(obj.modisData.inputProduct, 'mod09ga')
                     sensorDescription = 'MODIS/Terra L3 Daily 500m ';
-                elseif strcmp(modisData.inputProduct, 'vnp09ga')
+                elseif strcmp(obj.modisData.inputProduct, 'vnp09ga')
                     sensorDescription = 'VIIRS/Suomi NPP L3 Daily 500m ';
                 else
                     error('Sensor description not available for %s', ...
