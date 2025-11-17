@@ -269,7 +269,7 @@ classdef MODISData < handle
             % 1. Check valid dataLabel and get list of files for which the variable is
             % to be loaded.
             %---------------------------------------------------------------------------
-            if ~ismember(dataLabel, {'mod09ga', 'modisspiresdaily'})
+            if ~ismember(dataLabel, {'mod09ga', 'modisspiresdaily', 'vnp09ga'})
                 errorStruct.identifier = ...
                     'modisData:getDataForDateAndVarName:BadDataLabel';
                 errorStruct.message = sprintf( ...
