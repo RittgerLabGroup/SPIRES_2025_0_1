@@ -461,6 +461,7 @@ modspiresdailytifsinu,modspiresdailytifsinu,v2025.0.1,v2025.0.1,97,1,spatial_gra
 modspiresdailytifsinu,modspiresdailytifsinu,v2025.0.1,v2025.0.1,98,1,spatial_dust_concentration_s,,,,,uint16,0.1,tenths of unitless,0,9500,65535,,1,,
 modspiresdailytifsinu,modspiresdailytifsinu,v2025.0.1,v2025.0.1,99,1,albedo_muZ_s,,,,,uint8,1,percent,0,100,255,,1,,
 modspiresdailytifsinu,modspiresdailytifsinu,v2025.0.1,v2025.0.1,101,1,neural_classification_snow_cloud,,,,,uint8,1,Bit field,0,4,255,,1,"0: snow, 1: cloud, 2: other. Constructed by Timbo neural network based on reflectance full precision int16",
+modspiresdailytifsinu,modspiresdailytifsinu,v2025.0.1,v2025.0.1,109,1,QF_1km,,,,,uint16,1,Bit field,0,512,0,,2,"Bits: cloud, cloudshadow, landwater, aerosol, cirrus, saltpan. Position: [1, 3, 4, 7, 9, 15]. Size: [2, 1, 3, 2, 2, 1]. Bits between 11 and 14 not used. NB: values different meaning from state_1km",
 modspiresdailytifsinu,modspiresdailytifsinu,v2025.0.1,v2025.0.1,112,1,reflectance_rgb,,,,,uint8,100,hundredth,0,100,0,,1,,
 modspiresdailytifsinu,modspiresdailytifsinu,v2025.0.1,v2025.0.1,113,1,days_with_snow_observed_s,,,,,uint16,1,day,0,366,65535,,1,,
 modspiresdailytifsinu,modspiresdailytifsinu,v2025.0.1,v2025.0.1,114,1,days_with_absent_snow_observed_s,,,,,uint16,1,day,0,366,65535,,1,,
