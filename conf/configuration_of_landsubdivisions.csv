@@ -12849,7 +12849,7 @@ European Alps,26003,groupadm0,EurAlps,,,EurAlps,3,,,,1,0,EPSG:3857,,,,,,,,EurAlp
 Andes,26004,groupadm0,AMAndes,,,AMAndes,4,,,,1,1,EPSG:3857,,,,,,,,AMAndes,26004,Root = 2 when spires available,,
 Unused_26005,26005,groupadm0,Unused_26005,,,Unused_26005,0,,,,0,0,EPSG:3857,,,,,,,,Unused_26005,26005,Added 2024-10-01,,
 North East America,26006,groupadm0,USEast,,,USEast,6,,,,1,1,EPSG:3857,,,,,,,,USEast,26006,Added 2024-10-01,,
-New Zealand,26007,groupadm0,OCNewZealand,,,OCNewZealand,7,,,,1,1,EPSG:3857,,,,,,,,OCNewZealand,26007,Added 2024-10-01,,v2025.0.1
+New Zealand,26007,groupadm0,OCNewZealand,,,OCNewZealand,7,,,,1,1,EPSG:3857,,,,,,,,OCNewZealand,26007,Added 2024-10-01,v2025.0.1,v2025.0.1
 ,,,,,,,,,,,,,,,,,,,,,,,,,
 Alaska,26100,adm1part,USAlaskaWAleutian,,,USAlaska,1,,,,0,1,EPSG:3857,,,,,,,,USAlaskaWAleutian,26100,Root = 2 when spires available,,
 Canada,26101,adm0part,AMCanadaW,,,USAlaska,1,,,,0,1,EPSG:3857,,,,,,,,AMCanadaW,26101,Root = 2 when spires available,,
