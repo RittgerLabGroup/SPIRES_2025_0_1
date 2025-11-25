@@ -109,6 +109,8 @@ classdef SpiresAncillary < handle
             % varData expected uint8 on 100.
             % imresize used within getData for viirs M 1km bands 3, 4, 5, 7
             % with 1, 2, 6 I 500m bands.
+          % RTP 20251125 set 0s to NaNs in prep for R0 calculation
+          varData(varData == 0) = NaN;
           reflectance(:, :, varIdx) = varData;
         end
         % Get clouds....

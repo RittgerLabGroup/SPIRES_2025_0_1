@@ -18,7 +18,9 @@ scriptId=spiInver
 defaultSlurmArrayTaskId=292
 expectedCountOfArguments=
 inputDataLabels=(mod09ga vnp09ga)
-outputDataLabels=(modspiresdaily vnpspiresdaily modspiresdailytifsinu modspiresdailymetadatajson modspiresdailytifsinu modspiresdailymetadatajson backgroundreflectanceformodisforwateryear backgroundreflectanceforviirsforwateryear)
+# RTP comment out long data labels and replace with vnp only
+# outputDataLabels=(modspiresdaily vnpspiresdaily modspiresdailytifsinu modspiresdailymetadatajson modspiresdailytifsinu modspiresdailymetadatajson backgroundreflectanceformodisforwateryear backgroundreflectanceforviirsforwateryear)
+# outputDataLabels=(vnpspiresdaily vnpspiresdaily vnpspiresdailytifsinu vnpspiresdailymetadatajson vnpspiresdailytifsinu  backgroundreflectanceforviirsforwateryear)
 filterConfLabel=
 mainBashSource=${BASH_SOURCE}
 mainProgramName=${BASH_SOURCE[0]}

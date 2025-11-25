@@ -437,7 +437,8 @@ Main script default constant values.
 scriptId=${scriptId}; defaultSlurmArrayTaskId=${defaultSlurmArrayTaskId};
 expectedCountOfArguments=${expectedCountOfArguments};
 inputDataLabels=${inputDataLabels[*]};
-outputDataLabels=${outputDataLabels[*]};
+# RTP 20251125 comment out outputDataLabels, add back around line 800
+# outputDataLabels=${outputDataLabels[*]};
 filterConfLabel=${filterConfLabel};
 mainBashSource=${mainBashSource};
 slurmArrayTaskIds=${slurmArrayTaskIds};
@@ -795,6 +796,25 @@ printf "$(pStart): tmpDir=${tmpDir}.\n"
 # Input product and version, e.g. mod09ga and 061.
 inputProduct=${inputProductAndVersion%.*}
 inputProductVersion=${inputProductAndVersion##*.}
+
+# RTP 20251125 - Define outputDataLabels based on inputProduct
+if [[ "$inputProduct" == vnp09ga ]]; then
+  outputDataLabels=(
+    vnpspiresdaily 
+    vnpspiresdailytifsinu 
+    vnpspiresdailymetadatajson 
+    vnpspiresdailytifsinu
+    backgroundreflectanceforviirsforwateryear
+  )
+elif [[ "$inputProduct" == mod09ga ]]; then
+  outputDataLabels=(
+    modspiresdaily
+    modspiresdailytifsinu
+    modspiresdailymetadatajson
+    modspiresdailytifsinu
+    backgroundreflectanceformodisforwateryear
+  )
+fi
 
 # Determination of region names, indices, start and end dates,
 # Construction of the instantiation strings for Matlab.
