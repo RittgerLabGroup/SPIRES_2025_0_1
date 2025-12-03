@@ -12842,7 +12842,7 @@ San Juan - Guayas,17164,hydro4,HYD6720,,,,,,,,0,0,,South America,,,,,,,San Juan 
 ,25486,hydro5,HYD91480,,,,,,,,0,0,,Greenland,,,,,,,,25486,,,
 ,25487,hydro5,HYD91490,,,,,,,,0,0,,Greenland,,,,,,,,25487,,,
 ,,,,,,,,,,,,,,,,,,,,,,,,,
-Western United States,26000,groupadm0,USWest,westernUS,1,westernUS,5,0,0.98,1,2,1,EPSG:3857,,,,,,,,westernUS,26000,,,v2025.0.1
+Western United States,26000,groupadm0,USWest,westernUS,1,westernUS,5,0,0.98,1,2,1,EPSG:3857,,,,,,,,westernUS,26000,,v2024.0d,v2025.0.1
 Alaska and western Canada,26001,groupadm0,USAlaska,,,USAlaska,1,,,,0,0,EPSG:3857,ESRI:102009,,,,,,,USAlaska,26001,,,
 High Mountain Asia,26002,groupadm0,ASHimalayas,,,ASHimalaya,2,,,,1,1,EPSG:3857,,,,,,,,ASHimalayas,26002,Root = 2 when spires available,,
 European Alps,26003,groupadm0,EurAlps,,,EurAlps,3,,,,1,0,EPSG:3857,,,,,,,,EurAlps,26003,,,
