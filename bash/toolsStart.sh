@@ -798,7 +798,7 @@ inputProduct=${inputProductAndVersion%.*}
 inputProductVersion=${inputProductAndVersion##*.}
 
 # RTP 20251125 - Define outputDataLabels based on scriptID and inputProduct
-case "$scriptID" in
+case "$scriptId" in
   spiInver)
     case "$inputProduct" in
       vnp09ga)
