@@ -19,7 +19,8 @@ scriptId=spiTimeI
 defaultSlurmArrayTaskId=292001
 expectedCountOfArguments=
 inputDataLabels=(modspiresdaily vnpspiresdaily spiresdailytifsinu spiresdailymetadatajson)
-outputDataLabels=(modspirestimebycell vnpspirestimebycell)
+# RTP comment out outputDataLabels and set them in toolsStart line ~800
+# outputDataLabels=(modspirestimebycell vnpspirestimebycell)
 filterConfLabel=
 mainBashSource=${BASH_SOURCE}
 mainProgramName=${BASH_SOURCE[0]}

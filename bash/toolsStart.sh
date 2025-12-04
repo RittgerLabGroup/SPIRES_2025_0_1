@@ -797,24 +797,58 @@ printf "$(pStart): tmpDir=${tmpDir}.\n"
 inputProduct=${inputProductAndVersion%.*}
 inputProductVersion=${inputProductAndVersion##*.}
 
-# RTP 20251125 - Define outputDataLabels based on inputProduct
-if [[ "$inputProduct" == vnp09ga ]]; then
-  outputDataLabels=(
-    vnpspiresdaily 
-    vnpspiresdailytifsinu 
-    vnpspiresdailymetadatajson 
-    vnpspiresdailytifsinu
-    backgroundreflectanceforviirsforwateryear
-  )
-elif [[ "$inputProduct" == mod09ga ]]; then
-  outputDataLabels=(
-    modspiresdaily
-    modspiresdailytifsinu
-    modspiresdailymetadatajson
-    modspiresdailytifsinu
-    backgroundreflectanceformodisforwateryear
-  )
-fi
+# RTP 20251125 - Define outputDataLabels based on scriptID and inputProduct
+case "$scriptID" in
+  spiInver)
+    case "$inputProduct" in
+      vnp09ga)
+        outputDataLabels=(
+          vnpspiresdaily 
+          vnpspiresdailytifsinu 
+          vnpspiresdailymetadatajson 
+          vnpspiresdailytifsinu
+          backgroundreflectanceforviirsforwateryear
+        )
+        ;;
+      mod09ga)
+        outputDataLabels=(
+          modspiresdaily
+          modspiresdailytifsinu
+          modspiresdailymetadatajson
+          modspiresdailytifsinu
+          backgroundreflectanceformodisforwateryear
+        )
+        ;;
+    esac
+    ;;
+  spiTimeI)
+    case "$inputProduct" in
+      vnp09ga)
+        outputDataLabels=(vnpspirestimebycell)
+        ;;
+      mod09ga)
+        outputDataLabels=(modspirestimebycell)
+        ;;
+    esac
+esac
+
+# if [[ "$inputProduct" == vnp09ga ]]; then
+#   outputDataLabels=(
+#     vnpspiresdaily 
+#     vnpspiresdailytifsinu 
+#     vnpspiresdailymetadatajson 
+#     vnpspiresdailytifsinu
+#     backgroundreflectanceforviirsforwateryear
+#   )
+# elif [[ "$inputProduct" == mod09ga ]]; then
+#   outputDataLabels=(
+#     modspiresdaily
+#     modspiresdailytifsinu
+#     modspiresdailymetadatajson
+#     modspiresdailytifsinu
+#     backgroundreflectanceformodisforwateryear
+#   )
+# fi
 
 # Determination of region names, indices, start and end dates,
 # Construction of the instantiation strings for Matlab.

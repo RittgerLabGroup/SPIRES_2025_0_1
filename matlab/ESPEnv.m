@@ -4714,7 +4714,7 @@ classdef ESPEnv < handle
                 force = force, optim = optim);
 
             [theseVariable, ~] = obj.getVariable(dataLabel);
-            % fprintf(['dataLabel: %s\nvarName: %s\n'], dataLabel, varName); % RTP troubleshooting
+            fprintf(['dataLabel: %s\nvarName: %s\n'], dataLabel, varName); % RTP troubleshooting
             thisVariable = theseVariable(strcmp(theseVariable.name, varName), :);
             thisType = thisVariable.type{1};
             thisNoDataValue = thisVariable.nodata_value(1);
