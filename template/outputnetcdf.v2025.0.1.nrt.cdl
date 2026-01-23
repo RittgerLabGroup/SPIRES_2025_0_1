@@ -184,16 +184,16 @@ variables:
     crs:_Storage = "contiguous" ;
 
 // global attributes:
-    :id = "TO BE UPDATED" ;
+    :id = "10.7265/vnp4-1423" ;
 		:title = "Near Real-Time MODIS/Terra L3 Daily 500m SIN Grid SPIReS Snow Cover, Snow Albedo, and Snow Surface Properties. (SPIRES_NRT, Version 2.0)." ;
-    :citation = "Mandatory citation for any work, including articles, reports, presentations, abstracts and posters as: Rittger, K., Lenard, S. J. P., & Palomaki, R. T. (2025). Near Real-Time MODIS/Terra L3 Global Daily 500m SIN Grid Snow Cover, Snow Albedo, and Snow Surface Properties. (SPIRES_NRT, Version 2.0). [Data Set]. Boulder, Colorado USA. National Snow and Ice Data Center, University of Colorado Boulder. [@TO UPDATE DOI THERE]. https://nsidc.org/snow-today. Note: Authors Rittger, K. and Lenard, S. contributed equally to this work." ;
+    :citation = "Mandatory citation for any work, including articles, reports, presentations, abstracts and posters as: Rittger, K., Palomaki, R. T., Stephenson, L., & Lenard, S. J. P. (2025). Near Real-Time MODIS/Terra L3 Global Daily 500m SIN Grid Snow Cover, Snow Albedo, and Snow Surface Properties. (SPIRES_NRT, Version 2.0). [Data Set]. Boulder, Colorado USA. National Snow and Ice Data Center, University of Colorado Boulder. doi:10.7265/vnp4-1423. https://nsidc.org/snow-today." ;
     :license = "Creative Commons BY 4.0. You are free to (1) share: copy and redistribute the material in any medium or format for any purpose, even commercially; (2) Adapt: remix, transform, and build upon the material for any purpose, even commercially; Under the following terms, (3) Attribution: You must give appropriate credit, provide a link to the license, and indicate if changes were made. You may do so in any reasonable manner, but not in any way that suggests the licensor endorses you or your use. https://creativecommons.org/licenses/by/4.0/." ;
 		:summary = "This dataset contains daily raster images of snow cover and snow surface properties. Snow cover, grain size and dust concentration were unmixed from the daily reflectance of the MOD09GA Terra Collection 6 v061 (Vermote and Wolfe, 2021) using an updated version of the SPIReS algorithm (Bair et al., 2021) that we named SPIReS v2025.0.1, with a removal of clouds and data errors. The data were then temporally interpolated to fill the cloudy days, and the snow cover duration was calculated from the start of the water year (October 1st for the northern hemisphere, April 1st for the southern one). Deltavis, radiative forcing, and albedos were calculated using an adaptation of the ParBal algorithm (Bair et al., 2018), that we included in SPIReS v2025.0.1." ;
 		:source = "MOD09GA Terra Collection 6 v061" ;
 		:comment = "Snow cover validated with 3 m airborne snow maps on 116 days (Stillinger et al., 2023); Snow albedo validated using terrain correct in-situ observations at 3 sites for ~20 years with spatial comparisons to 31 ASO Inc hyperspectral airborne flights (Palomaki et al., RSE, in review). Preliminary radiative forcing evaluation performed at 1 site in the San Juan mountains of Colorado." ;
-		:metadata_link = "TO BE UPDATED" ;
+		:metadata_link = "https://doi.org/10.7265/vnp4-1423" ;
 		:product_version = "v2.0" ;
-		:software_version_id = "c196e7d" ;
+		:software_version_id = "a9f0d09" ;
 		:publisher_institution = "National Snow and Ice Data Center, University of Colorado Boulder" ;
 		:publisher_name = "National Snow and Ice Data Center, University of Colorado Boulder" ;
 		:publisher_type = "institution" ;
@@ -207,8 +207,8 @@ variables:
 		:creator_name = "Karl Rittger" ;
 		:creator_url = "https://www.colorado.edu/instaar/karl-rittger" ;
 		:creator_email = "karl.rittger@colorado.edu" ;
-		:contributor_name = "Karl Rittger, Sebastien J. P. Lenard, Ross T. Palomaki" ;
-		:contributor_role = "principal_investigator, researcher, researcher" ;
+		:contributor_name = "Karl Rittger, Ross T. Palomaki, Logan Stephenson, Sebastien J.P. Lenard" ;
+		:contributor_role = "principal_investigator, researcher, researcher, researcher" ;
     :geospatial_bounds_crs = "EPSG:4326" ;
 		:geospatial_bounds = "POLYGON((50.00000000 -155.57238269, 50.00000000 -140.01514442, 40.00000000 -117.48665604, 40.00000000 -130.54072893, 50.00000000 -155.57238269))" ;
 		:time_coverage_start = "2024-10-01T00:00:00.000+0000" ;
