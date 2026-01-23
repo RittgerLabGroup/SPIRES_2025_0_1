@@ -1037,9 +1037,18 @@ classdef Subdivision < handle
                 % NB: NaN are converted into null by jsonencode.
                 thisStruct = struct();
                 thisStruct.data = data;
-                thisStruct.metadata.minYear = minSnowFractionYear;
-                thisStruct.metadata.maxYear = maxSnowFractionYear; % TO CHANGE BECAUSE NEED TO BE MAX YEAR OF THE SPECIFIC VAR.
-                ancillaryOutput = AncillaryOutput(espEnv, ...
+
+		% FIXME!
+		% LS: Quick solution to fix water year; substract 1 if region id is New Zealand. 
+                if obj.id == 26007    
+		    thisStruct.metadata.minYear = minSnowFractionYear - 1;
+                    thisStruct.metadata.maxYear = maxSnowFractionYear - 1; % TO CHANGE BECAUSE NEED TO BE MAX YEAR OF THE SPECIFIC VAR.
+                else
+		    thisStruct.metadata.minYear = minSnowFractionYear;
+                    thisStruct.metadata.maxYear = maxSnowFractionYear; % TO CHANGE BECAUSE NEED TO BE MAX YEAR OF THE SPECIFIC VAR.
+		end
+
+		ancillaryOutput = AncillaryOutput(espEnv, ...
                     uncondensedJson = uncondensedJson);
                 dataLabel = 'SubdivisionStatsWebJson';
                 outFilePath = webJsonFilePath;
