@@ -280,8 +280,7 @@ Here are the NRT- and historic-generation steps for SPIReS v2025.0.1:
 |---|---|---|---|---|---|---|
 | 4 | spiInver | Generate intermediary gap files from mod09ga input. | x | x | bimester | trimester |
 |---|---|---|---|---|---|---|
-| 5 | spiTimeI | Generate gap-filled data files (without false positives) + 
-    temporal interpolation. | x | x | waterYear | waterYear |
+| 5 | spiTimeI | Generate gap-filled data files (without false positives) + temporal interpolation. | x | x | waterYear | waterYear |
 |---|---|---|---|---|---|---|
 | 6 | moSpires | Generate daily .mat files (dubbed mosaics). | x | x | waterYear | waterYear |
 |---|---|---|---|---|---|---|
