@@ -186,5 +186,7 @@ id,outputVersion,outputDataLabel,regionId,inputVersion,regionName,commentOnBigRe
 2024003,v2025.0.1,SubdivisionStatsDailyCsv,328,v2025.0.1,h09v04,westernUS
 2024003,v2025.0.1,SubdivisionStatsDailyCsv,329,v2025.0.1,h09v05,westernUS
 2024003,v2025.0.1,SubdivisionStatsDailyCsv,364,v2025.0.1,h10v04,westernUS
+2024003,v2025.0.1,SubdivisionStatsDailyCsv,365,v2025.0.1,h10v05,westernUS
+2024003,v2025.0.1,SubdivisionStatsDailyCsv,400,v2025.0.1,h11v04,westernUS
 2024003,v2025.0.1,SubdivisionStatsDailyCsv,1057,v2025.0.1,h29v13,OCNewZealand
 2024003,v2025.0.1,SubdivisionStatsDailyCsv,1093,v2025.0.1,h30v13,OCNewZealand
