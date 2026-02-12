@@ -4641,7 +4641,7 @@ Iowa,11733,adm1,US-IA,USWestStates,5,,,0,0.326631089263247,0,0,0,,,State,US1,,US
 Idaho,11734,adm1,US-ID,USWestStates,4,westernUS,5,1,0.999999999999996,1,2,0,,,State,US1,,USA,USA-3518,,Idaho,11734,,,
 Illinois,11735,adm1,US-IL,,,,,,,,0,0,,,State,US1,,USA,USA-3546,,Illinois,11735,,,
 Indiana,11736,adm1,US-IN,,,,,,,,0,0,,,State,US1,,USA,USA-3547,,Indiana,11736,,,
-Kansas,11737,adm1,US-KS,USWestStates,6,,,0,0.0234091813316561,0,0,0,,,State,US1,,USA,USA-3530,,Kansas,11737,,,
+Kansas,11737,adm1,US-KS,USWestStates,6,westernUS,5,0,1,1,2,0,,,State,US1,,USA,USA-3530,,Kansas,11737,,,
 Kentucky,11738,adm1,US-KY,,,,,,,,0,0,,,State,US1,,USA,USA-3548,,Kentucky,11738,,,
 Louisiana,11739,adm1,US-LA,,,,,,,,0,0,,,State,US1,,USA,USA-3535,,Louisiana,11739,,,
 Massachusetts,11740,adm1,US-MA,,,,,,,,0,0,,,State,US1,,USA,USA-3513,,Massachusetts,11740,,,
