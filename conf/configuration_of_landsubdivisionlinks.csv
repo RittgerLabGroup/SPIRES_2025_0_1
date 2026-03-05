@@ -1,10 +1,15 @@
 groupId,id,websiteDisplay,202402websiteDisplay,,Comment
 Unique id of the group which include the subdivision. NB: A subdivision can be included in several groups.,Unique id used in the stat files. Called snowtod_id in the shapefiles,"1: link displayed on the website, even if the results for the group shouldn’t be displayed.","Previous version as a reminder 1: link displayed on the website, even if the results for the group shouldn’t be displayed.",,0
+26000,11723,2,1,,Arkansas
 26000,11724,2,1,,
 26000,11725,2,2,,
 26000,11726,2,2,,
+26000,11733,2,1,,Iowa
 26000,11734,2,1,,
 26000,11737,2,1,,Kansas
+26000,11739,2,1,,Louisiana
+26000,11744,2,1,,Minnesota
+26000,11745,2,1,,Missouri
 26000,11747,2,1,,
 26000,11749,2,1,,North Dakota
 26000,11750,2,1,,
