@@ -1119,6 +1119,7 @@ classdef ESPEnv < handle
             % Get the varName within the file, which might be distinct from varName.
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             varNameWithinFile = varName;
+
             if ~isempty(varName) && ischar(varName)
                 if ~isempty(inputFileConf.fieldForVarNameWithinFile{1})
                     varConf = obj.myConf.variable( ...
