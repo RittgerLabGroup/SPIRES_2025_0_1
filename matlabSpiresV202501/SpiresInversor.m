@@ -1709,7 +1709,7 @@ classdef SpiresInversor < handle
 
         fprintf('Loaded background reflectance and others in %.2f mins.\n', toc / 60);
         if ~strcmp(modisData.inputProduct, 'mod09ga')
-          spiresGroupingToleranceValue = 12;
+          spiresGroupingToleranceValue = 7;
         end
         fprintf('Grouping tolerance of %d...\n', spiresGroupingToleranceValue);
         tic;
