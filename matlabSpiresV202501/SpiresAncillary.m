@@ -95,7 +95,7 @@ classdef SpiresAncillary < handle
       dataLabel = SpiresInversor.dataLabels.(modisData.inputProduct);
       complementaryLabel = '';
       force = struct(resamplingFactor = 1, ...
-        resamplingMethod = 'nearest', type = 'single');
+        resamplingMethod = 'bilinear', type = 'single');
       tic
       parfor dateIdx = 1:length(theseDate)
         thisDate = theseDate(dateIdx);
