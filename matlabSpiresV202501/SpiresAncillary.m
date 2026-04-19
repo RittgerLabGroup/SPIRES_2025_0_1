@@ -96,10 +96,47 @@ classdef SpiresAncillary < handle
       complementaryLabel = '';
       force = struct(resamplingFactor = 1, ...
         resamplingMethod = 'bilinear', type = 'single');
+      qfForce = struct(resamplingFactor = 1, ...
+        resamplingMethod = 'nearest', type = 'uint8');
       tic
       parfor dateIdx = 1:length(theseDate)
         thisDate = theseDate(dateIdx);
         reflectance = zeros(thisSize, 'single');
+        qf2 = [];
+        qf3 = [];
+        qf4 = [];
+        qf5 = [];
+        qf6 = [];
+        qf7 = [];
+        sharedBad = false(thisSize(1), thisSize(2));
+        if strcmp(modisData.inputProduct, 'vnp09ga')
+          qf2 = espEnv.getDataForDateAndVarName(objectName, ...
+            dataLabel, thisDate, 'reflectance_quality_flag_2', ...
+            complementaryLabel, force = qfForce);
+          qf3 = espEnv.getDataForDateAndVarName(objectName, ...
+            dataLabel, thisDate, 'reflectance_quality_flag_3', ...
+            complementaryLabel, force = qfForce);
+          qf4 = espEnv.getDataForDateAndVarName(objectName, ...
+            dataLabel, thisDate, 'reflectance_quality_flag_4', ...
+            complementaryLabel, force = qfForce);
+          qf5 = espEnv.getDataForDateAndVarName(objectName, ...
+            dataLabel, thisDate, 'reflectance_quality_flag_5', ...
+            complementaryLabel, force = qfForce);
+          qf6 = espEnv.getDataForDateAndVarName(objectName, ...
+            dataLabel, thisDate, 'reflectance_quality_flag_6', ...
+            complementaryLabel, force = qfForce);
+          qf7 = espEnv.getDataForDateAndVarName(objectName, ...
+            dataLabel, thisDate, 'reflectance_quality_flag_7', ...
+            complementaryLabel, force = qfForce);
+          sharedBad = logical( ...
+            bitget(qf2, 4) | ... % cloud shadow
+            bitget(qf2, 5) | ... % heavy aerosol
+            bitget(qf2, 6) | ... % snow/ice
+            bitget(qf2, 7) | ... % thin cirrus reflective
+            bitget(qf2, 8) | ... % thin cirrus emissive
+            bitget(qf7, 2) | ... % adjacent to cloud
+            bitget(qf7, 5));     % thin cirrus flag
+        end
         % Get all reflectances....
         for varIdx = 1:length(SpiresInversor.reflectanceNames)
           varName = SpiresInversor.reflectanceNames{varIdx}; % varIdx from 1 to 7.
@@ -111,6 +148,26 @@ classdef SpiresAncillary < handle
             % with 1, 2, 6 I 500m bands.
           % RTP 20251125 set 0s to NaNs in prep for R0 calculation
           varData(varData == 0) = NaN;
+          varData(varData < 0 | varData > 160) = NaN;
+          if strcmp(modisData.inputProduct, 'vnp09ga')
+            switch varIdx
+              case 1 % I1
+                bandBad = logical(bitget(qf4, 2) | bitget(qf6, 4));
+              case 2 % I2
+                bandBad = logical(bitget(qf4, 3) | bitget(qf6, 5));
+              case 3 % M2
+                bandBad = logical(bitget(qf3, 2) | bitget(qf5, 4));
+              case 4 % M4
+                bandBad = logical(bitget(qf3, 4) | bitget(qf5, 6));
+              case 5 % M8
+                bandBad = logical(bitget(qf3, 7) | bitget(qf6, 1));
+              case 6 % I3
+                bandBad = logical(bitget(qf4, 4) | bitget(qf6, 6));
+              case 7 % M11
+                bandBad = logical(bitget(qf4, 1) | bitget(qf6, 3));
+            end
+            varData(sharedBad | bandBad) = NaN;
+          end
           reflectance(:, :, varIdx) = varData;
         end
         % Get clouds....
