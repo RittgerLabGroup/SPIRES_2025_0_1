@@ -178,7 +178,7 @@ fi
 ########################################################################################
 beginTime="";
   # if the start is later, for instance at 19:30 the same day, replace by: beginTime="--begin=19:30:00"
-exclude="";
+exclude="--exclude=bgpu-biokem1,bgpu-biokem2,bgpu-biokem3,bgpu-bortz1,bgpu-curc2,bgpu-curc4,bgpu-g4-18,bgpu-g4-u20,bgpu-g4-u24,bgpu-g6-u20,bgpu-ivc,bhpc-c5-u31-1,blanca-g4-u14-3,bmem-rico1,bnode0108,bgpu-curc2,bgpu-g4-18,bgpu-g4-u20,bgpu-g6-u34,bhpc-c5-u7-12,bnode0414,bnode0508,bhpc-c7-u7-8,bgpu-g6-u25,bgpu-chbe-rdi1";
   # if some nodes have a know hardware failure, for instance nodes bmem-rico1 and bgpu-bortz1, replace by: exclude="--exclude=bmem-rico1,bgpu-bortz1"
 
 # Instantiate step-dependent variables.
