@@ -111,7 +111,7 @@ conda install gdal
   tileOutputTifFileNamePattern=mod09ga_061_spi_{regionName}_{thisYear}{thisMonthDay}_{varName}.EPSG_3857.${inputLabel}.tif
 
   # Dynamic variables.
-  varNames=(reflectance_rgb viewable_snow_fraction_s grain_size_s dust_concentration_s snow_fraction_s snow_cover_days_s albedo_s radiative_forcing_s deltavis_s albedo_muZ_s)
+  varNames=(reflectance_rgb viewable_snow_fraction_s grain_size_s dust_concentration_s snow_fraction_s snow_cover_days_s albedo_s radiative_forcing_s deltavis_s albedo_muZ_s days_without_observation_s)
     # NB: find a way to put this in conf file.
   pixelSize=
   thisYear=
