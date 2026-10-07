@@ -657,7 +657,7 @@ classdef ESPEnv < handle
                 tic;
                 fprintf('%s: Parallel cluster local submitting...\n', ...
                     pStart());
-                S.pool = parpool(S.cluster, maxWorkers, IdleTimeout = 60 * 24); % 2024-07-14 no automatic shutdown of a pool before a day (spiresFill constraints)
+                S.pool = parpool(S.cluster, maxWorkers, IdleTimeout = 60 * 48); % 2024-07-14 no automatic shutdown of a pool before a day (spiresFill constraints)
                 fprintf('%s: Parallel cluster local launched in %.2f mins.\n', ...
                     pStart(), toc / 60);
                 S.cluster.disp();
@@ -2331,9 +2331,15 @@ classdef ESPEnv < handle
                                     fileObj = matfile(thisFilePath);
                                     [~, ~, ~, ~, ~, metaData] = ...
                                         obj.getMetadataFromFilePath(thisFilePath, dataLabel);
+                                    % A new water year has one date only, for which MATLAB
+                                    % stores the cell data as a 2-D array rather than 3-D.
+                                    thatSize = size(fileObj, varNameWithinFile);
+                                    if numel(thatSize) == 2
+                                        thatSize(3) = 1;
+                                    end
                                     if fileIdx == 1
                                         oneData = fileObj.( ...
-                                            varNameWithinFile)(1:2, 1, 1);
+                                            varNameWithinFile)(1:2, 1);
                                         varData = ...
                                             ones(obj.modisData.sensorProperties.tiling. ...
                                                 rowPixelCount, ...
@@ -2347,7 +2353,6 @@ classdef ESPEnv < handle
                                     end
                                     % Occasionally, spirestime miss the last day and the
                                     % dataset has a lower size (in days) than expected.     @tocheck
-                                    thatSize = size(fileObj, varNameWithinFile);
                                     if startIdx(3) > thatSize(3)
                                         warning(['Impossible to read %s in %s, ', ...
                                             ' 3rd dim called position %d but size %d in ', ...
@@ -2359,10 +2364,18 @@ classdef ESPEnv < handle
                                         return;
                                     end   
                                     try
+                                        if thatSize(3) == 1
+                                            cellData = fileObj.(varNameWithinFile)(1:end, 1:end);
+                                            cellData = reshape(cellData, size(cellData, 1), ...
+                                                size(cellData, 2), 1);
+                                        else
+                                            cellData = fileObj.(varNameWithinFile)( ...
+                                                1:end, 1:end, ...
+                                                double(startIdx(3):endIdx(3)));
+                                        end
                                         varData(metaData.rowStartId:metaData.rowEndId, ...
                                             metaData.columnStartId:metaData.columnEndId, :) = ...
-                                            fileObj.(varNameWithinFile)( ...
-                                                1:end, 1:end, double(startIdx(3):endIdx(3)));
+                                            cellData;
                                             % Matlab requires double precision indices for h5read.
                                     catch thisException
                                         warning(['Impossible to read %s in %s, called position', ...
