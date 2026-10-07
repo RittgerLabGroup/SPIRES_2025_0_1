@@ -86,6 +86,7 @@ try;
   end;
   subdivisionConf = subdivisionConf(${firstIndex}:lastIndex, :);
   subdivisionIds = subdivisionConf.id(:);
+  alaskaMarchToNovemberSubdivisionIds = [26001 3701 3702 3707 3713 11721 12518 12822 12823 12824 12825 12826 12827 12828 12829 15269 15270 15272 15275 15276 15278];
   parfor (subdivisionIdx = 1:size(subdivisionIds, 1), ${parallelWorkersNb});
     subdivisionId = subdivisionIds(subdivisionIdx);
     subdivision = Subdivision(subdivisionId, region);
@@ -96,7 +97,24 @@ try;
       subdivision.calcAggregates(waterYearDate);
     end;
     if ismember(${thisMode}, [0, 4]);
-      subdivision.writeStatCsvAndJson(1);
+      if ismember(subdivisionId, alaskaMarchToNovemberSubdivisionIds);
+        % The three seasonal Alaska plots are written directly below from the
+        % aggregate CSV.  Write all other plot variables normally.
+        subdivision.writeStatCsvAndJson(1, excludeVarIds = [55 62 63]);
+      else;
+        subdivision.writeStatCsvAndJson(1);
+      end;
+    end;
+  end;
+  if ismember(${thisMode}, [0, 4]);
+    % Temporary Alaska plot season: Mar 1--Nov 15, 2026.  Its JSON is saved
+    % in WY 2027 because October--November are in that water year.
+    for subdivisionIdx = 1:size(subdivisionIds, 1);
+      subdivisionId = subdivisionIds(subdivisionIdx);
+      if ismember(subdivisionId, alaskaMarchToNovemberSubdivisionIds);
+        subdivision = Subdivision(subdivisionId, region);
+        writeAlaskaMarchToNovemberStatJson(subdivision, 2026, 1);
+      end;
     end;
   end;
 ${catchExceptionAndExit}
