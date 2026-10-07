@@ -80,6 +80,32 @@ if [[ $inputLabel == 'v2024.0d' ]]; then
   0
   1
   )
+elif [[ "$regionName" == "USAlaska" ]]; then
+  printf "regionName = $regionName. Skipping netcdf rsync. \n"
+  sourceBasePaths=(
+  mod09ga.061/spires/${inputLabel}/int_day/  
+  output/mod09ga.061/spires/${inputLabel}/tif_EPSG3857/
+  modis/regional_stats/scagdrfs_csv_${inputLabel}/v006/ 
+  modis/subdivisionstats/scagdrfs_aggregcsv_${inputLabel}/v006/
+  )
+  endSourceBasePaths=(
+  "" 
+  "" 
+  "WY" 
+  "" 
+  )
+  targetBasePaths=(
+  mod09ga.061/spires/${inputLabel}/int_day/ 
+  output/mod09ga.061/spires/${outputLabel}/tif_EPSG3857/ 
+  output/mod09ga.061/spires/${outputLabel}/csv/ 
+  output/mod09ga.061/spires/${outputLabel}/aggregcsv/
+  )
+  isAll=(
+  0
+  0
+  0
+  1
+  )
 else
   sourceBasePaths=(
   mod09ga.061/spires/${inputLabel}/int_day/ 
