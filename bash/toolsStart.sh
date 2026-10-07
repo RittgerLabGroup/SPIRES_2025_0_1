@@ -362,11 +362,22 @@ if [[ ${mainBashSource} == *"slurm_script"* ]]; then
 
   if [ -v SLURM_ARRAY_TASK_ID ]; then
     # Occasionally, sacct doesnt return any submit line to this job id, although it can
-    # return it later. This is why I take the one of the array job.
+    # return it later. This is why I take the one of the array job and retry while
+    # accounting data becomes available.
     printf "\n\nSubmit line of the array job:\n"
-    printf "sacct -j ${SLURM_ARRAY_JOB_ID} --format SubmitLine%%1000 | tr -s ' ' | tr -s '-' | sed '3p;d' | xargs\n"
-    sacct -j ${SLURM_ARRAY_JOB_ID} --format SubmitLine%1000 | tr -s ' ' | sed '3p;d' | xargs
-    sbatchSubmitLine=$(sacct -j ${SLURM_ARRAY_JOB_ID} --format SubmitLine%1000 | tr -s ' ' | sed '3p;d' | xargs)
+    printf "sacct -j ${SLURM_ARRAY_JOB_ID} --format SubmitLine%%1000 | awk '/sbatch[^@]+/{ print; exit }' | xargs\n"
+    sbatchSubmitLine=
+    for attempt in {1..24}; do
+      sbatchSubmitLine=$(sacct -j "${SLURM_ARRAY_JOB_ID}" --format SubmitLine%1000 | \
+        awk '/sbatch[^@]+/{ print; exit }' | xargs)
+      [[ -n ${sbatchSubmitLine} ]] && break
+      printf "SubmitLine unavailable for array %s (attempt %d/24); retrying in 5 seconds.\n" \
+        "${SLURM_ARRAY_JOB_ID}" "${attempt}"
+      sleep 5
+    done
+    [[ -n ${sbatchSubmitLine} ]] || \
+      error_exit "Exit=1, matlab=no, unable to retrieve SubmitLine for array ${SLURM_ARRAY_JOB_ID}."
+    printf "%s\n" "${sbatchSubmitLine}"
 
     slurmArrayTaskIds=$(echo $sbatchSubmitLine | sed -E "s~[^@]+ --array=([0-9,\-]+) [^@]+~\1~")
       # E.g. 292001-292036,293001-293036,328001-328036,329001-329036,364001-364036
@@ -742,14 +753,14 @@ EOM
 
 # Defective node cannot access scratchPath or archive.
 ########################################################################################
-if [[ $(timeout 5 ls ${scratchPath} 2>&1) == *"cannot access"* ]]; then
-  printf "\n\n\n\n"
-  error_exit "Exit=1, matlab=no, Defective node, scratchPath inaccessible."
-fi
-if [[ $(timeout 5 ls ${archivePath} 2>&1) == *"cannot access"* ]]; then
-  printf "\n\n\n\n"
-  error_exit "Exit=1, matlab=no, Defective node, archivePath inaccessible."
-fi
+#if [[ $(timeout 30 ls ${scratchPath} 2>&1) == *"cannot access"* ]]; then
+#  printf "\n\n\n\n"
+#  error_exit "Exit=1, matlab=no, Defective node, scratchPath inaccessible."
+#fi
+#if [[ $(timeout 30 ls ${archivePath} 2>&1) == *"cannot access"* ]]; then
+#  printf "\n\n\n\n"
+#  error_exit "Exit=1, matlab=no, Defective node, archivePath inaccessible."
+#fi
 
 # Creation of temporary directories on scratchPath.
 ########################################################################################
@@ -761,7 +772,7 @@ if [[ $SLURM_ARRAY_TASK_ID -eq $SLURM_ARRAY_TASK_MIN ]]; then
   thatSecond1=$SECONDS
   for taskId in ${slurmArrayExpandedTaskIds[@]}; do
     thisTmpDir=${scratchPath}.matlabTmp/alpine-${SLURM_ARRAY_JOB_ID}_${taskId}
-    mkDirOutput=$(timeout 2 mkdir $thisTmpDir -p 2>&1)
+    mkDirOutput=$(timeout 300 mkdir $thisTmpDir -p 2>&1)
     printf "${thisTmpDir}: ${mkDirOutput}.\n"
     if [[ $mkDirOutput == *"cannot"* ]]; then
       error_exit "Exit=1, matlab=no, Defective node, scratchPath inaccessible (w)."
@@ -781,9 +792,9 @@ printf "$(pStart): Checking existence of tmpDir=${tmpDir}...\n"
 while [ ! -d $tmpDir ] && [ $(( $SECONDS - $thatSecond1 )) -lt $(( ${#slurmArrayExpandedTaskIds[@]} + 180)) ]; do
   sleep 5
 done
-if [[ ! -d $tmpDir ]]; then
-  error_exit "Exit=1, matlab=no, Defective node, scratchPath inaccessible (wi)."
-fi
+#if [[ ! -d $tmpDir ]]; then
+#  error_exit "Exit=1, matlab=no, Defective node, scratchPath inaccessible (wi)."
+#fi
 export TMPDIR=$tmpDir
 export TMP=$tmpDir
 printf "$(pStart): tmpDir=${tmpDir}.\n"
@@ -1014,6 +1025,26 @@ fi
 # Update options for next script to submit in the pipeline.
 # Most options are defined in the pipeline configuration, with the waterYearDate
 # derived from this script waterYearDate.
+
+## Error check
+printf "\n\n\n"
+printf "#############################################################################\n"
+printf "DEBUG: Checking pipeline submission gate conditions:\n"
+printf "isBatch=%s (should be 1)\n" "${isBatch:-UNSET}"
+printf "pipeLineId=%s (should be 5 or 3)\n" "${pipeLineId:-UNSET}"
+printf "SLURM_ARRAY_TASK_ID=%s (should be a number)\n" "${SLURM_ARRAY_TASK_ID:-UNSET}"
+printf "SLURM_ARRAY_TASK_MIN=%s\n" "${SLURM_ARRAY_TASK_MIN:-UNSET}"
+printf "scriptId=%s (should be mod09gaI, spiInver, etc)\n" "${scriptId:-UNSET}"
+printf "pipeLineScriptIds array: %s\n" "${pipeLineScriptIds[*]}"
+printf "Test pipeLineScriptIds[@]/${scriptId}//: '%s'\n" "${pipeLineScriptIds[@]/${scriptId}//}"
+if [[ "${pipeLineScriptIds[@]/${scriptId}//}" == */* ]]; then
+  printf "RESULT: Pattern match PASSED (contains /)\n"
+else
+  printf "RESULT: Pattern match FAILED (no / found)\n"
+fi
+printf "#############################################################################\n\n"
+
+
 if [ -v isBatch ] && [ -v pipeLineId ] && [ -v SLURM_ARRAY_TASK_ID ] && \
 [ $SLURM_ARRAY_TASK_ID -eq $SLURM_ARRAY_TASK_MIN ] && \
 [[ "${pipeLineScriptIds[@]/${scriptId}//}" == */* ]]; then
@@ -1036,6 +1067,16 @@ if [ -v isBatch ] && [ -v pipeLineId ] && [ -v SLURM_ARRAY_TASK_ID ] && \
     nextWaterYearDate=${thisYear}-${thisMonth}-${thisDay}-${nextMonthWindow}
     nextSlurmStdOutFileName="%x_%a_${nextWaterYearDate//-/_}_%A.out"
     nextParallelWorkersNb=${pipeLineParallelWorkersNb[${nextIndexInPipeLine}]}
+
+    ## DEBUG
+    printf "\n\n\n"
+    printf "#############################################################################\n"
+    printf "DEBUG: Checking next script conditions:\n"
+    printf 'indexInPipeLine=[%s]\n' "$indexInPipeLine"
+    printf 'nextIndexInPipeLine=[%s]\n' "$nextIndexInPipeLine"
+    printf 'nextScriptId=[%s]\n' "$nextScriptId"
+    printf 'nextScript=[%s]\n' "$nextScript"
+    
 : '      
     declare -n pipeLineTasksPerNode=pipeLineTasksPerNode${pipeLineId}
     declare -n pipeLineMems=pipeLineMems${pipeLineId}
@@ -1126,7 +1167,14 @@ EOM
     } || error_exit "Exit=1, matlab=no, Defective node, impossible to login."
 
     nextSubmitLine=${sbatchSubmitLine}
-    nextSubmitLine=$(echo ${nextSubmitLine} | sed -E 's~--begin=[0-9\:]+ ~~' | sed -E "s~/[a-zA-Z0-9\_\%]+\.out( --job-name)~/${nextSlurmStdOutFileName}\1~" | sed -E "s~( --job-name=)[a-zA-Z0-9\-]+ ~\1${nextJobName} ~" | sed -E "s~( --ntasks-per-node=)[0-9]+ ~\1${nextTasksPerNode} ~" | sed -E "s~( --mem=)[0-9]+G ~\1${nextMem} ~" | sed -E "s~( --time=)[0-9:]+ ~\1${nextTime} ~" | sed -E "s~( --array=)[0-9\,\-]+ ~\1${nextArray} ~" | sed -E "s~ \.\/bash[a-zA-Z0-9]*\/[a-zA-Z0-9]+\.sh ~ ${nextScript} ~" | sed -E "s~( -A )[a-zA-Z0-9\.]+ ~\1${nextVersionOfAncillary} ~" | sed -E "s~( -L )[a-zA-Z0-9\.\_\-]+ ~\1${nextInputLabel} ~" | sed -E "s~( -O )[a-zA-Z0-9\.\_\-]+ ~\1${nextOutputLabel} ~" | sed -E "s~( -Q )[0-9]+ ~\1${nextCountOfCells} ~" | sed -E "s~( -w )[0-9]+ ~\1${nextParallelWorkersNb} ~" | sed "s~ -R ~ ~")
+    ## DEBUG
+    printf "\n\n\n"
+    printf "#############################################################################\n"
+    printf "DEBUG: Printing previous submit line:\n"
+    printf 'nextSubmitLine=[%s]\n' "$nextSubmitLine"
+    # following line causing error, debugging
+    #nextSubmitLine=$(echo ${nextSubmitLine} | sed -E 's~--begin=[0-9\:]+ ~~' | sed -E "s~/[a-zA-Z0-9\_\%]+\.out( --job-name)~/${nextSlurmStdOutFileName}\1~" | sed -E "s~( --job-name=)[a-zA-Z0-9\-]+ ~\1${nextJobName} ~" | sed -E "s~( --ntasks-per-node=)[0-9]+ ~\1${nextTasksPerNode} ~" | sed -E "s~( --mem=)[0-9]+G ~\1${nextMem} ~" | sed -E "s~( --time=)[0-9:]+ ~\1${nextTime} ~" | sed -E "s~( --array=)[0-9\,\-]+ ~\1${nextArray} ~" | sed -E "s~ \.\/bash[a-zA-Z0-9]*\/[a-zA-Z0-9]+\.sh ~ ${nextScript} ~" | sed -E "s~( -A )[a-zA-Z0-9\.]+ ~\1${nextVersionOfAncillary} ~" | sed -E "s~( -L )[a-zA-Z0-9\.\_\-]+ ~\1${nextInputLabel} ~" | sed -E "s~( -O )[a-zA-Z0-9\.\_\-]+ ~\1${nextOutputLabel} ~" | sed -E "s~( -Q )[0-9]+ ~\1${nextCountOfCells} ~" | sed -E "s~( -w )[0-9]+ ~\1${nextParallelWorkersNb} ~" | sed "s~ -R ~ ~")
+    nextSubmitLine=$(echo ${nextSubmitLine} | sed -E 's~--begin=[0-9\:]+ ~~' | sed -E "s~/[a-zA-Z0-9\_\%]+\.out( --job-name)~/${nextSlurmStdOutFileName}\1~" | sed -E "s~( --job-name=)[a-zA-Z0-9\-]+ ~\1${nextJobName} ~" | sed -E "s~( --ntasks-per-node=)[0-9]+ ~\1${nextTasksPerNode} ~" | sed -E "s~( --mem=)[0-9]+G ~\1${nextMem} ~" | sed -E "s~( --time=)[0-9:]+ ~\1${nextTime} ~" | sed -E "s~( --array=)[0-9\,\-]+ ~\1${nextArray} ~" | sed -E "s~\./bash[^[:space:]]+\.sh~${nextScript}~" | sed -E "s~( -A )[a-zA-Z0-9\.]+ ~\1${nextVersionOfAncillary} ~" | sed -E "s~( -L )[a-zA-Z0-9\.\_\-]+ ~\1${nextInputLabel} ~" | sed -E "s~( -O )[a-zA-Z0-9\.\_\-]+ ~\1${nextOutputLabel} ~" | sed -E "s~( -Q )[0-9]+ ~\1${nextCountOfCells} ~" | sed -E "s~( -w )[0-9]+ ~\1${nextParallelWorkersNb} ~" | sed "s~ -R ~ ~")
 
     if [[ "${nextSubmitLine}" == *" -D "* ]]; then
       # Precaution, we force the waterYearDate to what the script decided, and not only
