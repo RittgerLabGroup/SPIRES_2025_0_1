@@ -854,7 +854,7 @@ classdef Subdivision < handle
                     ' %s.\n'], mfilename(), obj.id, dailyStatFilePath);
             end
         end
-        function writeStatCsvAndJson(obj, uncondensedJson) %
+        function writeStatCsvAndJson(obj, uncondensedJson, varargin) %
             % Write the csv and json stat file later ingested by the SnowToday webapp
             % to display the plots of the website (in combination with the
             % variables and subdivision .json files).
@@ -863,6 +863,9 @@ classdef Subdivision < handle
             % ----------
             % uncondensedJson: int. If 0, condense the geojsn files by removing new
             %   lines/spaces. Otherwise set 1.
+            % excludeVarIds: vector(int), optional. Variables to omit from this
+            %   writer. Used by the temporary Alaska March--November writer, which
+            %   creates those JSON files directly from the aggregate CSV.
             %
             % NB: the csv is only used by the v2023.1 of the website and also pushed
             % later to a public FTP. (The v2023.1 website doesn't accept the json).
@@ -873,6 +876,12 @@ classdef Subdivision < handle
             % correctly for bissectil/non bissectile year. For bissectile years, the 
             % historics of 3/1 of non bissectile years is aggregated/displayed as 2/28.
             %                                                                      @todo
+
+            p = inputParser;
+            addParameter(p, 'excludeVarIds', []);
+            p.KeepUnmatched = false;
+            parse(p, varargin{:});
+            excludeVarIds = p.Results.excludeVarIds;
 
             % Initialize ...
             espEnv = obj.region.espEnv;
@@ -935,6 +944,10 @@ classdef Subdivision < handle
                 statTable.waterYear == obj.fakeWaterYearForGlobalStats & ...
                 statTable.varId == snowFractionVarConf.id(1) & ...
                 statTable.statId == 42, :).statValue(1);
+
+            % Keep all metadata calculations above based on the complete variable
+            % configuration, then omit any variables written by a specialized writer.
+            varConf = varConf(~ismember(varConf.id, excludeVarIds), :);
 
             currentDay = data.thisDateRange(currentDay);
             firstDayOfWaterYear = data.thisDateRange(1);
