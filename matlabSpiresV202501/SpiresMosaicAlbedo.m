@@ -315,8 +315,8 @@ classdef SpiresMosaicAlbedo < handle
       data.grain_size_s = sqrt(single(data.grain_size_s));
           % grain_size is converted to sqrt for AlbedoLookup.
       data.dust_concentration_s = single(data.dust_concentration_s) ...
-          / 10 / 1000; % spires dust is in ppm while
-          % AlbedoLookup expects ppt.
+          / 10 / 1000000; % spires dust is in ppm while
+          % AlbedoLookup expects dimensionless mass fraction
       sootFraction = zeros(size(mu0), 'uint8');
       fprintf('%s-%s: Albedo step 1 in %.2f mins.\n\n', ...
           thisFunctionCode, char(thisDate, 'yyyyMMdd'), ...
