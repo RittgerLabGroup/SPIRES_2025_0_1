@@ -61,5 +61,7 @@ export loginNodeDomain=login.rc.colorado.edu
 Run steps in `run_historic_step.md` starting at step `spiInver` (spectral unmixing). \
 All `spiInver` jobs can be submitted at the same time (2 jobs per water year + 1 job for June to September, 2000) \
 
+IMPORTANT: Add argument `-y $espScratchDir` to every submission command to use files from your scratch instead of `rittger_nrt`
+
 For subsequent steps, 1 job is submitted for each water year. 
 
