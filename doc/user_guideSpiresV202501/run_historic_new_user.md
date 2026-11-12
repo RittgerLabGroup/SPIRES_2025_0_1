@@ -63,5 +63,10 @@ All `spiInver` jobs can be submitted at the same time (2 jobs per water year + 1
 
 IMPORTANT: Add argument `-y $espScratchDir` to every submission command to use files from your scratch instead of `rittger_nrt`
 
-For subsequent steps, 1 job is submitted for each water year. 
+For subsequent steps, 1 job is submitted for each water year and all water years can be submitted simultaneously.
+
+Subsequent steps:
+  - `spiTimeI`
+  - `moSpires`
+  - `daNetCDF`
 
