@@ -24,7 +24,7 @@ Ancillary files:
 rsync /pl/active/rittger_ops/modis_ancillary /scratch/alpine/$USER/
 ```
 
-## 3. Edit .bashrc and .matlabEnvironmentVariableFiles
+## 3. Edit .bashrc and .matlabEnvironmentVariables Files
 Copy `/projects/lost1845/SPIRES_2025_0_1/home/.bashrc` and `/projects/lost1845/SPIRES_2025_0_1/home/.matlabEnvironmentVariables` to `/home/$USER`
 
 `.matlabEnvironmentVariables` does not need to be edited. 
